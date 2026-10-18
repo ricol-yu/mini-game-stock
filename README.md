@@ -23,7 +23,7 @@
 | `AGENTS.md` | 项目约定，给 AI 看的（技术栈、硬性规则、代码风格） |
 | `HANDOFF.md` | 交接卡，每次收工更新：做到哪 / 下一步 / 卡在哪 |
 | `docs/design/game-design.md` | 玩法规格：四属性、每日结算公式、状态、结局 |
-| `docs/tech/wechat-migration.md` | 迁移到小游戏的硬约束与坑 |
+| `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案与坑（WXS 手势、WXSS 兼容、类目风险） |
 | `data/cards.json` | 63 张卡的结构化数据 |
 | `tools/extract-cards.js` | 从 `prototype.html` 重新抽取卡池 |
 | `docs/devlog/` | 开发日志，按日期，一文件一天 |

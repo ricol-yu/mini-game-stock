@@ -11,7 +11,7 @@
 |---|---|
 | 游戏名 | 韭菜之王 |
 | 题材 | 股票人生 · 卡牌决策 · 60 天生命周期 |
-| 技术栈 | 微信小游戏原生 Canvas 2D + JavaScript（**不引入游戏引擎**） |
+| 技术栈 | 微信**小程序**原生（WXML + WXSS + JS）。**不是小游戏**，不用 Canvas 手绘，不引游戏引擎 |
 | AppID | *待填*（两端必须一致，且两端登录同一个微信账号） |
 | 仓库 | `git@github.com:ricol-yu/mini-game-stock.git` |
 | 当前阶段 | v3 网页原型已可玩（`prototype.html`），待迁移到小游戏 |
@@ -37,7 +37,7 @@
 | 文件 | 内容 |
 |---|---|
 | `docs/design/game-design.md` | 完整玩法规格：四属性、每日结算公式、七种状态、结局优先级 |
-| `docs/tech/wechat-migration.md` | 迁移到小游戏的硬约束与五个具体的坑 |
+| `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
 | `data/cards.json` | 63 张卡的结构化数据（从原型自动抽取） |
 | `tools/extract-cards.js` | 从 `prototype.html` 重新抽取卡池的脚本 |
 
@@ -58,6 +58,9 @@
 - **逻辑与渲染必须分离** —— `core/` 里不许出现任何绘制代码，渲染层不许直接改状态
 - 不在仓库里存任何密钥、Token、AppSecret
 - 提交信息用 `feat: / fix: / chore: / docs: / refactor:` 前缀
+- **这是小程序，不是小游戏** —— 已验证过判断依据（见迁移文档第一节），不要再推翻重议
+- **拖动、动画等每帧变化的样式必须走 WXS** —— 不许在 `touchmove` 里 `setData`，会掉帧到不可用
+- **小程序类目绝不能选「游戏」** —— 该操作不可逆，选了就变成小游戏，只能重新注册账号
 - 一次改动涉及 3 个以上文件时，先说明打算改哪些、为什么
 
 ## 代码约定
