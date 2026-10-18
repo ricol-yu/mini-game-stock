@@ -1,0 +1,17 @@
+# 统一换行符为 LF，避免 Windows(CRLF) 与 Mac(LF) 互相把整个文件标记为已改动
+* text=auto eol=lf
+
+# 二进制文件不做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.mp4 binary
+*.zip binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
