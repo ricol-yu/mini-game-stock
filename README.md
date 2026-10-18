@@ -1,6 +1,6 @@
 # mini-game-stock
 
-微信小程序小游戏（立项中）。
+微信小程序（卡牌决策游戏《韭菜之王》，立项中）。
 
 - 仓库：https://github.com/ricol-yu/mini-game-stock
 - 本地（Windows）：`C:\Users\ZhuanZ\WorkBuddy\mini-game-stock`
@@ -16,6 +16,14 @@
 **没 push 的代码 = 不存在。** 微信开发者工具的预览只认本地文件，
 在一台设备上改了没 push，另一台打开就是上一版，而且不会有任何提示。
 
+## 第一次在新设备上：先读 `HANDOFF.md`
+
+换设备后的第一件事不是看代码，是看 `HANDOFF.md`。里面有「做到哪 / 下一步第一件事 / 卡在哪」，
+比翻 git log 快得多。
+
+当前进度：**WXS 滑卡验证工程已写完，还没在任何设备上跑过**。
+在新设备上要做的第一件事是跑 `spike/wxs-swipe`，具体步骤写在 `HANDOFF.md` 第 2 节。
+
 ## 文件说明
 
 | 文件 | 作用 |
@@ -24,6 +32,8 @@
 | `HANDOFF.md` | 交接卡，每次收工更新：做到哪 / 下一步 / 卡在哪 |
 | `docs/design/game-design.md` | 玩法规格：四属性、每日结算公式、状态、结局 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案与坑（WXS 手势、WXSS 兼容、类目风险） |
+| `docs/tech/testing.md` | 四层测试环境、手感为什么只能在真机验、PC 端边界、广告变现约束 |
+| `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。导入时目录要选这一层，不是仓库根 |
 | `data/cards.json` | 63 张卡的结构化数据 |
 | `tools/extract-cards.js` | 从 `prototype.html` 重新抽取卡池 |
 | `docs/devlog/` | 开发日志，按日期，一文件一天 |
@@ -31,6 +41,9 @@
 | `.gitattributes` | 强制 LF，防止 Windows/Mac 换行符互相污染 |
 
 ## ⚠️ Mac 端导入现有代码：必须用 clone，不要 git init 后强推
+
+> 这一节讲的是**把 v3 原型代码导进仓库**，属于后面的事。
+> 第一次在 Mac 上先跑 `spike/wxs-swipe` 验手感，不要先导入代码。
 
 Mac 上已经有一个能跑的 v3 原型目录了。**不要在那个目录里 `git init` 然后
 `git push -f`** —— 那会把仓库里已有的提交（文档、卡池数据、协作文件）全部覆盖掉。
