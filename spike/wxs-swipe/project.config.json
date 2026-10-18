@@ -1,0 +1,21 @@
+{
+  "description": "WXS 滑卡手感验证工程",
+  "compileType": "miniprogram",
+  "libVersion": "latest",
+  "appid": "touristappid",
+  "projectname": "wxs-swipe",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": false,
+    "enhance": false,
+    "postcss": false,
+    "minified": false,
+    "bigPackageSizeSupport": true,
+    "ignoreDevUnusedFiles": false
+  },
+  "condition": {}
+}

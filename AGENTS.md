@@ -41,6 +41,7 @@
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
 | `docs/tech/testing.md` | 四层测试环境、真机验证流程、PC 端边界、广告变现硬约束 |
 | `data/cards.json` | 63 张卡的结构化数据（从原型自动抽取） |
+| `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。结论回写到 `testing.md` |
 | `tools/extract-cards.js` | 从 `prototype.html` 重新抽取卡池的脚本 |
 
 **改数值或文案前，先读 `docs/design/game-design.md`。**
@@ -57,6 +58,7 @@
 - **绝不提交 `project.private.config.json`** —— 它在 `.gitignore` 里，存的是各设备本地设置（端口、编译选项、真机调试机器），两端必然不同
 - **目录名保持 `mini-game-stock`，不要重命名** —— `projectname` 字段跟着目录名走，改了就反复冲突
 - **主包上限 4MB** —— 美术、音频不进仓库，放 CDN 或分包
+- **`spike/` 不进主包** —— 正式工程建好后，把 `spike/` 加进 `packOptions.ignore`，或直接删掉
 - **逻辑与渲染必须分离** —— `core/` 里不许出现任何绘制代码，渲染层不许直接改状态
 - 不在仓库里存任何密钥、Token、AppSecret
 - 提交信息用 `feat: / fix: / chore: / docs: / refactor:` 前缀

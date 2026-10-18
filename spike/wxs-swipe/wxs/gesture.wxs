@@ -1,0 +1,187 @@
+// WXS 滑卡手势 —— 运行在渲染层，不走逻辑层通信
+// 语言限制：ES5 only。不能用 let/const、箭头函数、模板字符串、扩展运算符
+// 可用 API：getDate()、Math、console.log，没有 setTimeout
+
+var TH = 92;      // 松手判定阈值 px，可在调试面板里改
+var ROT = 9;      // 最大旋转角
+var BASE = 300;   // dx 归一化基准
+
+var startX = 0;
+var startY = 0;
+var dx = 0;
+var dy = 0;
+var dragging = false;
+
+var evCount = 0;
+var t0 = 0;
+var lastT = 0;
+var gapSum = 0;
+var maxGap = 0;
+var costSum = 0;
+var costMax = 0;
+var lastBucket = -1;
+
+var SEL = {};
+
+function nowMs() {
+  return getDate().getTime();
+}
+
+function clamp(v, a, b) {
+  if (v < a) return a;
+  if (v > b) return b;
+  return v;
+}
+
+// 选择器结果缓存：每帧都 selectComponent 是有成本的
+function pick(ins, sel) {
+  var d = SEL[sel];
+  if (!d) {
+    d = ins.selectComponent(sel);
+    if (d) SEL[sel] = d;
+  }
+  return d;
+}
+
+function setStamp(ins, l, r) {
+  var el;
+  el = pick(ins, '.stamp-l');
+  if (el) el.setStyle({ opacity: '' + l });
+  el = pick(ins, '.stamp-r');
+  if (el) el.setStyle({ opacity: '' + r });
+}
+
+function touchstart(e, ins) {
+  var t = e.touches[0];
+  if (!t) return;
+  startX = t.clientX;
+  startY = t.clientY;
+  dx = 0;
+  dy = 0;
+  dragging = true;
+  evCount = 0;
+  t0 = nowMs();
+  lastT = t0;
+  gapSum = 0;
+  maxGap = 0;
+  costSum = 0;
+  costMax = 0;
+  lastBucket = -1;
+
+  var card = pick(ins, '.card-top');
+  if (card) card.setStyle({ transition: 'none' });
+}
+
+function touchmove(e, ins) {
+  if (!dragging) return;
+  var t = e.touches[0];
+  if (!t) return;
+
+  var nDx = t.clientX - startX;
+  var nDy = t.clientY - startY;
+
+  // 采样间隔：这个数字等于真机的帧间隔，掉帧会直接体现出来
+  var tn = nowMs();
+  var gap = tn - lastT;
+  lastT = tn;
+  evCount = evCount + 1;
+  gapSum = gapSum + gap;
+  if (gap > maxGap) maxGap = gap;
+
+  dx = nDx;
+  dy = nDy;
+
+  var rot = clamp(nDx / BASE * ROT, -ROT, ROT);
+  var ty = nDy * 0.18;
+
+  var c0 = nowMs();
+  var card = pick(ins, '.card-top');
+  if (card) {
+    card.setStyle({
+      transform: 'translate3d(' + nDx + 'px,' + ty + 'px,0) rotate(' + rot + 'deg)'
+    });
+  }
+  var cost = nowMs() - c0;
+  costSum = costSum + cost;
+  if (cost > costMax) costMax = cost;
+
+  // 印章透明度按 10 级分桶，避免每条 event 都做两次 setStyle
+  var bucket = Math.round(clamp(Math.abs(nDx) / TH, 0, 1) * 10);
+  if (bucket !== lastBucket) {
+    lastBucket = bucket;
+    var a = bucket / 10;
+    if (nDx > 0) {
+      setStamp(ins, 0, a);
+    } else if (nDx < 0) {
+      setStamp(ins, a, 0);
+    } else {
+      setStamp(ins, 0, 0);
+    }
+  }
+}
+
+function touchend(e, ins) {
+  if (!dragging) return;
+  dragging = false;
+
+  var total = nowMs() - t0;
+  var fired = Math.abs(dx) > TH;
+  var dir = dx > 0 ? 1 : -1;
+
+  var card = pick(ins, '.card-top');
+  if (card) {
+    if (fired) {
+      card.setStyle({
+        transition: 'transform .3s cubic-bezier(.3,.9,.4,1), opacity .3s ease-out',
+        transform: 'translate3d(' + (dir * 520) + 'px,' + (dy * 0.3) + 'px,0) rotate(' + (dir * 22) + 'deg)',
+        opacity: '0'
+      });
+    } else {
+      card.setStyle({
+        transition: 'transform .34s cubic-bezier(.22,1,.36,1)',
+        transform: 'translate3d(0,0,0) rotate(0deg)'
+      });
+    }
+  }
+  setStamp(ins, 0, 0);
+
+  var n = evCount;
+  var avgGap = n > 0 ? Math.round(gapSum / n) : 0;
+  var fps = total > 0 ? Math.round(n * 1000 / total) : 0;
+  var costAvg = n > 0 ? Math.round(costSum / n * 100) / 100 : 0;
+
+  ins.callMethod('onGesture', {
+    fired: fired,
+    dir: dx > 0 ? 'R' : 'L',
+    dx: Math.round(dx),
+    events: n,
+    duration: Math.round(total),
+    avgGap: avgGap,
+    maxGap: Math.round(maxGap),
+    fps: fps,
+    costAvg: costAvg,
+    costMax: Math.round(costMax * 100) / 100
+  });
+}
+
+// 换下一张卡时重置变换，由页面 round 变化触发
+function observe(nv, ov, ins, instance) {
+  var card = pick(ins, '.card-top');
+  if (card) {
+    card.setStyle({
+      transition: 'none',
+      transform: 'translate3d(0,0,0) rotate(0deg)',
+      opacity: '1'
+    });
+  }
+  setStamp(ins, 0, 0);
+  lastBucket = -1;
+}
+
+module.exports = {
+  touchstart: touchstart,
+  touchmove: touchmove,
+  touchend: touchend,
+  observe: observe,
+  threshold: TH
+};

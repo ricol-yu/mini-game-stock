@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "pages/swipe/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "WXS 滑卡验证",
+    "navigationBarBackgroundColor": "#f2f3f5",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f2f3f5"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
