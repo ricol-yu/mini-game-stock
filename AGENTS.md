@@ -12,7 +12,7 @@
 | 游戏名 | *待定* |
 | 技术栈 | 微信小游戏原生（Canvas 2D + JavaScript） |
 | AppID | *待填*（两端必须一致，且两端登录同一个微信账号） |
-| 仓库 | *待填* |
+| 仓库 | `git@github.com:ricol-yu/mini-game-stock.git` |
 | 当前阶段 | 立项 —— 核心玩法验证中 |
 | 在线工作台 | https://workbuddy.link/p/rqRIkavd1RWvbGy1DoQrtE |
 
@@ -25,7 +25,7 @@
 ## 硬性规则
 
 - **绝不提交 `project.private.config.json`** —— 它在 `.gitignore` 里，存的是各设备本地设置（端口、编译选项、真机调试机器），两端必然不同
-- **目录名保持 `mini-game`，不要重命名** —— `projectname` 字段跟着目录名走，改了就反复冲突
+- **目录名保持 `mini-game-stock`，不要重命名** —— `projectname` 字段跟着目录名走，改了就反复冲突
 - **主包上限 4MB** —— 美术、音频不进仓库，放 CDN 或分包
 - 不在仓库里存任何密钥、Token、AppSecret
 - 提交信息用 `feat: / fix: / chore: / docs: / refactor:` 前缀
