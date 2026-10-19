@@ -6,10 +6,10 @@
 
 ---
 
-**最后更新**：2026-10-19 16:06
+**最后更新**：2026-10-19 16:16
 **在哪台设备上写的**：公司 Mac（`ricol-yu@ricol-yu-Mac`）
 **当前分支**：main
-**最后一次 commit**：`a6ab5ff` + 本次 v3 原型合并提交
+**最后一次 commit**：`bd2a5e9`
 
 ## 1. 做到哪了
 
@@ -20,13 +20,28 @@
 - 验证 `git config --global user.name/email` → `ricol-yu / 595619863@qq.com`（与 Windows 端一致）
 - `HANDOFF.md` 切到 Mac → commit `4d33148` → push
 - `docs/devlog/2026-10-19.md` 记录接入 → commit `a6ab5ff` → push
-- **v3 原型合并入仓库**（`prototype.html` + `design.html` + 同步重抽 `data/cards.json`）→ 即将 commit
+- **v3 原型已合并入仓库**（`prototype.html` + `design.html` + 同步重抽 `data/cards.json`）→ commit `c7b0d69`
+- **追加修复「潜伏的旧版残留」**（`docs/design/game-design.md` 与 spike 的卡面硬编码各一处）→ commit `bd2a5e9`
 
 **冲突检查结果**（合并前做的，三项分别给出）：
 
 - 路径零冲突：`prototype.html` / `design.html` 仓库中不存在，是净新增
 - **真实隐性冲突已修复**：`data/cards.json` 是 10-16 生活成本定标（×1.3）前的旧版，当前 `prototype.html` 是定标后版本。20 处 `spend` 数值 + 8 处卡面文案差异。重抽后已对齐
 - `design.html` 的技术选型/变现结论与 `AGENTS.md` 一致（小程序、纯广告、版号做 Plan B）
+
+**根因（用户事后确认）**：昨天发给 Windows 上 AI 的那份 `prototype.html` 不是最新的，
+Mac 上定标后的版本才是最新。所以 Windows 那晚抽的 `cards.json`、写的文档示例、
+抄的 spike 卡面，跟的都是旧版。
+
+**合并后又扫出 2 处「潜伏的旧版残留」**（已修复，`bd2a5e9`）：
+
+| 位置 | 旧值 | 新值 |
+|---|---|---|
+| `docs/design/game-design.md:138` | "出 4,200" | "出 5,500" |
+| `spike/wxs-swipe/pages/swipe/index.js:14` | `'出 4,200'` | `'出 5,500'` |
+
+都是「老婆/房贷」卡的 R 文本。教训：重抽 `cards.json` 只能修**结构化派生**，
+**手抄副本**（文档示例、spike 卡面）必须靠 grep 扫。
 
 **合并后约定**：`/Users/zhinan009/WorkBuddy/game-stock/` 不再是原型真源。如需修改 v3，请直接改仓库里的 `prototype.html`（推送后 Windows 端 `git pull` 即可同步），不要再回头改原目录。
 
@@ -64,6 +79,7 @@
 - [x] **Mac 上 git 全局用户已配**：`ricol-yu / 595619863@qq.com`（与 Windows 端一致）
 - [x] **Mac 仓库位置**：`~/mini-game-stock`（按 README 约定，没改名）
 - [x] **v3 原型已合并入仓库**（`prototype.html` + `design.html` + 重抽后的 `data/cards.json`）—— 路径零冲突，但 `data/cards.json` 与旧 prototype 有 20 处数值差异（生活成本 ×1.3 定标前），已重抽对齐
+- [x] **已扫描并修复旧版残留**（docs + spike 各一处 4,200 → 5,500）；剩余 4,200 仅出现在 devlog 的历史描述里，属正常
 - [ ] **Mac 端未装微信开发者工具** —— 装上之后才能跑 spike
 - [ ] **AppID 还没填**，两端都还是 `touristappid`。谁拿到测试号就填上并提交，另一端 pull 即可
 - [ ] 没有未提交的文件
