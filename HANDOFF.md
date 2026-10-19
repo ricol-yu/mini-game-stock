@@ -6,10 +6,50 @@
 
 ---
 
-**最后更新**：2026-10-19 18:15
+**最后更新**：2026-10-19 18:30
 **在哪台设备上写的**：公司 Mac（`ricol-yu@ricol-yu-Mac`）
 **当前分支**：main
-**最后一次 commit**：`d3753cd` + 本次「卡池真源反转」提交
+**最后一次 commit**：`b07083b`（已 push，远端与此一致，工作区干净）
+
+## 0. 回家验收清单（2026-10-19 收工时写的，给 Windows 端）
+
+**先同步，别跳过**：
+
+```powershell
+cd C:\Users\ZhuanZ\WorkBuddy\mini-game-stock
+git pull
+git log --oneline -1        # 应该看到 b07083b
+git status                  # 应该「nothing to commit，working tree clean」
+```
+
+只要这三行的输出对得上，说明公司这台推干净了，下面的验收才有意义。
+
+**四步，20 分钟够**：
+
+| # | 做什么 | 看什么 / 判据 |
+|---|---|---|
+| 1 | 双击仓库根的 `prototype.html`（浏览器直接开，不用起服务器） | 能玩。四根属性条、右滑买 / 左滑卖、走完 60 天出结局和「一句话评价」 |
+| 2 | 双击 `tools/cards-manager.html` | 63 张卡全在表里，能筛选、能改、能「导出 JSON」。改完不必真覆盖，能导出就算通 |
+| 3 | `node tools/sync-json-to-prototype.js`，然后 `git status` | **应无改动**。有 diff 就说明真源和 prototype 不一致——先别提交，记下来告诉我 |
+| 4 | 想通盘扫数值就开 `data/cards.xlsx` | 63 行 × 31 列，含「填表说明」页，可按列筛选 |
+
+**玩的时候，这几个是设计如此、不是 bug**：心态到 88 不会死，会进「上头」状态（买入价 ×1.35）；
+风险到 72 之后每天有 7.5% 概率「事情自己发生」；社会值每天自然 −0.22，是唯一必须花钱才保得住的属性。
+
+**改数值的正经动作，就一条**：
+
+```
+管理表改  →  导出覆盖 data/cards.json  →  node tools/sync-json-to-prototype.js  →  玩一局确认
+```
+
+**Windows 端两个坑**：
+
+- `prototype.html` 的 `CARDS = [...]` 数组**别手改**，它是生成的，下次同步会冲掉
+- `export-xlsx.py` 在 Windows 上用 `python` 不是 `python3`，且要装 `openpyxl`。
+  装不上就算了 —— **xlsx 只是浏览用的，不是真源**，缺它不影响任何事
+
+**验收完请回写**：哪些卡的数值明显太狠 / 太软、哪句卡面文案读着别扭、结局的一句话评价哪句没味。
+不用改，记在 `docs/devlog/` 次日文件里或直接回写这一节都行 —— 内容向的活儿等你拍板了才动。
 
 ## 1. 做到哪了
 
@@ -114,11 +154,16 @@ prototype.html    ← 单文件自包含、双击即玩（由真源生成，别�
 - [x] **已扫描并修复旧版残留**（docs + spike 各一处 4,200 → 5,500）；剩余 4,200 仅出现在 devlog 的历史描述里，属正常
 - [ ] **Mac 端未装微信开发者工具** —— 装上之后才能跑 spike
 - [ ] **AppID 还没填**，两端都还是 `touristappid`。谁拿到测试号就填上并提交，另一端 pull 即可
-- [ ] 没有未提交的文件
+- [x] **没有未提交的文件**（`git status` 干净，本地与 `origin/main` 同为 `b07083b`）
+- [ ] **xlsx 导出依赖 Mac 上的 venv**：`export-xlsx.py` 用的是
+      `/Users/zhinan009/.workbuddy/binaries/python/envs/default/bin/python`（装了 openpyxl）。
+      Windows 端要重跑得自己装 `openpyxl`；不跑也没关系，xlsx 不是真源
 
 ## 5. 下次别忘
 
-- **`prototype.html` 不要改** —— 现在它在仓库根 `/Users/zhinan009/mini-game-stock/prototype.html`，是 v3 的唯一真源（Mac 原目录 `/Users/zhinan009/WorkBuddy/game-stock/` 已不再维护，改了没人同步）
+- **`prototype.html` 不要手改** —— 它是 `data/cards.json` 生成的派生物，手改的下次同步就被冲掉。
+  要改数值：改 `cards.json`（或用管理表导出覆盖它）→ 跑 `node tools/sync-json-to-prototype.js`。
+  （Mac 原目录 `/Users/zhinan009/WorkBuddy/game-stock/` 已不再维护，改了没人同步）
 - **`prototype.html` / `design.html` 已在仓库根，但它们不是小程序代码**。spike 导入时目录仍选 `spike/wxs-swipe`。将来建正式工程时，这两个文件不能被打进主包（HTML 不是小程序页面，但要在 `packOptions.ignore` 里排除，别忘）
 - **正式工程骨架还没建**。不要在仓库根目录随手 `git init` 或新建小程序工程；现在已经 clone 好了，直接在里面建即可
 - 验证完把结论回写 `docs/tech/testing.md` 的「待验证清单」，然后 `spike/` 就可以删了 ——

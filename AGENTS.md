@@ -40,9 +40,12 @@
 | `docs/design/game-design.md` | 完整玩法规格：四属性、每日结算公式、七种状态、结局优先级 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
 | `docs/tech/testing.md` | 四层测试环境、真机验证流程、PC 端边界、广告变现硬约束 |
-| `data/cards.json` | 63 张卡的结构化数据（从原型自动抽取） |
+| `data/cards.json` | **63 张卡的唯一真源**。改卡面文案或数值一律改它 |
+| `prototype.html` | 可玩原型，单文件自包含。**由 `cards.json` 生成，不要手改** |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。结论回写到 `testing.md` |
-| `tools/extract-cards.js` | 从 `prototype.html` 重新抽取卡池的脚本 |
+| `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
+| `tools/cards-manager.html` | 网页管理表，双击即用，改完导出 JSON 覆盖 `cards.json` |
+| `tools/extract-cards.js` | 反向（prototype → json），**仅救急核对**，不是正常流程 |
 
 **改数值或文案前，先读 `docs/design/game-design.md`。**
 数值之间有耦合（比如风险消退 0.15/天 vs 重仓 +0.45/天），单改一个数会破坏平衡。

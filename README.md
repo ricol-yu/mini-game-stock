@@ -21,8 +21,10 @@
 换设备后的第一件事不是看代码，是看 `HANDOFF.md`。里面有「做到哪 / 下一步第一件事 / 卡在哪」，
 比翻 git log 快得多。
 
-当前进度：**WXS 滑卡验证工程已写完，还没在任何设备上跑过**。
+当前进度：**配置层已封住**（卡池真源是 `data/cards.json`，有网页管理表可改数值），
+WXS 滑卡验证工程已写完、还没在任何设备上跑过。
 在新设备上要做的第一件事是跑 `spike/wxs-swipe`，具体步骤写在 `HANDOFF.md` 第 2 节。
+只想验收游戏内容本身的话，看 `HANDOFF.md` 第 0 节（验收清单）。
 
 ## 文件说明
 
@@ -34,8 +36,13 @@
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案与坑（WXS 手势、WXSS 兼容、类目风险） |
 | `docs/tech/testing.md` | 四层测试环境、手感为什么只能在真机验、PC 端边界、广告变现约束 |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。导入时目录要选这一层，不是仓库根 |
-| `data/cards.json` | 63 张卡的结构化数据 |
-| `tools/extract-cards.js` | 从 `prototype.html` 重新抽取卡池 |
+| `prototype.html` | 可玩的网页原型，双击即开。**由 `cards.json` 生成，不要手改** |
+| `data/cards.json` | **63 张卡的唯一真源**，改数值改这里 |
+| `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
+| `tools/cards-manager.html` | 网页管理表（63×31，可筛选/排序/编辑/导出 JSON），双击即用 |
+| `tools/build-manager.js` | 重新生成管理表（卡池结构性变更后跑一次） |
+| `tools/export-xlsx.py` | 导出 `data/cards.xlsx`（只作浏览，不是真源） |
+| `tools/extract-cards.js` | 反向（prototype → json），**仅救急核对** |
 | `docs/devlog/` | 开发日志，按日期，一文件一天 |
 | `.gitignore` | 已排除 `project.private.config.json` 等本地文件 |
 | `.gitattributes` | 强制 LF，防止 Windows/Mac 换行符互相污染 |
