@@ -6,6 +6,21 @@
 - 本地（Windows）：`C:\Users\ZhuanZ\WorkBuddy\mini-game-stock`
 - 本地（Mac）：`~/mini-game-stock`
 
+## 工作空间约定：AI 对话也在这个目录里开
+
+AI 对话挂在「工作目录」上，而对话历史只存在本机、**不跨设备**。
+所以两端用同一个目录名，并且每次开新对话都选这个目录：
+
+| 设备 | 开对话时选这个目录 |
+|---|---|
+| Windows | `C:\Users\ZhuanZ\WorkBuddy\mini-game-stock` |
+| Mac | `~/mini-game-stock` |
+
+**不要**在 `WorkBuddy\2026-10-18-17-55-16` 这类自动命名的目录里开游戏开发的对话 ——
+那是「协作基建台」的旧空间，只用来改云端工作台本身，和游戏代码无关。
+
+对话记忆不跨设备，跨设备靠两样东西：`HANDOFF.md` + `git pull`。
+
 ## 这个仓库是什么
 
 游戏代码的**唯一真源**。公司和家里两台设备靠它同步：
