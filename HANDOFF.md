@@ -6,10 +6,10 @@
 
 ---
 
-**最后更新**：2026-10-19 16:16
+**最后更新**：2026-10-19 18:15
 **在哪台设备上写的**：公司 Mac（`ricol-yu@ricol-yu-Mac`）
 **当前分支**：main
-**最后一次 commit**：`bd2a5e9`
+**最后一次 commit**：`d3753cd` + 本次「卡池真源反转」提交
 
 ## 1. 做到哪了
 
@@ -43,7 +43,39 @@ Mac 上定标后的版本才是最新。所以 Windows 那晚抽的 `cards.json`
 都是「老婆/房贷」卡的 R 文本。教训：重抽 `cards.json` 只能修**结构化派生**，
 **手抄副本**（文档示例、spike 卡面）必须靠 grep 扫。
 
-**合并后约定**：`/Users/zhinan009/WorkBuddy/game-stock/` 不再是原型真源。如需修改 v3，请直接改仓库里的 `prototype.html`（推送后 Windows 端 `git pull` 即可同步），不要再回头改原目录。
+**合并后约定**：`/Users/zhinan009/WorkBuddy/game-stock/` 不再是原型真源，不要再改那个目录。
+
+## 1.5 数据真源反转（本次做的，改动了协作方式 —— 请务必看）
+
+之前是「prototype.html 硬编码 CARDS = 真源 → 抽取出 cards.json」，方向是反的，
+这也是 10-19 那次 4200/5500 漂移的根因。现在反过来了：
+
+```
+data/cards.json   ← 唯一真源（要改数值就改这个）
+    ↓ node tools/sync-json-to-prototype.js
+prototype.html    ← 单文件自包含、双击即玩（由真源生成，别再手改它的 CARDS 数组）
+```
+
+**改数值的标准动作**：
+1. 双击 `tools/cards-manager.html`（网页表格，可筛选/排序/编辑）→ 改 → 点「导出 JSON」→ 覆盖 `data/cards.json`
+   或者直接在 Excel 里看 `data/cards.xlsx` 通盘浏览，回 JSON 里改
+2. `node tools/sync-json-to-prototype.js`
+3. 跑仿真确认平衡没被改坏
+
+配套工具（**都是派生物，不要手改**）：
+
+| 文件 | 作用 | 生成命令 |
+|---|---|---|
+| `tools/cards-manager.html` | 网页可视化管理表（内嵌当前卡池，绕开 file:// 的 CORS） | `node tools/build-manager.js` |
+| `data/cards.xlsx` | Excel/Numbers 表格，含「填表说明」页 | `python3 tools/export-xlsx.py` |
+| `data/cards-flat.json` | 扁平中间数据，供 xlsx 等下游消费 | `node tools/build-manager.js` 顺带产出 |
+| `tools/extract-cards.js` | 反向（prototype → json），**仅救急核对** | — |
+
+**同时把卡牌触发条件声明式化了**：`when` 从 JS 函数（`function(){return S.mind<30;}`）
+改成能写进表格的字符串（`mind<30`、`no:baby`、`has:fired; social>52`、`equity<cost*0.85`）。
+26 张卡全部迁移，新旧逻辑对拍 78000 次、判定 100% 等价。
+这落实了 `AGENTS.md` 里早就写下的「触发条件不要用 function」那条 —— 之前 prototype 一直在违反它。
+语法速查见 `AGENTS.md` 代码约定一节，或管理表底部的说明。
 
 ## 2. 下一步第一件事
 

@@ -233,6 +233,57 @@ function apply(e){
   if(e.addst) for(var k in e.addst) setST(k, e.addst[k]);
   if(e.unst)  e.unst.forEach(clearST);
 }
+/* ============ 声明式 when 条件解析器 ============
+   语法：; 或 & = 且    | = 或
+   状态：has:xxx（有此状态）  /  no:xxx（无此状态）
+   比较：属性 符号 值
+         如 mind<30 / social>48 / equity>800
+            equity>cost（浮盈）/ equity<cost*0.85（跌超 15%）
+   可用属性：mind social risk day equity cash debt cost
+   说明：这么设计是为了让条件能写进配置表里手动编辑，
+        不再写死成 JS 函数。功能与原先完全等价。
+*/
+function whenOK(w){
+  if(!w) return true;                        // 无条件 = 总是可出现
+  var orGroups = String(w).split("|");
+  for(var g = 0; g < orGroups.length; g++){
+    if(andOK(orGroups[g])) return true;      // 任一组满足即可
+  }
+  return false;
+}
+function andOK(group){
+  var conds = group.split(/[;&]/);
+  for(var i = 0; i < conds.length; i++){
+    var t = conds[i].trim();
+    if(t && !oneCond(t)) return false;       // 组内需全部满足
+  }
+  return true;
+}
+function oneCond(t){
+  var m = t.match(/^(has|no):(\w+)$/);       // 状态判断
+  if(m){
+    var on = !!(S.st && S.st[m[2]]);
+    return m[1] === "has" ? on : !on;
+  }
+  m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);   // 属性比较
+  if(m){
+    var lv = S[m[1]], rv = exprVal(m[3]);
+    if(lv === undefined || rv === undefined) return false;
+    if(m[2] === "<")  return lv <  rv;
+    if(m[2] === ">")  return lv >  rv;
+    if(m[2] === "<=") return lv <= rv;
+    if(m[2] === ">=") return lv >= rv;
+  }
+  return false;                              // 无法识别：视为不满足（保守）
+}
+function exprVal(x){
+  x = String(x).trim();
+  var m = x.match(/^cost\s*\*\s*([\d.]+)$/);
+  if(m) return S.cost * parseFloat(m[1]);
+  if(x === "cost") return S.cost;
+  var v = parseFloat(x);
+  return isNaN(v) ? undefined : v;
+}
 function resolve(c, dir){                            // 打出一张卡
   var sel = dir === "R" ? c.R : c.L;
   apply(sel.e);
@@ -397,8 +448,8 @@ function toast(t){
 /* ============ 卡牌交互 ============ */
 var stage = $("stage"), cur = null, busy = false;
 function pick(){
-  var pool = CARDS.filter(function(c){ return (c._used|0) < 2 && (!c.when || c.when()); });
-  if(!pool.length){ CARDS.forEach(function(c){ c._used = 0; }); pool = CARDS.filter(function(c){ return !c.when || c.when(); }); }
+  var pool = CARDS.filter(function(c){ return (c._used|0) < 2 && whenOK(c.when); });
+  if(!pool.length){ CARDS.forEach(function(c){ c._used = 0; }); pool = CARDS.filter(function(c){ return whenOK(c.when); }); }
   var c = pool[Math.floor(Math.random() * pool.length)];
   c._used = (c._used|0) + 1; return c;
 }
@@ -523,7 +574,6 @@ $("o-b").onclick = function(){ $("over").classList.remove("on"); reset(); };
    卡牌级 st：无论怎么选都会发生的事（时代、公告、命运）
 ========================================= */
 CARDS = [
- /* ---------- 家庭 ---------- */
  {who:"老婆",av:"💍",tag:"家庭",txt:"这个月房贷 6,800。你看着办。",
   R:{s:"出 5,500",e:{spend:5500,social:6,mind:2}},L:{s:"先拖两天",e:{mind:-5,social:-5}}},
  {who:"老婆",av:"💍",tag:"家庭",txt:"孩子要上补习班，一年两万八。",
@@ -532,9 +582,9 @@ CARDS = [
   R:{s:"说实话",e:{mind:-3,social:3}},L:{s:"报喜不报忧",e:{mind:-3,social:-5}}},
  {who:"老婆",av:"💍",tag:"家庭",txt:"我们多久没一起吃饭了？",
   R:{s:"出去吃，我请",e:{spend:1200,mind:7,social:8}},L:{s:"最近有点忙",e:{mind:-3,social:-7}}},
- {who:"老婆",av:"💍",tag:"家庭",when:function(){return !S.st.baby;},txt:"我怀孕了。",
-  R:{s:"留着吧",e:{spend:5200,mind:15,social:12,addst:{baby:-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
- {who:"老婆",av:"💍",tag:"家庭",when:function(){return S.mind<30;},txt:"这日子没法过了。离婚吧。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"no:baby",txt:"我怀孕了。",
+  R:{s:"留着吧",e:{spend:5200,mind:15,social:12,addst:{"baby":-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
+ {who:"老婆",av:"💍",tag:"家庭",when:"mind<30",txt:"这日子没法过了。离婚吧。",
   R:{s:"挽留，转 5,800",e:{spend:5800,mind:12,social:8}},L:{s:"……好",e:{mind:-14,social:-20,cash:-3000}}},
  {who:"女儿",av:"👧",tag:"家庭",txt:"爸爸，你为什么总在看手机？",
   R:{s:"爸爸在工作",e:{mind:-4,social:-4}},L:{s:"陪她玩一会儿",e:{mind:9,social:5}}},
@@ -546,24 +596,22 @@ CARDS = [
   R:{s:"收下，投进去",e:{borrow:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5}}},
  {who:"丈母娘",av:"🧓",tag:"家庭",txt:"听说你最近在做投资？妈这里有点闲钱。",
   R:{s:"拿 20,000",e:{borrow:15000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5}}},
- {who:"孩子",av:"🤒",tag:"家庭",when:function(){return !!S.st.baby;},txt:"半夜发烧 39 度。",
+ {who:"孩子",av:"🤒",tag:"家庭",when:"has:baby",txt:"半夜发烧 39 度。",
   R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6}},L:{s:"先观察一晚",e:{mind:-7,social:-8}}},
- {who:"孩子",av:"👶",tag:"家庭",when:function(){return !!S.st.baby;},txt:"他第一次叫爸爸。你正在看盘。",
+ {who:"孩子",av:"👶",tag:"家庭",when:"has:baby",txt:"他第一次叫爸爸。你正在看盘。",
   R:{s:"再看一会儿",e:{mind:-4,social:-5}},L:{s:"把他抱起来",e:{mind:10,social:7}}},
  {who:"房东",av:"🏠",tag:"家庭",txt:"下个月房租要涨 800。",
   R:{s:"认了",e:{spend:1000,social:2}},L:{s:"搬家",e:{spend:2100,mind:-4,social:-4}}},
-
- /* ---------- 职场 ---------- */
  {who:"老板",av:"😰",tag:"职场",txt:"公司要优化，名单下周公布，你心里有个数。",
   R:{s:"赌一把，加仓",e:{buy:4000,mind:-6}},L:{s:"多陪陪家人",e:{social:6,mind:-3}}},
  {who:"老板",av:"😰",tag:"职场",txt:"今年年终奖取消，改成期权，大家理解一下。",
   R:{s:"理解",e:{mind:-4,social:3}},L:{s:"我不理解",e:{mind:-5,social:-6}}},
- {who:"HR",av:"📦",tag:"职场",when:function(){return !S.st.fired;},txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
+ {who:"HR",av:"📦",tag:"职场",when:"no:fired",txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
   st:{fired:-1},
   R:{s:"再给我一次机会",e:{mind:-9,social:-5}},L:{s:"我早就不想干了",e:{cash:8000,mind:-3,social:-2}}},
- {who:"招聘软件",av:"📱",tag:"职场",when:function(){return !!S.st.fired;},txt:"对方已读，没有回。",
+ {who:"招聘软件",av:"📱",tag:"职场",when:"has:fired",txt:"对方已读，没有回。",
   R:{s:"再降低点期望",e:{mind:-4,social:-3}},L:{s:"先接点零活",e:{cash:2500,mind:-2,social:2}}},
- {who:"老同事",av:"🤝",tag:"职场",when:function(){return !!S.st.fired && S.social>52;},txt:"我们组缺人，就是降薪三成。来不来？",
+ {who:"老同事",av:"🤝",tag:"职场",when:"has:fired; social>52",txt:"我们组缺人，就是降薪三成。来不来？",
   R:{s:"来",e:{cash:3000,mind:6,social:6,unst:["fired"]}},L:{s:"再等等",e:{mind:-5}}},
  {who:"同事",av:"☕",tag:"职场",txt:"茶水间都在聊这只票，已经连着涨好几天了。",
   R:{s:"上车 3,000",e:{buy:3000,mind:-3}},L:{s:"不接最后一棒",e:{mind:4}}},
@@ -571,14 +619,12 @@ CARDS = [
   R:{s:"跟 3,000",e:{buy:3000,risk:4,mind:-2}},L:{s:"不信小道消息",e:{mind:3}}},
  {who:"项目",av:"🌃",tag:"职场",txt:"今晚上线，全组通宵。你走吗？",
   R:{s:"留下来",e:{mind:-6,social:6}},L:{s:"准时走",e:{mind:5,social:-4}}},
- {who:"工资",av:"💵",tag:"收入",when:function(){return !S.st.fired;},txt:"这个月工资到账了。",
+ {who:"工资",av:"💵",tag:"收入",when:"no:fired",txt:"这个月工资到账了。",
   R:{s:"投进去 5,000",e:{buy:5000,mind:-2}},L:{s:"留着过日子",e:{cash:6500,mind:5}}},
  {who:"私活",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 4,000，要占掉两个周末。",
   R:{s:"接了",e:{cash:4000,mind:-5}},L:{s:"算了",e:{mind:3,social:-2}}},
- {who:"年终奖",av:"🧧",tag:"收入",when:function(){return !S.st.fired && S.day>24;},txt:"年终奖发了 15,000。",
+ {who:"年终奖",av:"🧧",tag:"收入",when:"no:fired; day>24",txt:"年终奖发了 15,000。",
   R:{s:"全部加仓",e:{buy:8000,mind:-4}},L:{s:"给家里买点东西",e:{spend:5200,mind:6,social:9}}},
-
- /* ---------- 人情 ---------- */
  {who:"朋友",av:"💌",tag:"人情",txt:"我下个月结婚，你知道的。",
   R:{s:"随 1,600",e:{spend:1600,social:5,mind:-1}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
  {who:"朋友",av:"💌",tag:"人情",txt:"借我两万周转一下，下个月一定还。",
@@ -587,12 +633,10 @@ CARDS = [
   R:{s:"去，AA 也行",e:{spend:1600,social:8,mind:4}},L:{s:"不去",e:{social:-5,mind:-3}}},
  {who:"张阿姨",av:"🏘",tag:"人情",txt:"楼下办寿宴，整栋楼都去了。",
   R:{s:"随 800",e:{spend:1000,social:6}},L:{s:"装不在家",e:{social:-6}}},
- {who:"老同学",av:"🤳",tag:"人情",when:function(){return S.social>48;},txt:"有个项目，稳赚，就是得先投点钱。",
+ {who:"老同学",av:"🤳",tag:"人情",when:"social>48",txt:"有个项目，稳赚，就是得先投点钱。",
   R:{s:"投 6,500",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
- {who:"饭局",av:"🥢",tag:"人情",when:function(){return !S.st.insider && S.social>45;},txt:"有人凑到你耳边说了几句，就几句。",
-  R:{s:"记住这个消息",e:{mind:-3,risk:8,addst:{insider:6}}},L:{s:"当没听见",e:{mind:4}}},
-
- /* ---------- 自己 ---------- */
+ {who:"饭局",av:"🥢",tag:"人情",when:"no:insider; social>45",txt:"有人凑到你耳边说了几句，就几句。",
+  R:{s:"记住这个消息",e:{mind:-3,risk:8,addst:{"insider":6}}},L:{s:"当没听见",e:{mind:4}}},
  {who:"体检报告",av:"🏥",tag:"自己",txt:"血压偏高，熬夜太多。医生让你少盯屏幕。",
   R:{s:"没事，我扛得住",e:{mind:-6}},L:{s:"今晚不看了",e:{mind:10}}},
  {who:"凌晨三点",av:"🌙",tag:"自己",txt:"你还没睡。屏幕的蓝光里，那根线还在跳。",
@@ -603,45 +647,41 @@ CARDS = [
   R:{s:"研究一下行情",e:{mind:-3}},L:{s:"带家人出去走走",e:{spend:1000,mind:9,social:7}}},
  {who:"地漏",av:"🚿",tag:"自己",txt:"洗完头，地漏上是一层头发。",
   R:{s:"没事",e:{mind:-3}},L:{s:"去挂个号",e:{spend:1600,mind:6}}},
- {who:"生日",av:"🎂",tag:"自己",when:function(){return S.social<36;},txt:"今天你生日。没有人记得。",
+ {who:"生日",av:"🎂",tag:"自己",when:"social<36",txt:"今天你生日。没有人记得。",
   R:{s:"给自己买点东西",e:{spend:1000,mind:5}},L:{s:"照常过",e:{mind:-7}}},
-
- /* ---------- 市场 ---------- */
  {who:"银行",av:"🏦",tag:"市场",txt:"新闻说银行要放水了，市面上的钱会变多。",
   R:{s:"加仓 3,000",e:{buy:3000,mind:-2}},L:{s:"听过太多次了",e:{mind:3}}},
  {who:"新闻",av:"🌐",tag:"市场",txt:"美国那边利息涨了，据说全球的钱都在往回跑。",
   R:{s:"抄底 2,000",e:{buy:2000,mind:-3}},L:{s:"先看看",e:{sell:0.3,mind:3}}},
  {who:"新闻联播",av:"📺",tag:"市场",txt:"要活跃资本市场，提振投资者信心。",
   R:{s:"加仓 4,000",e:{buy:4000,mind:-3}},L:{s:"政策底不是市场底",e:{mind:4}}},
- {who:"公司公告",av:"⚠️",tag:"市场",when:function(){return S.equity>500;},txt:"你持有的这家公司说，今年赚的钱少了九成。",
+ {who:"公司公告",av:"⚠️",tag:"市场",when:"equity>500",txt:"你持有的这家公司说，今年赚的钱少了九成。",
   R:{s:"补仓摊薄成本",e:{buy:2000,mind:-7}},L:{s:"卖一半",e:{sell:0.5,mind:-4}}},
- {who:"公司公告",av:"📉",tag:"市场",when:function(){return S.equity>500;},txt:"公司老板自己在卖股票，卖了不少。",
+ {who:"公司公告",av:"📉",tag:"市场",when:"equity>500",txt:"公司老板自己在卖股票，卖了不少。",
   R:{s:"相信公司",e:{mind:-3}},L:{s:"跟着卖一半",e:{sell:0.5,mind:2}}},
- {who:"你的票",av:"📈",tag:"决策",when:function(){return S.equity>800 && S.equity>S.cost;},txt:"它今天又涨了。卖掉一部分落袋，还是再等等？",
+ {who:"你的票",av:"📈",tag:"决策",when:"equity>800; equity>cost",txt:"它今天又涨了。卖掉一部分落袋，还是再等等？",
   R:{s:"还能涨，再等等",e:{mind:-2}},L:{s:"落袋为安",e:{sell:0.5,mind:6}}},
- {who:"你的票",av:"📉",tag:"决策",when:function(){return S.equity>800 && S.equity<S.cost*0.85;},txt:"它已经跌去两成。止损，还是扛着？",
+ {who:"你的票",av:"📉",tag:"决策",when:"equity>800; equity<cost*0.85",txt:"它已经跌去两成。止损，还是扛着？",
   R:{s:"扛着，会回来的",e:{mind:-6}},L:{s:"割了",e:{sell:1,mind:-4}}},
- {who:"你的票",av:"🔴",tag:"决策",when:function(){return S.equity>600;},txt:"今天它封住了涨停。群里都在喊明天还有。",
+ {who:"你的票",av:"🔴",tag:"决策",when:"equity>600",txt:"今天它封住了涨停。群里都在喊明天还有。",
   R:{s:"拿着，明天还有",e:{mind:-3}},L:{s:"见好就收",e:{sell:0.6,mind:5}}},
- {who:"所有人",av:"🫧",tag:"市场",when:function(){return !S.st.bubble && S.day>7;},txt:"半年没人亏过钱了。连门口的保安都在问你买的什么。",
+ {who:"所有人",av:"🫧",tag:"市场",when:"no:bubble; day>7",txt:"半年没人亏过钱了。连门口的保安都在问你买的什么。",
   st:{bubble:-1},
   R:{s:"我也加点",e:{buy:4000,mind:-2}},L:{s:"我怕了",e:{sell:0.5,mind:3}}},
- {who:"所有人",av:"🫧",tag:"市场",when:function(){return !!S.st.bubble;},txt:"菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。",
+ {who:"所有人",av:"🫧",tag:"市场",when:"has:bubble",txt:"菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。",
   R:{s:"再拿一天",e:{mind:-3}},L:{s:"全部清掉",e:{sell:1,mind:4}}},
- {who:"你的票",av:"🤩",tag:"市场",when:function(){return !!S.st.bubble && S.equity>1000;},txt:"你赚的钱，已经比一整年工资还多。",
+ {who:"你的票",av:"🤩",tag:"市场",when:"has:bubble; equity>1000",txt:"你赚的钱，已经比一整年工资还多。",
   R:{s:"还能更多",e:{mind:-4}},L:{s:"够了，走人",e:{sell:1,mind:6}}},
- {who:"新闻头条",av:"❄️",tag:"市场",when:function(){return !S.st.crisis && S.day>11;},txt:"有一家很大的银行，一夜之间没了。街上没人笑得出来。",
+ {who:"新闻头条",av:"❄️",tag:"市场",when:"no:crisis; day>11",txt:"有一家很大的银行，一夜之间没了。街上没人笑得出来。",
   st:{crisis:12},
   R:{s:"这是抄底的机会",e:{buy:2500,mind:-3}},L:{s:"先躲一躲",e:{sell:0.5,mind:3}}},
- {who:"公司群",av:"❄️",tag:"市场",when:function(){return !!S.st.crisis;},txt:"群里在传第三轮裁员。这次是真的。",
+ {who:"公司群",av:"❄️",tag:"市场",when:"has:crisis",txt:"群里在传第三轮裁员。这次是真的。",
   R:{s:"再扛一天",e:{mind:-5}},L:{s:"认了，先跑",e:{sell:1,mind:-3}}},
- {who:"交易所",av:"🚫",tag:"市场",when:function(){return !S.st.halt && S.equity>500;},txt:"公司公告：筹划重大事项，明日起停牌，复牌时间待定。",
+ {who:"交易所",av:"🚫",tag:"市场",when:"no:halt; equity>500",txt:"公司公告：筹划重大事项，明日起停牌，复牌时间待定。",
   st:{halt:5},
   R:{s:"赶紧先卖出来",e:{sell:1,mind:-3}},L:{s:"拿着等消息",e:{mind:-2}}},
- {who:"交易所",av:"🚫",tag:"市场",when:function(){return !!S.st.halt;},txt:"还是没有复牌的消息。",
+ {who:"交易所",av:"🚫",tag:"市场",when:"has:halt",txt:"还是没有复牌的消息。",
   R:{s:"刷公告",e:{mind:-3}},L:{s:"不看就不难受",e:{mind:2}}},
-
- /* ---------- 风险 ---------- */
  {who:"配资公司",av:"📞",tag:"风险",txt:"您好，十倍杠杆，资金秒到账，日息只要万分之八。",
   R:{s:"先配 12,000",e:{borrow:12000,mind:-8}},L:{s:"直接挂断",e:{mind:5}}},
  {who:"网贷广告",av:"📱",tag:"风险",txt:"额度 50,000，日息万三，三分钟到账。",
@@ -654,18 +694,16 @@ CARDS = [
   R:{s:"跟 3,000",e:{buy:3000,risk:5,mind:-3}},L:{s:"大 V 也亏钱",e:{mind:4}}},
  {who:"微信群",av:"👥",tag:"风险",txt:"群里有人说，这只票下周要有大动作，内部消息。",
   R:{s:"满仓埋伏",e:{buy:4000,risk:9,mind:-5}},L:{s:"这话我听过二十遍",e:{mind:3}}},
- {who:"券商短信",av:"📲",tag:"风险",when:function(){return S.risk>34 || S.debt>8000;},txt:"你借的钱快不够抵押了，请追加保证金。",
+ {who:"券商短信",av:"📲",tag:"风险",when:"risk>34 | debt>8000",txt:"你借的钱快不够抵押了，请追加保证金。",
   R:{s:"再借 5,000 补上",e:{borrow:5000,mind:-6}},L:{s:"认了，让他们卖",e:{sell:0.6,mind:-8,risk:-5}}},
- {who:"你的债",av:"🧮",tag:"风险",when:function(){return S.debt>3000;},txt:"要不要先把欠的钱还掉一部分？",
+ {who:"你的债",av:"🧮",tag:"风险",when:"debt>3000",txt:"要不要先把欠的钱还掉一部分？",
   R:{s:"还 6,000",e:{repay:6000,mind:4,risk:-7}},L:{s:"留着翻身",e:{mind:-3,risk:2}}},
  {who:"网友",av:"💬",tag:"风险",txt:"别天天看了，每月固定买一点就行，长期拿着。",
   R:{s:"每月投 2,000",e:{buy:2000,mind:7}},L:{s:"我就是要择时",e:{mind:-3}}},
  {who:"年度账单",av:"📊",tag:"风险",txt:"你今年的收益，跑赢了 1.2% 的人。",
   R:{s:"再来一年",e:{mind:-5}},L:{s:"删掉 App",e:{mind:-2,risk:-3}}},
-
- /* ---------- 意外 ---------- */
  {who:"你的猫",av:"🐱",tag:"意外",txt:"猫从键盘上踩过去。等你回过神，一笔 8,000 已经买进去了。",
-  R:{s:"就当长线投资",e:{buy:8000,mind:-4}},L:{s:"赶紧撤单",e:{mind:-3}}}
+  R:{s:"就当长线投资",e:{buy:8000,mind:-4}},L:{s:"赶紧撤单",e:{mind:-3}}},
 ];
 reset();
 </script>

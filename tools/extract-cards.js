@@ -41,7 +41,10 @@ const out = cards.map((c, i) => ({
   avatar: c.av,
   tag: c.tag,
   text: c.txt,
-  when: typeof c.when === 'function' ? c.when.toString().replace(/\s+/g, ' ') : null,
+  // when 现在是声明式字符串（如 "no:baby" / "mind<30"），不再是 JS 函数；
+  // 保留函数分支仅为兼容历史版本。
+  when: typeof c.when === 'function' ? c.when.toString().replace(/\s+/g, ' ')
+        : (typeof c.when === 'string' && c.when ? c.when : null),
   alwaysStatus: c.st || null,
   left: { label: c.L.s, effects: c.L.e },
   right: { label: c.R.s, effects: c.R.e }

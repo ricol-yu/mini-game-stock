@@ -68,6 +68,11 @@
 - **手感相关参数（松手阈值、跟手系数、惯性衰减）不得在模拟器上定型** —— 模拟器的 touchmove 事件密度比真机低一个数量级，调出来的值必然偏移。必须在真机调试 2.0 上下调
 - **`app.json` 不配 `resizable`** —— 配了 PC 端会在大窗口自动双栏，一张全屏卡被拆成两栏，视觉直接崩
 - **广告只放自然停顿点**（日结算后 / 重开一局），绝不插在滑卡之间
+- **卡池唯一真源是 `data/cards.json`** —— 改卡面文案或数值一律改它，
+  再跑 `node tools/sync-json-to-prototype.js` 同步回 `prototype.html`（prototype 仍保持单文件自包含、双击即玩）。
+  `tools/extract-cards.js`（prototype → json）只作救急核对，不作日常流程。
+  可视化管理表 `tools/cards-manager.html` 由 `node tools/build-manager.js` 生成、**不要手改**；
+  `data/cards.xlsx` 由 `python3 tools/export-xlsx.py` 生成，同样不要手改 —— 两者都是派生物
 - 一次改动涉及 3 个以上文件时，先说明打算改哪些、为什么
 
 ## 代码约定
@@ -76,7 +81,9 @@
 - 游戏状态集中在单个 `state` 对象里，不散落全局变量
 - 渲染函数之间不互相调用，统一由一个 `render()` 入口按固定顺序调度（防止递归死循环）
 - 卡牌的触发条件用声明式描述，**不要用 `function`** —— 函数无法序列化，
-  会导致卡池不能数据驱动、不能热更
+  会导致卡池不能数据驱动、不能热更。
+  语法：`;` 且、`|` 或；`has:xxx` / `no:xxx` 判状态；`mind<30`、`equity>cost`、`equity<cost*0.85` 比属性。
+  可用属性：`mind social risk day equity cash debt cost`。解析见 `prototype.html` 的 `whenOK()`
 - 新增模块时先看现有文件的组织方式，不要另起一套风格
 
 ## 待补充（项目推进中逐步填）

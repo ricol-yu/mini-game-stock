@@ -104,7 +104,7 @@
       "avatar": "💍",
       "tag": "家庭",
       "text": "我怀孕了。",
-      "when": "function(){return !S.st.baby;}",
+      "when": "no:baby",
       "alwaysStatus": null,
       "left": {
         "label": "现在不合适",
@@ -131,7 +131,7 @@
       "avatar": "💍",
       "tag": "家庭",
       "text": "这日子没法过了。离婚吧。",
-      "when": "function(){return S.mind<30;}",
+      "when": "mind<30",
       "alwaysStatus": null,
       "left": {
         "label": "……好",
@@ -274,7 +274,7 @@
       "avatar": "🤒",
       "tag": "家庭",
       "text": "半夜发烧 39 度。",
-      "when": "function(){return !!S.st.baby;}",
+      "when": "has:baby",
       "alwaysStatus": null,
       "left": {
         "label": "先观察一晚",
@@ -298,7 +298,7 @@
       "avatar": "👶",
       "tag": "家庭",
       "text": "他第一次叫爸爸。你正在看盘。",
-      "when": "function(){return !!S.st.baby;}",
+      "when": "has:baby",
       "alwaysStatus": null,
       "left": {
         "label": "把他抱起来",
@@ -391,7 +391,7 @@
       "avatar": "📦",
       "tag": "职场",
       "text": "HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
-      "when": "function(){return !S.st.fired;}",
+      "when": "no:fired",
       "alwaysStatus": {
         "fired": -1
       },
@@ -417,7 +417,7 @@
       "avatar": "📱",
       "tag": "职场",
       "text": "对方已读，没有回。",
-      "when": "function(){return !!S.st.fired;}",
+      "when": "has:fired",
       "alwaysStatus": null,
       "left": {
         "label": "先接点零活",
@@ -441,7 +441,7 @@
       "avatar": "🤝",
       "tag": "职场",
       "text": "我们组缺人，就是降薪三成。来不来？",
-      "when": "function(){return !!S.st.fired && S.social>52;}",
+      "when": "has:fired; social>52",
       "alwaysStatus": null,
       "left": {
         "label": "再等等",
@@ -535,7 +535,7 @@
       "avatar": "💵",
       "tag": "收入",
       "text": "这个月工资到账了。",
-      "when": "function(){return !S.st.fired;}",
+      "when": "no:fired",
       "alwaysStatus": null,
       "left": {
         "label": "留着过日子",
@@ -581,7 +581,7 @@
       "avatar": "🧧",
       "tag": "收入",
       "text": "年终奖发了 15,000。",
-      "when": "function(){return !S.st.fired && S.day>24;}",
+      "when": "no:fired; day>24",
       "alwaysStatus": null,
       "left": {
         "label": "给家里买点东西",
@@ -699,7 +699,7 @@
       "avatar": "🤳",
       "tag": "人情",
       "text": "有个项目，稳赚，就是得先投点钱。",
-      "when": "function(){return S.social>48;}",
+      "when": "social>48",
       "alwaysStatus": null,
       "left": {
         "label": "算了",
@@ -724,7 +724,7 @@
       "avatar": "🥢",
       "tag": "人情",
       "text": "有人凑到你耳边说了几句，就几句。",
-      "when": "function(){return !S.st.insider && S.social>45;}",
+      "when": "no:insider; social>45",
       "alwaysStatus": null,
       "left": {
         "label": "当没听见",
@@ -858,7 +858,7 @@
       "avatar": "🎂",
       "tag": "自己",
       "text": "今天你生日。没有人记得。",
-      "when": "function(){return S.social<36;}",
+      "when": "social<36",
       "alwaysStatus": null,
       "left": {
         "label": "照常过",
@@ -947,7 +947,7 @@
       "avatar": "⚠️",
       "tag": "市场",
       "text": "你持有的这家公司说，今年赚的钱少了九成。",
-      "when": "function(){return S.equity>500;}",
+      "when": "equity>500",
       "alwaysStatus": null,
       "left": {
         "label": "卖一半",
@@ -970,7 +970,7 @@
       "avatar": "📉",
       "tag": "市场",
       "text": "公司老板自己在卖股票，卖了不少。",
-      "when": "function(){return S.equity>500;}",
+      "when": "equity>500",
       "alwaysStatus": null,
       "left": {
         "label": "跟着卖一半",
@@ -992,7 +992,7 @@
       "avatar": "📈",
       "tag": "决策",
       "text": "它今天又涨了。卖掉一部分落袋，还是再等等？",
-      "when": "function(){return S.equity>800 && S.equity>S.cost;}",
+      "when": "equity>800; equity>cost",
       "alwaysStatus": null,
       "left": {
         "label": "落袋为安",
@@ -1014,7 +1014,7 @@
       "avatar": "📉",
       "tag": "决策",
       "text": "它已经跌去两成。止损，还是扛着？",
-      "when": "function(){return S.equity>800 && S.equity<S.cost*0.85;}",
+      "when": "equity>800; equity<cost*0.85",
       "alwaysStatus": null,
       "left": {
         "label": "割了",
@@ -1036,7 +1036,7 @@
       "avatar": "🔴",
       "tag": "决策",
       "text": "今天它封住了涨停。群里都在喊明天还有。",
-      "when": "function(){return S.equity>600;}",
+      "when": "equity>600",
       "alwaysStatus": null,
       "left": {
         "label": "见好就收",
@@ -1058,7 +1058,7 @@
       "avatar": "🫧",
       "tag": "市场",
       "text": "半年没人亏过钱了。连门口的保安都在问你买的什么。",
-      "when": "function(){return !S.st.bubble && S.day>7;}",
+      "when": "no:bubble; day>7",
       "alwaysStatus": {
         "bubble": -1
       },
@@ -1083,7 +1083,7 @@
       "avatar": "🫧",
       "tag": "市场",
       "text": "菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。",
-      "when": "function(){return !!S.st.bubble;}",
+      "when": "has:bubble",
       "alwaysStatus": null,
       "left": {
         "label": "全部清掉",
@@ -1105,7 +1105,7 @@
       "avatar": "🤩",
       "tag": "市场",
       "text": "你赚的钱，已经比一整年工资还多。",
-      "when": "function(){return !!S.st.bubble && S.equity>1000;}",
+      "when": "has:bubble; equity>1000",
       "alwaysStatus": null,
       "left": {
         "label": "够了，走人",
@@ -1127,7 +1127,7 @@
       "avatar": "❄️",
       "tag": "市场",
       "text": "有一家很大的银行，一夜之间没了。街上没人笑得出来。",
-      "when": "function(){return !S.st.crisis && S.day>11;}",
+      "when": "no:crisis; day>11",
       "alwaysStatus": {
         "crisis": 12
       },
@@ -1152,7 +1152,7 @@
       "avatar": "❄️",
       "tag": "市场",
       "text": "群里在传第三轮裁员。这次是真的。",
-      "when": "function(){return !!S.st.crisis;}",
+      "when": "has:crisis",
       "alwaysStatus": null,
       "left": {
         "label": "认了，先跑",
@@ -1174,7 +1174,7 @@
       "avatar": "🚫",
       "tag": "市场",
       "text": "公司公告：筹划重大事项，明日起停牌，复牌时间待定。",
-      "when": "function(){return !S.st.halt && S.equity>500;}",
+      "when": "no:halt; equity>500",
       "alwaysStatus": {
         "halt": 5
       },
@@ -1198,7 +1198,7 @@
       "avatar": "🚫",
       "tag": "市场",
       "text": "还是没有复牌的消息。",
-      "when": "function(){return !!S.st.halt;}",
+      "when": "has:halt",
       "alwaysStatus": null,
       "left": {
         "label": "不看就不难受",
@@ -1355,7 +1355,7 @@
       "avatar": "📲",
       "tag": "风险",
       "text": "你借的钱快不够抵押了，请追加保证金。",
-      "when": "function(){return S.risk>34 || S.debt>8000;}",
+      "when": "risk>34 | debt>8000",
       "alwaysStatus": null,
       "left": {
         "label": "认了，让他们卖",
@@ -1379,7 +1379,7 @@
       "avatar": "🧮",
       "tag": "风险",
       "text": "要不要先把欠的钱还掉一部分？",
-      "when": "function(){return S.debt>3000;}",
+      "when": "debt>3000",
       "alwaysStatus": null,
       "left": {
         "label": "留着翻身",
