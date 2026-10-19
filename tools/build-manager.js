@@ -8,10 +8,17 @@
  *   因为浏览器在 file:// 协议下用 fetch 读本地 JSON 会被 CORS 拦截。
  *   所以把当前卡池数据直接内嵌进页面里，双击打开即可看到并编辑全部数值，
  *   改完点"导出 JSON"下载，覆盖 data/cards.json 即可。
- *   同时也支持"导入 JSON"重新加载，方便核对。
+ *
+ * N1.5 升级内容：
+ *   - 新列：whoId（素材锚点）/ window 出现窗口 / weight 权重 / once 单局一次 / hidden 隐藏卡
+ *   - 新增卡 / 复制卡（id 自动顺延，符合命名规则）
+ *   - 批量改数值：对筛选结果批量设置某个效果值
+ *   - 内嵌校验：validate-cards.js 的同一份函数注入页面，改动 0.4s 后实时校验，
+ *     有错的卡 id 标红，导出前有错会弹确认
  */
 const fs = require('fs');
 const path = require('path');
+const { validateCards } = require('./validate-cards');
 
 const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'data', 'cards.json');
@@ -23,13 +30,19 @@ const data = JSON.parse(raw);
 /* ---------- 列定义：这就是"能看见的全部参数" ---------- */
 const NUM_EFFECTS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'mind', 'risk', 'social'];
 const COLS = [
-  { k: 'id',   t: 'ID',   w: 58,  ro: true },
+  { k: '__ops',  t: '操作', w: 46, nosort: true },
+  { k: 'id',   t: 'ID',   w: 150, ro: true },
   { k: 'who',  t: '谁',   w: 78 },
+  { k: 'whoId', t: 'whoId', w: 110, hint: '素材锚点（N4 出图用），拼音小写' },
   { k: 'avatar', t: '头像', w: 48 },
   { k: 'tag',  t: '分类', w: 62 },
   { k: 'text', t: '卡面文案', w: 250 },
-  { k: 'when', t: '出现条件', w: 128, hint: '如 no:baby / mind<30 / has:fired; social>52' },
+  { k: 'when', t: '出现条件', w: 128, hint: '如 no:baby / mind<30 / has:fired; social>52；v2 谓词 did:卡id.r / seen:卡id / pick:tag>=5' },
   { k: 'alwaysStatus', t: '自带状态', w: 88, hint: '如 fired:-1' },
+  { k: 'window', t: '窗口', w: 64, hint: '出现日期窗口，如 7-45；留空=全程' },
+  { k: 'weight', t: '权重', w: 52, num: true, plain: true, hint: '抽取权重 0.1..10，留空=1（引擎 N3 实装）' },
+  { k: 'once',  t: '单局一次', w: 60, bool: true, hint: '勾选 = 这张卡一局最多出现 1 次（引擎 N3 实装）' },
+  { k: 'hidden', t: '隐藏', w: 48, bool: true, hint: '勾选 = 隐藏卡，图鉴里显示剪影（引擎 N3 实装）' },
 ];
 ['L', 'R'].forEach(side => {
   const p = side === 'L' ? '左' : '右';
@@ -45,8 +58,11 @@ const COLS = [
 function flat(cards) {
   return cards.map(c => {
     const row = {
-      id: c.id, who: c.who, avatar: c.avatar, tag: c.tag,
-      text: c.text, when: c.when || '', alwaysStatus: fmtSt(c.alwaysStatus)
+      id: c.id, who: c.who, whoId: c.whoId || '', avatar: c.avatar, tag: c.tag,
+      text: c.text, when: c.when || '', alwaysStatus: fmtSt(c.alwaysStatus),
+      window: Array.isArray(c.window) ? c.window.join('-') : '',
+      weight: (c.weight === undefined ? '' : c.weight),
+      once: !!c.once, hidden: !!c.hidden,
     };
     ['left', 'right'].forEach((side, i) => {
       const s = (i === 0 ? 'L' : 'R');
@@ -66,9 +82,10 @@ function fmtSt(o) {
 }
 
 /* ---------- 反扁平化：表格行 → 嵌套 JSON ----------
-   注意：这几个函数与 flat() 一样，只在 Node 端定义一次，
-   再用 toString() 注入进生成的 HTML，保证浏览器端与这里完全同源，
-   不会出现"两份逻辑各写一遍、慢慢漂移"的问题。 */
+   与 flat() 一样只在 Node 端定义一次，再用 toString() 注入生成的 HTML，
+   保证浏览器端与这里完全同源。
+   缺省值不落盘：window/weight/once/hidden/whoId 留空 = 键不写入，
+   这样导出的 JSON 与手写真源形状一致，往返无损。 */
 function parseSt(s){
   s = String(s == null ? '' : s).trim();
   if(!s) return null;
@@ -94,8 +111,17 @@ function buildSide(r, s){
 function unflat(rows){
   return rows.map(r => {
     const card = { id:r.id, who:r.who, avatar:r.avatar, tag:r.tag, text:r.text };
+    if(String(r.whoId || '').trim()) card.whoId = String(r.whoId).trim();
     card.when = String(r.when == null ? '' : r.when).trim() || null;
     card.alwaysStatus = parseSt(r.alwaysStatus);
+    const win = String(r.window == null ? '' : r.window).trim();
+    if(win){
+      const m = win.match(/^(\d+)\s*-\s*(\d+)$/);
+      if(m) card.window = [Number(m[1]), Number(m[2])];
+    }
+    if(r.weight !== '' && r.weight != null && !isNaN(Number(r.weight))) card.weight = Number(r.weight);
+    if(r.once) card.once = true;
+    if(r.hidden) card.hidden = true;
     card.left = buildSide(r, 'L');
     card.right = buildSide(r, 'R');
     return card;
@@ -104,9 +130,7 @@ function unflat(rows){
 
 const rows = flat(data.cards);
 
-/* ---------- 自检：往返必须无损 ----------
-   用深比较而不是 JSON.stringify 直接比：effects 里的键顺序在重建后会按固定顺序排列，
-   但 JS 对象的键顺序不影响语义，所以只比"内容是否一致"。 */
+/* ---------- 自检：往返必须无损 ---------- */
 function deepEq(a, b){
   if(a === b) return true;
   if(a === null || b === null) return false;
@@ -143,6 +167,7 @@ function deepEq(a, b){
 
 /* ---------- 生成页面 ---------- */
 const tagList = [...new Set(rows.map(r => r.tag))].sort();
+const TAG_PREFIX = JSON.stringify({ '家庭':'fam','职场':'work','收入':'inc','人情':'soc','自己':'self','市场':'mkt','决策':'dec','风险':'risk','意外':'acc' });
 
 const html = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -151,7 +176,7 @@ const html = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>韭菜之王 · 卡牌数值管理表</title>
 <style>
-  :root{ --bg:#faf9f7; --line:#e3e0da; --hd:#f2efe9; --accent:#8a6d3b; --hot:#fff8e6; }
+  :root{ --bg:#faf9f7; --line:#e3e0da; --hd:#f2efe9; --accent:#8a6d3b; --hot:#fff8e6; --err:#c0392b; }
   *{ box-sizing:border-box; }
   body{ margin:0; background:var(--bg); color:#2b2b2b;
         font:13px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
@@ -161,14 +186,16 @@ const html = `<!DOCTYPE html>
   .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap;
             padding:10px 18px; background:#fff; border-bottom:1px solid var(--line);
             position:sticky; top:0; z-index:5; }
-  select,input[type=text]{ padding:5px 8px; border:1px solid var(--line); border-radius:5px;
+  select,input[type=text],input[type=number]{ padding:5px 8px; border:1px solid var(--line); border-radius:5px;
                           background:#fff; font-size:12px; }
-  input[type=text]{ width:190px; }
+  input[type=text]{ width:190px; } input[type=number]{ width:70px; }
   button{ padding:5px 12px; border:1px solid var(--accent); border-radius:5px;
           background:var(--accent); color:#fff; font-size:12px; cursor:pointer; }
   button.ghost{ background:#fff; color:var(--accent); }
+  button.mini{ padding:2px 7px; font-size:11px; }
   button:hover{ opacity:.85; }
   .stat{ margin-left:auto; color:#8a8578; font-size:12px; }
+  .stat b.bad{ color:var(--err); }
   .tablewrap{ overflow:auto; max-height:calc(100vh - 132px); }
   table{ border-collapse:collapse; white-space:nowrap; }
   th,td{ border:1px solid var(--line); padding:0; }
@@ -178,13 +205,20 @@ const html = `<!DOCTYPE html>
   thead th:hover:not(.nosort){ background:#e8e3d8; }
   tbody td{ background:#fff; }
   tbody tr:hover td{ background:var(--hot); }
-  td input{ width:100%; border:0; padding:5px 6px; font:inherit; background:transparent;
+  td input[type=text]{ width:100%; border:0; padding:5px 6px; font:inherit; background:transparent;
             box-sizing:border-box; }
   td input:focus{ outline:2px solid var(--accent); outline-offset:-2px; background:#fff; }
   td input.num{ text-align:right; font-variant-numeric:tabular-nums; }
   td input.num.pos{ color:#c0392b; }   /* 正数为红（增益/加值） */
   td input.num.neg{ color:#27865a; }   /* 负数为绿 */
+  td input.plain{ color:inherit; }
   td.id{ background:#f7f5f1; color:#a09889; font-size:11px; padding:5px 6px; }
+  td.id.bad{ background:#fdecea; color:var(--err); font-weight:600; }
+  td.chk, td.ops{ text-align:center; }
+  #issues{ display:none; max-height:180px; overflow:auto; padding:8px 18px;
+           background:#fffdf8; border-top:1px solid var(--line); font-size:12px; }
+  #issues.on{ display:block; }
+  #issues div{ padding:1px 0; }
   .tip{ padding:8px 18px; color:#8a8578; font-size:11.5px; background:#fffdf8;
         border-top:1px solid var(--line); }
   code{ background:#f0ede6; padding:1px 4px; border-radius:3px; font-size:11px; }
@@ -194,18 +228,30 @@ const html = `<!DOCTYPE html>
 <header>
   <h1>韭菜之王 · 卡牌数值管理表</h1>
   <div class="sub">共 ${rows.length} 张卡 · 数据源 <code>data/cards.json</code> · 生成于 ${new Date().toLocaleString('zh-CN')}
-    —— 改完点「导出 JSON」，覆盖回 data/cards.json 即可</div>
+    —— 改完点「导出 JSON」，覆盖回 data/cards.json，再跑 <code>node tools/sync-json-to-prototype.js</code></div>
 </header>
 
 <div class="toolbar">
   <select id="fTag"><option value="">全部分类</option>${tagList.map(t => `<option>${t}</option>`).join('')}</select>
   <input type="text" id="fSearch" placeholder="搜索 文案 / 人物 / 条件">
   <button class="ghost" id="btnReset">重置筛选</button>
+  <button class="ghost" id="btnAdd">新增卡</button>
+  <button class="ghost" id="btnBatch" title="对当前筛选结果批量设置一个效果值">批量改数值</button>
+  <span id="batchBox" style="display:none">
+    <select id="bSide"><option value="L">左</option><option value="R">右</option></select>
+    <select id="bEff">${NUM_EFFECTS.map(f => `<option>${f}</option>`).join('')}</select>
+    <input type="number" id="bVal" step="any" placeholder="数值">
+    <button id="bApply">应用到筛选结果</button>
+    <button class="ghost" id="bClear" title="清空这个效果（从选中卡里删掉该键）">清空该值</button>
+  </span>
   <button id="btnExport">导出 JSON</button>
   <button class="ghost" id="btnImport">导入 JSON</button>
+  <button class="ghost" id="btnIssues">校验面板</button>
   <input type="file" id="fileIn" accept=".json" style="display:none">
   <span class="stat" id="stat"></span>
 </div>
+
+<div id="issues"></div>
 
 <div class="tablewrap">
   <table id="tbl">
@@ -219,34 +265,44 @@ const html = `<!DOCTYPE html>
   数值列留空 = 这项不生效；填 0 = 真的加/减 0。
   <code>出现条件</code> 写法：<code>no:baby</code>（无此状态）、<code>has:fired</code>（有此状态）、
   <code>mind&lt;30</code>、<code>equity&gt;cost</code>（浮盈）、<code>equity&lt;cost*0.85</code>；
-  多个条件「且」用 <code>;</code>、「或」用 <code>|</code>，如 <code>has:fired; social&gt;52</code>。
+  多个条件「且」用 <code>;</code>、「或」用 <code>|</code>。
+  <b>v2 谓词</b>（校验已支持，引擎 N3 实装）：<code>did:卡id.r</code>（那张卡选过右）、
+  <code>seen:卡id</code>、<code>pick:家庭&gt;=5</code>（某分类选边倾向）。
+  <code>窗口</code> 填 <code>7-45</code> 表示只在第 7~45 天出现；<code>权重</code> 留空=1。
   <code>加状态</code> 填 <code>baby:-1</code>（-1 表示永久）；<code>清状态</code> 填状态名，多个用逗号。
+  <b>改完必须过：</b><code>node tools/validate-cards.js</code> →
+  <code>node tools/sync-json-to-prototype.js</code> →
+  <code>node tools/simulate.js --runs 10000</code> 对比基线。
   <b>点表头可排序。</b>
 </div>
 
 <script>
 const COLS = ${JSON.stringify(COLS)};
 const NUM_EFFECTS = ${JSON.stringify(NUM_EFFECTS)};
+const TAG_PREFIX = ${TAG_PREFIX};
 ${fmtSt.toString()}
 ${flat.toString()}
 let ROWS = ${JSON.stringify(rows)};
 const ORIGINAL = JSON.parse(JSON.stringify(ROWS));
-let sortKey = null, sortDir = 1, dirty = 0;
+let sortKey = null, sortDir = 1, dirty = 0, ISSUES = [];
+
+/* ---------- 内嵌校验：与 tools/validate-cards.js 同一份函数 ---------- */
+${validateCards.toString()}
+let vTimer = null;
+function scheduleValidate(){ clearTimeout(vTimer); vTimer = setTimeout(runValidate, 400); }
+function runValidate(){
+  ISSUES = validateCards({ cards: unflat(ROWS) });
+  const errs = ISSUES.filter(i => i.level === 'error');
+  const box = document.getElementById('issues');
+  box.innerHTML = ISSUES.length
+    ? ISSUES.map(i => '<div>' + (i.level === 'error' ? '✗' : '⚠') + ' <b>' + i.id + '</b> · ' + i.field + ' — ' + i.msg + '</div>').join('')
+    : '<div style="color:#27865a">✓ 校验通过，8 类检查全绿</div>';
+  renderStat();
+  return errs.length;
+}
 
 const NUMK = COLS.filter(c => c.num).map(c => c.k);
-
-function headCell(c){
-  const th = document.createElement('th');
-  th.style.minWidth = c.w + 'px';
-  th.textContent = c.t + (sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : '');
-  th.title = c.hint || '';
-  if(c.k === 'id'){ th.className = 'nosort'; return th; }
-  th.onclick = () => {
-    if(sortKey === c.k) sortDir = -sortDir; else { sortKey = c.k; sortDir = (c.num ? -1 : 1); }
-    render();
-  };
-  return th;
-}
+function errMap(){ const m = {}; ISSUES.forEach(i => { if(i.level==='error'){ (m[i.id] = m[i.id] || []).push(i.field + ': ' + i.msg); } }); return m; }
 
 function view(){
   const tag = document.getElementById('fTag').value;
@@ -258,11 +314,25 @@ function view(){
     r = r.slice().sort((a,b) => {
       let x = a[sortKey], y = b[sortKey];
       if(typeof x === 'number' && typeof y === 'number') return (x - y) * sortDir;
+      if(typeof x === 'boolean' || typeof y === 'boolean') return ((x?1:0) - (y?1:0)) * sortDir;
       x = String(x == null ? '' : x); y = String(y == null ? '' : y);
       return x.localeCompare(y, 'zh') * sortDir;
     });
   }
   return r;
+}
+
+function headCell(c){
+  const th = document.createElement('th');
+  th.style.minWidth = c.w + 'px';
+  th.textContent = c.t + (sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : '');
+  th.title = c.hint || '';
+  if(c.k === 'id' || c.k === '__ops'){ th.className = 'nosort'; return th; }
+  th.onclick = () => {
+    if(sortKey === c.k) sortDir = -sortDir; else { sortKey = c.k; sortDir = (c.num ? -1 : 1); }
+    render();
+  };
+  return th;
 }
 
 function render(){
@@ -272,55 +342,148 @@ function render(){
 
   const tb = document.getElementById('bodyRows');
   tb.innerHTML = '';
-  const rows = view();
-  rows.forEach(row => {
+  const bad = errMap();
+  const data = view();
+  data.forEach(row => {
     const tr = document.createElement('tr');
     COLS.forEach(c => {
       const td = document.createElement('td');
-      if(c.k === 'id'){ td.className = 'id'; td.textContent = row.id; tr.appendChild(td); return; }
+      if(c.k === '__ops'){
+        td.className = 'ops';
+        const b = document.createElement('button');
+        b.className = 'mini ghost'; b.textContent = '复';
+        b.title = '复制这张卡（id 自动顺延）';
+        b.onclick = () => dupRow(row);
+        td.appendChild(b); tr.appendChild(td); return;
+      }
+      if(c.k === 'id'){
+        td.className = 'id' + (bad[row.id] ? ' bad' : '');
+        if(bad[row.id]) td.title = bad[row.id].join('\\n');
+        td.textContent = row.id; tr.appendChild(td); return;
+      }
+      if(c.bool){
+        td.className = 'chk';
+        const inp = document.createElement('input');
+        inp.type = 'checkbox'; inp.checked = !!row[c.k]; inp.title = c.hint || '';
+        inp.onchange = () => { row[c.k] = inp.checked; markDirty(); scheduleValidate(); };
+        td.appendChild(inp); tr.appendChild(td); return;
+      }
       const inp = document.createElement('input');
       inp.type = 'text';
       inp.value = (row[c.k] == null ? '' : row[c.k]);
       inp.title = c.hint || '';
       if(c.num){
-        inp.className = 'num';
+        inp.className = 'num' + (c.plain ? ' plain' : '');
         const v = parseFloat(inp.value);
-        if(!isNaN(v) && v > 0) inp.classList.add('pos');
-        if(!isNaN(v) && v < 0) inp.classList.add('neg');
+        if(!c.plain && !isNaN(v) && v > 0) inp.classList.add('pos');
+        if(!c.plain && !isNaN(v) && v < 0) inp.classList.add('neg');
       }
       inp.oninput = () => {
         let v = inp.value;
         if(c.num){
           if(v === '' ){ row[c.k] = ''; }
           else { const n = Number(v); row[c.k] = isNaN(n) ? v : n; }
-          inp.className = 'num';
+          inp.className = 'num' + (c.plain ? ' plain' : '');
           const n = parseFloat(v);
-          if(!isNaN(n) && n > 0) inp.classList.add('pos');
-          if(!isNaN(n) && n < 0) inp.classList.add('neg');
+          if(!c.plain && !isNaN(n) && n > 0) inp.classList.add('pos');
+          if(!c.plain && !isNaN(n) && n < 0) inp.classList.add('neg');
         } else row[c.k] = v;
-        markDirty();
+        markDirty(); scheduleValidate();
       };
       td.appendChild(inp);
       tr.appendChild(td);
     });
     tb.appendChild(tr);
   });
-  document.getElementById('stat').textContent =
-    '显示 ' + rows.length + ' / ' + ROWS.length + ' 张' + (isDirty() ? ' · 已修改未导出' : '');
+  renderStat();
+}
+
+function renderStat(){
+  const errs = ISSUES.filter(i => i.level === 'error').length;
+  const warns = ISSUES.length - errs;
+  document.getElementById('stat').innerHTML =
+    '显示 ' + view().length + ' / ' + ROWS.length + ' 张 · 校验 ' +
+    (errs ? '<b class="bad">' + errs + ' 错误</b>' : '✓') + (warns ? ' / ' + warns + ' 提醒' : '') +
+    (dirty ? ' · 已修改未导出' : '');
 }
 
 function markDirty(){
   dirty = JSON.stringify(ROWS) === JSON.stringify(ORIGINAL) ? 0 : 1;
-  document.getElementById('stat').textContent =
-    '显示 ' + view().length + ' / ' + ROWS.length + ' 张' + (dirty ? ' · 已修改未导出' : '');
+  renderStat();
 }
-function isDirty(){ return dirty === 1; }
+
+/* ---------- 新增 / 复制：id 自动顺延 ---------- */
+function nextId(base){
+  const used = new Set(ROWS.map(r => r.id));
+  for(let n = 1; n < 100; n++){
+    const cand = base + '_' + String(n).padStart(2, '0');
+    if(!used.has(cand)) return cand;
+  }
+  return base + '_xx';
+}
+function sceneBase(tag){
+  const p = TAG_PREFIX[tag] || 'misc';
+  return p + '_scene';
+}
+function dupRow(row){
+  const base = (row.id || sceneBase(row.tag)).replace(/_\\d{2}$/, '');
+  const nr = JSON.parse(JSON.stringify(row));
+  nr.id = nextId(base);
+  ROWS.push(nr);
+  markDirty(); runValidate(); render();
+  const tb = document.getElementById('bodyRows');
+  tb.lastElementChild.scrollIntoView({ block: 'center' });
+}
+document.getElementById('btnAdd').onclick = () => {
+  const tag = document.getElementById('fTag').value || '自己';
+  const nr = { id: nextId(sceneBase(tag)), who: '？', whoId: '', avatar: '❓', tag: tag,
+               text: '（新卡面文案，≤31 字）', when: '', alwaysStatus: '',
+               window: '', weight: '', once: false, hidden: false,
+               L_label: '', R_label: '' };
+  NUM_EFFECTS.forEach(f => { nr['L_' + f] = ''; nr['R_' + f] = ''; });
+  nr['L_addst'] = ''; nr['R_addst'] = ''; nr['L_unst'] = ''; nr['R_unst'] = '';
+  ROWS.push(nr);
+  markDirty(); runValidate(); render();
+  document.getElementById('bodyRows').lastElementChild.scrollIntoView({ block: 'center' });
+};
+
+/* ---------- 批量改数值 ---------- */
+document.getElementById('btnBatch').onclick = () => {
+  const box = document.getElementById('batchBox');
+  box.style.display = box.style.display === 'none' ? '' : 'none';
+};
+document.getElementById('bApply').onclick = () => {
+  const side = document.getElementById('bSide').value;
+  const eff = document.getElementById('bEff').value;
+  const raw = document.getElementById('bVal').value;
+  if(raw === ''){ alert('先填数值（要清空请用「清空该值」）'); return; }
+  const targets = view();
+  if(!targets.length){ alert('当前筛选结果为空'); return; }
+  if(!confirm('把 ' + (side === 'L' ? '左' : '右') + '·' + eff + ' = ' + raw +
+      ' 应用到筛选出的 ' + targets.length + ' 张卡？')) return;
+  targets.forEach(r => { r[side + '_' + eff] = Number(raw); });
+  markDirty(); runValidate(); render();
+};
+document.getElementById('bClear').onclick = () => {
+  const side = document.getElementById('bSide').value;
+  const eff = document.getElementById('bEff').value;
+  const targets = view();
+  if(!targets.length){ alert('当前筛选结果为空'); return; }
+  if(!confirm('把筛选出的 ' + targets.length + ' 张卡的 ' + (side === 'L' ? '左' : '右') + '·' + eff + ' 清空？')) return;
+  targets.forEach(r => { r[side + '_' + eff] = ''; });
+  markDirty(); runValidate(); render();
+};
+
+document.getElementById('btnIssues').onclick = () =>
+  document.getElementById('issues').classList.toggle('on');
 
 ${parseSt.toString()}
 ${buildSide.toString()}
 ${unflat.toString()}
 
 function download(){
+  const errs = ISSUES.filter(i => i.level === 'error').length;
+  if(errs && !confirm('校验还有 ' + errs + ' 个错误，导出的 JSON 可能不合法。仍要导出？')) return;
   const out = {
     version: ${JSON.stringify(data.version)},
     source: 'data/cards.json',
@@ -353,12 +516,14 @@ document.getElementById('fileIn').onchange = e => {
       const cards = Array.isArray(j) ? j : (j.cards || []);
       if(!cards.length) throw new Error('没有卡牌数据');
       ROWS = flat(cards);
-      render();
+      ORIGINAL.length = 0; ORIGINAL.push(...JSON.parse(JSON.stringify(ROWS)));
+      dirty = 0; runValidate(); render();
       alert('已载入 ' + ROWS.length + ' 张卡');
     }catch(err){ alert('导入失败：' + err.message); }
   };
   rd.readAsText(f);
 };
+runValidate();
 render();
 </script>
 </body>

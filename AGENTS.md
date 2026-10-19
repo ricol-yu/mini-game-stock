@@ -42,7 +42,11 @@
 | `docs/plan/development-plan.md` | **执行清单（按节点推进）**：每完成一项打勾写日期，开工先看这里 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
 | `docs/tech/testing.md` | 四层测试环境、真机验证流程、PC 端边界、广告变现硬约束 |
-| `data/cards.json` | **63 张卡的唯一真源**。改卡面文案或数值一律改它 |
+| `data/cards.json` | **63 张卡的唯一真源**（schema v2：语义 id + whoId）。改卡面文案或数值一律改它 |
+| `docs/plan/baseline.md` | **仿真基线**：结局分布/重复率/卡覆盖。改卡后跑仿真与它对比 |
+| `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
+| `tools/validate-cards.js` | **校验器**：`node tools/validate-cards.js`，8 类检查，退出码非 0 = 不许提交 |
+| `tools/simulate.js` | **无头仿真器**：`node tools/simulate.js --runs 10000`，跑的是 prototype.html 的真实代码 |
 | `prototype.html` | 可玩原型，单文件自包含。**由 `cards.json` 生成，不要手改** |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。结论回写到 `testing.md` |
 | `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
@@ -78,6 +82,11 @@
   `tools/extract-cards.js`（prototype → json）只作救急核对，不作日常流程。
   可视化管理表 `tools/cards-manager.html` 由 `node tools/build-manager.js` 生成、**不要手改**；
   `data/cards.xlsx` 由 `python3 tools/export-xlsx.py` 生成，同样不要手改 —— 两者都是派生物
+- **改卡三连，缺一不可**：改完 `data/cards.json` 后依次 ① `node tools/validate-cards.js`（全绿才继续）
+  ② `node tools/sync-json-to-prototype.js` ③ `node tools/simulate.js --runs 10000` 并和
+  `docs/plan/baseline.md` 对比——任一结局占比偏移 > 2 个百分点要停下来说明原因
+- **卡片 id 一旦定下永不改**（`fam_mortgage_01` 这种语义 id）——关联卡、素材 manifest 都引用它；
+  新卡 id 用 `{类别拼音}_{场景}_{两位序号}`，查重交给校验器
 - 一次改动涉及 3 个以上文件时，先说明打算改哪些、为什么
 
 ## 代码约定

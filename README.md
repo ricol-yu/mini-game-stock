@@ -52,14 +52,19 @@ WXS 滑卡验证工程已写完、还没在任何设备上跑过。
 | `docs/tech/testing.md` | 四层测试环境、手感为什么只能在真机验、PC 端边界、广告变现约束 |
 | `docs/plan/next-phase.md` | **下个阶段路线图**：先做什么、卡池扩容到多少、素材规范、铺量门槛 |
 | `docs/plan/development-plan.md` | **执行清单**：N0–N8 节点打勾表，每完成一项写日期，开工先看这里 |
+| `docs/plan/baseline.md` | **仿真基线（N1 产出）**：63 张卡的结局分布/重复率/卡覆盖，改卡后与它对比 |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。导入时目录要选这一层，不是仓库根 |
 | `prototype.html` | 可玩的网页原型，双击即开。**由 `cards.json` 生成，不要手改** |
 | `data/cards.json` | **63 张卡的唯一真源**，改数值改这里 |
 | `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
-| `tools/cards-manager.html` | 网页管理表（63×31，可筛选/排序/编辑/导出 JSON），双击即用 |
+| `tools/validate-cards.js` | **校验器（改卡必跑）**：8 类检查，`node tools/validate-cards.js`；`--selftest` 自检 |
+| `tools/simulate.js` | **无头仿真器（改卡必跑）**：`node tools/simulate.js --runs 10000`，跑真实原型代码出平衡报告 |
+| `tools/sim/engine.js` | 仿真引擎：把 prototype.html 装进 vm 沙箱（DOM 桩 + 种子 RNG + when 对拍） |
+| `tools/cards-manager.html` | 网页管理表（63×37，可筛选/排序/增删/批量改/内嵌校验/导出 JSON），双击即用 |
 | `tools/build-manager.js` | 重新生成管理表（卡池结构性变更后跑一次） |
 | `tools/export-xlsx.py` | 导出 `data/cards.xlsx`（只作浏览，不是真源） |
-| `tools/extract-cards.js` | 反向（prototype → json），**仅救急核对** |
+| `tools/extract-cards.js` | 反向（prototype → json），**仅救急核对**；v2 后不认识语义 id，平时别用 |
+| `tools/migrate-ids-v2.js` | 一次性迁移记录：c001→语义 id 映射表（已执行完，保留备查，勿再运行） |
 | `docs/devlog/` | 开发日志，按日期，一文件一天 |
 | `.gitignore` | 已排除 `project.private.config.json` 等本地文件 |
 | `.gitattributes` | 强制 LF，防止 Windows/Mac 换行符互相污染 |

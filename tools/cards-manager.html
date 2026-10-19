@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>韭菜之王 · 卡牌数值管理表</title>
 <style>
-  :root{ --bg:#faf9f7; --line:#e3e0da; --hd:#f2efe9; --accent:#8a6d3b; --hot:#fff8e6; }
+  :root{ --bg:#faf9f7; --line:#e3e0da; --hd:#f2efe9; --accent:#8a6d3b; --hot:#fff8e6; --err:#c0392b; }
   *{ box-sizing:border-box; }
   body{ margin:0; background:var(--bg); color:#2b2b2b;
         font:13px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
@@ -15,14 +15,16 @@
   .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap;
             padding:10px 18px; background:#fff; border-bottom:1px solid var(--line);
             position:sticky; top:0; z-index:5; }
-  select,input[type=text]{ padding:5px 8px; border:1px solid var(--line); border-radius:5px;
+  select,input[type=text],input[type=number]{ padding:5px 8px; border:1px solid var(--line); border-radius:5px;
                           background:#fff; font-size:12px; }
-  input[type=text]{ width:190px; }
+  input[type=text]{ width:190px; } input[type=number]{ width:70px; }
   button{ padding:5px 12px; border:1px solid var(--accent); border-radius:5px;
           background:var(--accent); color:#fff; font-size:12px; cursor:pointer; }
   button.ghost{ background:#fff; color:var(--accent); }
+  button.mini{ padding:2px 7px; font-size:11px; }
   button:hover{ opacity:.85; }
   .stat{ margin-left:auto; color:#8a8578; font-size:12px; }
+  .stat b.bad{ color:var(--err); }
   .tablewrap{ overflow:auto; max-height:calc(100vh - 132px); }
   table{ border-collapse:collapse; white-space:nowrap; }
   th,td{ border:1px solid var(--line); padding:0; }
@@ -32,13 +34,20 @@
   thead th:hover:not(.nosort){ background:#e8e3d8; }
   tbody td{ background:#fff; }
   tbody tr:hover td{ background:var(--hot); }
-  td input{ width:100%; border:0; padding:5px 6px; font:inherit; background:transparent;
+  td input[type=text]{ width:100%; border:0; padding:5px 6px; font:inherit; background:transparent;
             box-sizing:border-box; }
   td input:focus{ outline:2px solid var(--accent); outline-offset:-2px; background:#fff; }
   td input.num{ text-align:right; font-variant-numeric:tabular-nums; }
   td input.num.pos{ color:#c0392b; }   /* 正数为红（增益/加值） */
   td input.num.neg{ color:#27865a; }   /* 负数为绿 */
+  td input.plain{ color:inherit; }
   td.id{ background:#f7f5f1; color:#a09889; font-size:11px; padding:5px 6px; }
+  td.id.bad{ background:#fdecea; color:var(--err); font-weight:600; }
+  td.chk, td.ops{ text-align:center; }
+  #issues{ display:none; max-height:180px; overflow:auto; padding:8px 18px;
+           background:#fffdf8; border-top:1px solid var(--line); font-size:12px; }
+  #issues.on{ display:block; }
+  #issues div{ padding:1px 0; }
   .tip{ padding:8px 18px; color:#8a8578; font-size:11.5px; background:#fffdf8;
         border-top:1px solid var(--line); }
   code{ background:#f0ede6; padding:1px 4px; border-radius:3px; font-size:11px; }
@@ -47,19 +56,31 @@
 <body>
 <header>
   <h1>韭菜之王 · 卡牌数值管理表</h1>
-  <div class="sub">共 63 张卡 · 数据源 <code>data/cards.json</code> · 生成于 2026/10/19 18:09:35
-    —— 改完点「导出 JSON」，覆盖回 data/cards.json 即可</div>
+  <div class="sub">共 63 张卡 · 数据源 <code>data/cards.json</code> · 生成于 2026/10/20 02:01:57
+    —— 改完点「导出 JSON」，覆盖回 data/cards.json，再跑 <code>node tools/sync-json-to-prototype.js</code></div>
 </header>
 
 <div class="toolbar">
   <select id="fTag"><option value="">全部分类</option><option>人情</option><option>决策</option><option>家庭</option><option>市场</option><option>意外</option><option>收入</option><option>职场</option><option>自己</option><option>风险</option></select>
   <input type="text" id="fSearch" placeholder="搜索 文案 / 人物 / 条件">
   <button class="ghost" id="btnReset">重置筛选</button>
+  <button class="ghost" id="btnAdd">新增卡</button>
+  <button class="ghost" id="btnBatch" title="对当前筛选结果批量设置一个效果值">批量改数值</button>
+  <span id="batchBox" style="display:none">
+    <select id="bSide"><option value="L">左</option><option value="R">右</option></select>
+    <select id="bEff"><option>spend</option><option>buy</option><option>sell</option><option>borrow</option><option>repay</option><option>cash</option><option>mind</option><option>risk</option><option>social</option></select>
+    <input type="number" id="bVal" step="any" placeholder="数值">
+    <button id="bApply">应用到筛选结果</button>
+    <button class="ghost" id="bClear" title="清空这个效果（从选中卡里删掉该键）">清空该值</button>
+  </span>
   <button id="btnExport">导出 JSON</button>
   <button class="ghost" id="btnImport">导入 JSON</button>
+  <button class="ghost" id="btnIssues">校验面板</button>
   <input type="file" id="fileIn" accept=".json" style="display:none">
   <span class="stat" id="stat"></span>
 </div>
+
+<div id="issues"></div>
 
 <div class="tablewrap">
   <table id="tbl">
@@ -73,14 +94,21 @@
   数值列留空 = 这项不生效；填 0 = 真的加/减 0。
   <code>出现条件</code> 写法：<code>no:baby</code>（无此状态）、<code>has:fired</code>（有此状态）、
   <code>mind&lt;30</code>、<code>equity&gt;cost</code>（浮盈）、<code>equity&lt;cost*0.85</code>；
-  多个条件「且」用 <code>;</code>、「或」用 <code>|</code>，如 <code>has:fired; social&gt;52</code>。
+  多个条件「且」用 <code>;</code>、「或」用 <code>|</code>。
+  <b>v2 谓词</b>（校验已支持，引擎 N3 实装）：<code>did:卡id.r</code>（那张卡选过右）、
+  <code>seen:卡id</code>、<code>pick:家庭&gt;=5</code>（某分类选边倾向）。
+  <code>窗口</code> 填 <code>7-45</code> 表示只在第 7~45 天出现；<code>权重</code> 留空=1。
   <code>加状态</code> 填 <code>baby:-1</code>（-1 表示永久）；<code>清状态</code> 填状态名，多个用逗号。
+  <b>改完必须过：</b><code>node tools/validate-cards.js</code> →
+  <code>node tools/sync-json-to-prototype.js</code> →
+  <code>node tools/simulate.js --runs 10000</code> 对比基线。
   <b>点表头可排序。</b>
 </div>
 
 <script>
-const COLS = [{"k":"id","t":"ID","w":58,"ro":true},{"k":"who","t":"谁","w":78},{"k":"avatar","t":"头像","w":48},{"k":"tag","t":"分类","w":62},{"k":"text","t":"卡面文案","w":250},{"k":"when","t":"出现条件","w":128,"hint":"如 no:baby / mind<30 / has:fired; social>52"},{"k":"alwaysStatus","t":"自带状态","w":88,"hint":"如 fired:-1"},{"k":"L_label","t":"左·文案","w":140},{"k":"L_spend","t":"左·spend","w":62,"num":true},{"k":"L_buy","t":"左·buy","w":62,"num":true},{"k":"L_sell","t":"左·sell","w":62,"num":true},{"k":"L_borrow","t":"左·borrow","w":62,"num":true},{"k":"L_repay","t":"左·repay","w":62,"num":true},{"k":"L_cash","t":"左·cash","w":62,"num":true},{"k":"L_mind","t":"左·mind","w":62,"num":true},{"k":"L_risk","t":"左·risk","w":62,"num":true},{"k":"L_social","t":"左·social","w":62,"num":true},{"k":"L_addst","t":"左·加状态","w":82,"hint":"如 baby:-1"},{"k":"L_unst","t":"左·清状态","w":78,"hint":"如 fired"},{"k":"R_label","t":"右·文案","w":140},{"k":"R_spend","t":"右·spend","w":62,"num":true},{"k":"R_buy","t":"右·buy","w":62,"num":true},{"k":"R_sell","t":"右·sell","w":62,"num":true},{"k":"R_borrow","t":"右·borrow","w":62,"num":true},{"k":"R_repay","t":"右·repay","w":62,"num":true},{"k":"R_cash","t":"右·cash","w":62,"num":true},{"k":"R_mind","t":"右·mind","w":62,"num":true},{"k":"R_risk","t":"右·risk","w":62,"num":true},{"k":"R_social","t":"右·social","w":62,"num":true},{"k":"R_addst","t":"右·加状态","w":82,"hint":"如 baby:-1"},{"k":"R_unst","t":"右·清状态","w":78,"hint":"如 fired"}];
+const COLS = [{"k":"__ops","t":"操作","w":46,"nosort":true},{"k":"id","t":"ID","w":150,"ro":true},{"k":"who","t":"谁","w":78},{"k":"whoId","t":"whoId","w":110,"hint":"素材锚点（N4 出图用），拼音小写"},{"k":"avatar","t":"头像","w":48},{"k":"tag","t":"分类","w":62},{"k":"text","t":"卡面文案","w":250},{"k":"when","t":"出现条件","w":128,"hint":"如 no:baby / mind<30 / has:fired; social>52；v2 谓词 did:卡id.r / seen:卡id / pick:tag>=5"},{"k":"alwaysStatus","t":"自带状态","w":88,"hint":"如 fired:-1"},{"k":"window","t":"窗口","w":64,"hint":"出现日期窗口，如 7-45；留空=全程"},{"k":"weight","t":"权重","w":52,"num":true,"plain":true,"hint":"抽取权重 0.1..10，留空=1（引擎 N3 实装）"},{"k":"once","t":"单局一次","w":60,"bool":true,"hint":"勾选 = 这张卡一局最多出现 1 次（引擎 N3 实装）"},{"k":"hidden","t":"隐藏","w":48,"bool":true,"hint":"勾选 = 隐藏卡，图鉴里显示剪影（引擎 N3 实装）"},{"k":"L_label","t":"左·文案","w":140},{"k":"L_spend","t":"左·spend","w":62,"num":true},{"k":"L_buy","t":"左·buy","w":62,"num":true},{"k":"L_sell","t":"左·sell","w":62,"num":true},{"k":"L_borrow","t":"左·borrow","w":62,"num":true},{"k":"L_repay","t":"左·repay","w":62,"num":true},{"k":"L_cash","t":"左·cash","w":62,"num":true},{"k":"L_mind","t":"左·mind","w":62,"num":true},{"k":"L_risk","t":"左·risk","w":62,"num":true},{"k":"L_social","t":"左·social","w":62,"num":true},{"k":"L_addst","t":"左·加状态","w":82,"hint":"如 baby:-1"},{"k":"L_unst","t":"左·清状态","w":78,"hint":"如 fired"},{"k":"R_label","t":"右·文案","w":140},{"k":"R_spend","t":"右·spend","w":62,"num":true},{"k":"R_buy","t":"右·buy","w":62,"num":true},{"k":"R_sell","t":"右·sell","w":62,"num":true},{"k":"R_borrow","t":"右·borrow","w":62,"num":true},{"k":"R_repay","t":"右·repay","w":62,"num":true},{"k":"R_cash","t":"右·cash","w":62,"num":true},{"k":"R_mind","t":"右·mind","w":62,"num":true},{"k":"R_risk","t":"右·risk","w":62,"num":true},{"k":"R_social","t":"右·social","w":62,"num":true},{"k":"R_addst","t":"右·加状态","w":82,"hint":"如 baby:-1"},{"k":"R_unst","t":"右·清状态","w":78,"hint":"如 fired"}];
 const NUM_EFFECTS = ["spend","buy","sell","borrow","repay","cash","mind","risk","social"];
+const TAG_PREFIX = {"家庭":"fam","职场":"work","收入":"inc","人情":"soc","自己":"self","市场":"mkt","决策":"dec","风险":"risk","意外":"acc"};
 function fmtSt(o) {
   if (!o || typeof o !== 'object') return '';
   return Object.keys(o).map(k => k + ':' + o[k]).join('; ');
@@ -88,8 +116,11 @@ function fmtSt(o) {
 function flat(cards) {
   return cards.map(c => {
     const row = {
-      id: c.id, who: c.who, avatar: c.avatar, tag: c.tag,
-      text: c.text, when: c.when || '', alwaysStatus: fmtSt(c.alwaysStatus)
+      id: c.id, who: c.who, whoId: c.whoId || '', avatar: c.avatar, tag: c.tag,
+      text: c.text, when: c.when || '', alwaysStatus: fmtSt(c.alwaysStatus),
+      window: Array.isArray(c.window) ? c.window.join('-') : '',
+      weight: (c.weight === undefined ? '' : c.weight),
+      once: !!c.once, hidden: !!c.hidden,
     };
     ['left', 'right'].forEach((side, i) => {
       const s = (i === 0 ? 'L' : 'R');
@@ -103,24 +134,194 @@ function flat(cards) {
     return row;
   });
 }
-let ROWS = [{"id":"c001","who":"老婆","avatar":"💍","tag":"家庭","text":"这个月房贷 6,800。你看着办。","when":"","alwaysStatus":"","L_label":"先拖两天","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"出 5,500","R_spend":5500,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":2,"R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"c002","who":"老婆","avatar":"💍","tag":"家庭","text":"孩子要上补习班，一年两万八。","when":"","alwaysStatus":"","L_label":"太贵了，不报","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":-6,"L_addst":"","L_unst":"","R_label":"出 3,900 报名","R_spend":3900,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":3,"R_risk":"","R_social":7,"R_addst":"","R_unst":""},{"id":"c003","who":"老婆","avatar":"💍","tag":"家庭","text":"你到底亏了多少？我要听实话。","when":"","alwaysStatus":"","L_label":"报喜不报忧","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"说实话","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":3,"R_addst":"","R_unst":""},{"id":"c004","who":"老婆","avatar":"💍","tag":"家庭","text":"我们多久没一起吃饭了？","when":"","alwaysStatus":"","L_label":"最近有点忙","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-7,"L_addst":"","L_unst":"","R_label":"出去吃，我请","R_spend":1200,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":7,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"c005","who":"老婆","avatar":"💍","tag":"家庭","text":"我怀孕了。","when":"no:baby","alwaysStatus":"","L_label":"现在不合适","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-12,"L_risk":"","L_social":-14,"L_addst":"","L_unst":"","R_label":"留着吧","R_spend":5200,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":15,"R_risk":"","R_social":12,"R_addst":"baby:-1","R_unst":""},{"id":"c006","who":"老婆","avatar":"💍","tag":"家庭","text":"这日子没法过了。离婚吧。","when":"mind<30","alwaysStatus":"","L_label":"……好","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":-3000,"L_mind":-14,"L_risk":"","L_social":-20,"L_addst":"","L_unst":"","R_label":"挽留，转 5,800","R_spend":5800,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":12,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"c007","who":"女儿","avatar":"👧","tag":"家庭","text":"爸爸，你为什么总在看手机？","when":"","alwaysStatus":"","L_label":"陪她玩一会儿","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":9,"L_risk":"","L_social":5,"L_addst":"","L_unst":"","R_label":"爸爸在工作","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":-4,"R_addst":"","R_unst":""},{"id":"c008","who":"老师","avatar":"🏫","tag":"家庭","text":"今晚家长会，你来不来？","when":"","alwaysStatus":"","L_label":"让妈妈去吧","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-7,"L_addst":"","L_unst":"","R_label":"我去","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":4,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"c009","who":"老妈","avatar":"👵","tag":"家庭","text":"你爸住院了，要先垫三万。","when":"","alwaysStatus":"","L_label":"让弟弟先垫","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-7,"L_risk":"","L_social":-11,"L_addst":"","L_unst":"","R_label":"我出 6,500","R_spend":6500,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":2,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"c010","who":"老妈","avatar":"👵","tag":"家庭","text":"我这有二十万养老钱，你拿去做，赚了都是你的。","when":"","alwaysStatus":"","L_label":"妈，这个不能要","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":5,"L_addst":"","L_unst":"","R_label":"收下，投进去","R_spend":"","R_buy":"","R_sell":"","R_borrow":12000,"R_repay":"","R_cash":"","R_mind":-9,"R_risk":"","R_social":-6,"R_addst":"","R_unst":""},{"id":"c011","who":"丈母娘","avatar":"🧓","tag":"家庭","text":"听说你最近在做投资？妈这里有点闲钱。","when":"","alwaysStatus":"","L_label":"您留着养老","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":5,"L_addst":"","L_unst":"","R_label":"拿 20,000","R_spend":"","R_buy":"","R_sell":"","R_borrow":15000,"R_repay":"","R_cash":"","R_mind":-8,"R_risk":"","R_social":-5,"R_addst":"","R_unst":""},{"id":"c012","who":"孩子","avatar":"🤒","tag":"家庭","text":"半夜发烧 39 度。","when":"has:baby","alwaysStatus":"","L_label":"先观察一晚","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-7,"L_risk":"","L_social":-8,"L_addst":"","L_unst":"","R_label":"连夜去医院","R_spend":1600,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"c013","who":"孩子","avatar":"👶","tag":"家庭","text":"他第一次叫爸爸。你正在看盘。","when":"has:baby","alwaysStatus":"","L_label":"把他抱起来","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":10,"L_risk":"","L_social":7,"L_addst":"","L_unst":"","R_label":"再看一会儿","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":-5,"R_addst":"","R_unst":""},{"id":"c014","who":"房东","avatar":"🏠","tag":"家庭","text":"下个月房租要涨 800。","when":"","alwaysStatus":"","L_label":"搬家","L_spend":2100,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":-4,"L_addst":"","L_unst":"","R_label":"认了","R_spend":1000,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":"","R_risk":"","R_social":2,"R_addst":"","R_unst":""},{"id":"c015","who":"老板","avatar":"😰","tag":"职场","text":"公司要优化，名单下周公布，你心里有个数。","when":"","alwaysStatus":"","L_label":"多陪陪家人","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":6,"L_addst":"","L_unst":"","R_label":"赌一把，加仓","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c016","who":"老板","avatar":"😰","tag":"职场","text":"今年年终奖取消，改成期权，大家理解一下。","when":"","alwaysStatus":"","L_label":"我不理解","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":-6,"L_addst":"","L_unst":"","R_label":"理解","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":3,"R_addst":"","R_unst":""},{"id":"c017","who":"HR","avatar":"📦","tag":"职场","text":"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。","when":"no:fired","alwaysStatus":"fired:-1","L_label":"我早就不想干了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":8000,"L_mind":-3,"L_risk":"","L_social":-2,"L_addst":"","L_unst":"","R_label":"再给我一次机会","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-9,"R_risk":"","R_social":-5,"R_addst":"","R_unst":""},{"id":"c018","who":"招聘软件","avatar":"📱","tag":"职场","text":"对方已读，没有回。","when":"has:fired","alwaysStatus":"","L_label":"先接点零活","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":2500,"L_mind":-2,"L_risk":"","L_social":2,"L_addst":"","L_unst":"","R_label":"再降低点期望","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":-3,"R_addst":"","R_unst":""},{"id":"c019","who":"老同事","avatar":"🤝","tag":"职场","text":"我们组缺人，就是降薪三成。来不来？","when":"has:fired; social>52","alwaysStatus":"","L_label":"再等等","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"来","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":3000,"R_mind":6,"R_risk":"","R_social":6,"R_addst":"","R_unst":"fired"},{"id":"c020","who":"同事","avatar":"☕","tag":"职场","text":"茶水间都在聊这只票，已经连着涨好几天了。","when":"","alwaysStatus":"","L_label":"不接最后一棒","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"上车 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c021","who":"同事小王","avatar":"👨‍💼","tag":"职场","text":"我表哥在券商，说最近有个大动作。跟不跟？","when":"","alwaysStatus":"","L_label":"不信小道消息","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"跟 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":4,"R_social":"","R_addst":"","R_unst":""},{"id":"c022","who":"项目","avatar":"🌃","tag":"职场","text":"今晚上线，全组通宵。你走吗？","when":"","alwaysStatus":"","L_label":"准时走","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":-4,"L_addst":"","L_unst":"","R_label":"留下来","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"c023","who":"工资","avatar":"💵","tag":"收入","text":"这个月工资到账了。","when":"no:fired","alwaysStatus":"","L_label":"留着过日子","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":6500,"L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"投进去 5,000","R_spend":"","R_buy":5000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c024","who":"私活","avatar":"🧰","tag":"收入","text":"朋友介绍一个活，做完给 4,000，要占掉两个周末。","when":"","alwaysStatus":"","L_label":"算了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":-2,"L_addst":"","L_unst":"","R_label":"接了","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":4000,"R_mind":-5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c025","who":"年终奖","avatar":"🧧","tag":"收入","text":"年终奖发了 15,000。","when":"no:fired; day>24","alwaysStatus":"","L_label":"给家里买点东西","L_spend":5200,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":9,"L_addst":"","L_unst":"","R_label":"全部加仓","R_spend":"","R_buy":8000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c026","who":"朋友","avatar":"💌","tag":"人情","text":"我下个月结婚，你知道的。","when":"","alwaysStatus":"","L_label":"装没看见","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"随 1,600","R_spend":1600,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-1,"R_risk":"","R_social":5,"R_addst":"","R_unst":""},{"id":"c027","who":"朋友","avatar":"💌","tag":"人情","text":"借我两万周转一下，下个月一定还。","when":"","alwaysStatus":"","L_label":"说自己也紧","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"借他 3,900","R_spend":3900,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":5,"R_addst":"","R_unst":""},{"id":"c028","who":"同学","avatar":"🍻","tag":"人情","text":"老同学聚会，人均 600。听说你最近在做投资？","when":"","alwaysStatus":"","L_label":"不去","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"去，AA 也行","R_spend":1600,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":4,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"c029","who":"张阿姨","avatar":"🏘","tag":"人情","text":"楼下办寿宴，整栋楼都去了。","when":"","alwaysStatus":"","L_label":"装不在家","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":"","L_risk":"","L_social":-6,"L_addst":"","L_unst":"","R_label":"随 800","R_spend":1000,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":"","R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"c030","who":"老同学","avatar":"🤳","tag":"人情","text":"有个项目，稳赚，就是得先投点钱。","when":"social>48","alwaysStatus":"","L_label":"算了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":2,"L_risk":"","L_social":-4,"L_addst":"","L_unst":"","R_label":"投 6,500","R_spend":6500,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":8,"R_social":3,"R_addst":"","R_unst":""},{"id":"c031","who":"饭局","avatar":"🥢","tag":"人情","text":"有人凑到你耳边说了几句，就几句。","when":"no:insider; social>45","alwaysStatus":"","L_label":"当没听见","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"记住这个消息","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":8,"R_social":"","R_addst":"insider:6","R_unst":""},{"id":"c032","who":"体检报告","avatar":"🏥","tag":"自己","text":"血压偏高，熬夜太多。医生让你少盯屏幕。","when":"","alwaysStatus":"","L_label":"今晚不看了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":10,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"没事，我扛得住","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c033","who":"凌晨三点","avatar":"🌙","tag":"自己","text":"你还没睡。屏幕的蓝光里，那根线还在跳。","when":"","alwaysStatus":"","L_label":"睡了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":8,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"再看五分钟","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":1,"R_social":"","R_addst":"","R_unst":""},{"id":"c034","who":"镜子","avatar":"🪞","tag":"自己","text":"你盯着屏幕，忽然问自己：我到底在干什么？","when":"","alwaysStatus":"","L_label":"……不知道","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"为了自由","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c035","who":"周末","avatar":"🌿","tag":"自己","text":"难得一个完整的周末，没人找你，也没什么消息。","when":"","alwaysStatus":"","L_label":"带家人出去走走","L_spend":1000,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":9,"L_risk":"","L_social":7,"L_addst":"","L_unst":"","R_label":"研究一下行情","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c036","who":"地漏","avatar":"🚿","tag":"自己","text":"洗完头，地漏上是一层头发。","when":"","alwaysStatus":"","L_label":"去挂个号","L_spend":1600,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"没事","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c037","who":"生日","avatar":"🎂","tag":"自己","text":"今天你生日。没有人记得。","when":"social<36","alwaysStatus":"","L_label":"照常过","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-7,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"给自己买点东西","R_spend":1000,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c038","who":"银行","avatar":"🏦","tag":"市场","text":"新闻说银行要放水了，市面上的钱会变多。","when":"","alwaysStatus":"","L_label":"听过太多次了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"加仓 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c039","who":"新闻","avatar":"🌐","tag":"市场","text":"美国那边利息涨了，据说全球的钱都在往回跑。","when":"","alwaysStatus":"","L_label":"先看看","L_spend":"","L_buy":"","L_sell":0.3,"L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"抄底 2,000","R_spend":"","R_buy":2000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c040","who":"新闻联播","avatar":"📺","tag":"市场","text":"要活跃资本市场，提振投资者信心。","when":"","alwaysStatus":"","L_label":"政策底不是市场底","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"加仓 4,000","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c041","who":"公司公告","avatar":"⚠️","tag":"市场","text":"你持有的这家公司说，今年赚的钱少了九成。","when":"equity>500","alwaysStatus":"","L_label":"卖一半","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"补仓摊薄成本","R_spend":"","R_buy":2000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-7,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c042","who":"公司公告","avatar":"📉","tag":"市场","text":"公司老板自己在卖股票，卖了不少。","when":"equity>500","alwaysStatus":"","L_label":"跟着卖一半","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":2,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"相信公司","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c043","who":"你的票","avatar":"📈","tag":"决策","text":"它今天又涨了。卖掉一部分落袋，还是再等等？","when":"equity>800; equity>cost","alwaysStatus":"","L_label":"落袋为安","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"还能涨，再等等","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c044","who":"你的票","avatar":"📉","tag":"决策","text":"它已经跌去两成。止损，还是扛着？","when":"equity>800; equity<cost*0.85","alwaysStatus":"","L_label":"割了","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"扛着，会回来的","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c045","who":"你的票","avatar":"🔴","tag":"决策","text":"今天它封住了涨停。群里都在喊明天还有。","when":"equity>600","alwaysStatus":"","L_label":"见好就收","L_spend":"","L_buy":"","L_sell":0.6,"L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"拿着，明天还有","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c046","who":"所有人","avatar":"🫧","tag":"市场","text":"半年没人亏过钱了。连门口的保安都在问你买的什么。","when":"no:bubble; day>7","alwaysStatus":"bubble:-1","L_label":"我怕了","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"我也加点","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c047","who":"所有人","avatar":"🫧","tag":"市场","text":"菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。","when":"has:bubble","alwaysStatus":"","L_label":"全部清掉","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"再拿一天","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c048","who":"你的票","avatar":"🤩","tag":"市场","text":"你赚的钱，已经比一整年工资还多。","when":"has:bubble; equity>1000","alwaysStatus":"","L_label":"够了，走人","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"还能更多","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c049","who":"新闻头条","avatar":"❄️","tag":"市场","text":"有一家很大的银行，一夜之间没了。街上没人笑得出来。","when":"no:crisis; day>11","alwaysStatus":"crisis:12","L_label":"先躲一躲","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"这是抄底的机会","R_spend":"","R_buy":2500,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c050","who":"公司群","avatar":"❄️","tag":"市场","text":"群里在传第三轮裁员。这次是真的。","when":"has:crisis","alwaysStatus":"","L_label":"认了，先跑","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"再扛一天","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c051","who":"交易所","avatar":"🚫","tag":"市场","text":"公司公告：筹划重大事项，明日起停牌，复牌时间待定。","when":"no:halt; equity>500","alwaysStatus":"halt:5","L_label":"拿着等消息","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-2,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"赶紧先卖出来","R_spend":"","R_buy":"","R_sell":1,"R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c052","who":"交易所","avatar":"🚫","tag":"市场","text":"还是没有复牌的消息。","when":"has:halt","alwaysStatus":"","L_label":"不看就不难受","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":2,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"刷公告","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c053","who":"配资公司","avatar":"📞","tag":"风险","text":"您好，十倍杠杆，资金秒到账，日息只要万分之八。","when":"","alwaysStatus":"","L_label":"直接挂断","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"先配 12,000","R_spend":"","R_buy":"","R_sell":"","R_borrow":12000,"R_repay":"","R_cash":"","R_mind":-8,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c054","who":"网贷广告","avatar":"📱","tag":"风险","text":"额度 50,000，日息万三，三分钟到账。","when":"","alwaysStatus":"","L_label":"关掉","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"借来抄底","R_spend":"","R_buy":"","R_sell":"","R_borrow":12000,"R_repay":"","R_cash":"","R_mind":-9,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c055","who":"信用卡","avatar":"💳","tag":"风险","text":"账单 8,000。还最低，还是还全额？","when":"","alwaysStatus":"","L_label":"咬牙全额还","L_spend":10400,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"还最低","R_spend":"","R_buy":"","R_sell":"","R_borrow":8000,"R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c056","who":"荐股群","avatar":"🎯","tag":"风险","text":"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。","when":"","alwaysStatus":"","L_label":"这就是骗局","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"交钱","R_spend":3900,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":8,"R_social":"","R_addst":"","R_unst":""},{"id":"c057","who":"大 V","avatar":"⭐","tag":"风险","text":"十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。","when":"","alwaysStatus":"","L_label":"大 V 也亏钱","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"跟 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":5,"R_social":"","R_addst":"","R_unst":""},{"id":"c058","who":"微信群","avatar":"👥","tag":"风险","text":"群里有人说，这只票下周要有大动作，内部消息。","when":"","alwaysStatus":"","L_label":"这话我听过二十遍","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"满仓埋伏","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":9,"R_social":"","R_addst":"","R_unst":""},{"id":"c059","who":"券商短信","avatar":"📲","tag":"风险","text":"你借的钱快不够抵押了，请追加保证金。","when":"risk>34 | debt>8000","alwaysStatus":"","L_label":"认了，让他们卖","L_spend":"","L_buy":"","L_sell":0.6,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-8,"L_risk":-5,"L_social":"","L_addst":"","L_unst":"","R_label":"再借 5,000 补上","R_spend":"","R_buy":"","R_sell":"","R_borrow":5000,"R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c060","who":"你的债","avatar":"🧮","tag":"风险","text":"要不要先把欠的钱还掉一部分？","when":"debt>3000","alwaysStatus":"","L_label":"留着翻身","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":2,"L_social":"","L_addst":"","L_unst":"","R_label":"还 6,000","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":6000,"R_cash":"","R_mind":4,"R_risk":-7,"R_social":"","R_addst":"","R_unst":""},{"id":"c061","who":"网友","avatar":"💬","tag":"风险","text":"别天天看了，每月固定买一点就行，长期拿着。","when":"","alwaysStatus":"","L_label":"我就是要择时","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"每月投 2,000","R_spend":"","R_buy":2000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":7,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c062","who":"年度账单","avatar":"📊","tag":"风险","text":"你今年的收益，跑赢了 1.2% 的人。","when":"","alwaysStatus":"","L_label":"删掉 App","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-2,"L_risk":-3,"L_social":"","L_addst":"","L_unst":"","R_label":"再来一年","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"c063","who":"你的猫","avatar":"🐱","tag":"意外","text":"猫从键盘上踩过去。等你回过神，一笔 8,000 已经买进去了。","when":"","alwaysStatus":"","L_label":"赶紧撤单","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"就当长线投资","R_spend":"","R_buy":8000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""}];
+let ROWS = [{"id":"fam_mortgage_01","who":"老婆","whoId":"laopo","avatar":"💍","tag":"家庭","text":"这个月房贷 6,800。你看着办。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"先拖两天","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"出 5,500","R_spend":5500,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":2,"R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"fam_tutor_01","who":"老婆","whoId":"laopo","avatar":"💍","tag":"家庭","text":"孩子要上补习班，一年两万八。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"太贵了，不报","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":-6,"L_addst":"","L_unst":"","R_label":"出 3,900 报名","R_spend":3900,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":3,"R_risk":"","R_social":7,"R_addst":"","R_unst":""},{"id":"fam_confess_01","who":"老婆","whoId":"laopo","avatar":"💍","tag":"家庭","text":"你到底亏了多少？我要听实话。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"报喜不报忧","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"说实话","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":3,"R_addst":"","R_unst":""},{"id":"fam_dinner_01","who":"老婆","whoId":"laopo","avatar":"💍","tag":"家庭","text":"我们多久没一起吃饭了？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"最近有点忙","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-7,"L_addst":"","L_unst":"","R_label":"出去吃，我请","R_spend":1200,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":7,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"fam_pregnant_01","who":"老婆","whoId":"laopo","avatar":"💍","tag":"家庭","text":"我怀孕了。","when":"no:baby","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"现在不合适","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-12,"L_risk":"","L_social":-14,"L_addst":"","L_unst":"","R_label":"留着吧","R_spend":5200,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":15,"R_risk":"","R_social":12,"R_addst":"baby:-1","R_unst":""},{"id":"fam_divorce_01","who":"老婆","whoId":"laopo","avatar":"💍","tag":"家庭","text":"这日子没法过了。离婚吧。","when":"mind<30","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"……好","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":-3000,"L_mind":-14,"L_risk":"","L_social":-20,"L_addst":"","L_unst":"","R_label":"挽留，转 5,800","R_spend":5800,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":12,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"fam_daughter_01","who":"女儿","whoId":"nver","avatar":"👧","tag":"家庭","text":"爸爸，你为什么总在看手机？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"陪她玩一会儿","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":9,"L_risk":"","L_social":5,"L_addst":"","L_unst":"","R_label":"爸爸在工作","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":-4,"R_addst":"","R_unst":""},{"id":"fam_parentmeet_01","who":"老师","whoId":"laoshi","avatar":"🏫","tag":"家庭","text":"今晚家长会，你来不来？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"让妈妈去吧","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-7,"L_addst":"","L_unst":"","R_label":"我去","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":4,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"fam_hospital_01","who":"老妈","whoId":"laoma","avatar":"👵","tag":"家庭","text":"你爸住院了，要先垫三万。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"让弟弟先垫","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-7,"L_risk":"","L_social":-11,"L_addst":"","L_unst":"","R_label":"我出 6,500","R_spend":6500,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":2,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"fam_eldermoney_01","who":"老妈","whoId":"laoma","avatar":"👵","tag":"家庭","text":"我这有二十万养老钱，你拿去做，赚了都是你的。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"妈，这个不能要","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":5,"L_addst":"","L_unst":"","R_label":"收下，投进去","R_spend":"","R_buy":"","R_sell":"","R_borrow":12000,"R_repay":"","R_cash":"","R_mind":-9,"R_risk":"","R_social":-6,"R_addst":"","R_unst":""},{"id":"fam_inlaws_01","who":"丈母娘","whoId":"zhangmuniang","avatar":"🧓","tag":"家庭","text":"听说你最近在做投资？妈这里有点闲钱。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"您留着养老","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":5,"L_addst":"","L_unst":"","R_label":"拿 20,000","R_spend":"","R_buy":"","R_sell":"","R_borrow":15000,"R_repay":"","R_cash":"","R_mind":-8,"R_risk":"","R_social":-5,"R_addst":"","R_unst":""},{"id":"fam_fever_01","who":"孩子","whoId":"haizi","avatar":"🤒","tag":"家庭","text":"半夜发烧 39 度。","when":"has:baby","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"先观察一晚","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-7,"L_risk":"","L_social":-8,"L_addst":"","L_unst":"","R_label":"连夜去医院","R_spend":1600,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"fam_babysfirst_01","who":"孩子","whoId":"haizi","avatar":"👶","tag":"家庭","text":"他第一次叫爸爸。你正在看盘。","when":"has:baby","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"把他抱起来","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":10,"L_risk":"","L_social":7,"L_addst":"","L_unst":"","R_label":"再看一会儿","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":-5,"R_addst":"","R_unst":""},{"id":"fam_rent_01","who":"房东","whoId":"fangdong","avatar":"🏠","tag":"家庭","text":"下个月房租要涨 800。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"搬家","L_spend":2100,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":-4,"L_addst":"","L_unst":"","R_label":"认了","R_spend":1000,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":"","R_risk":"","R_social":2,"R_addst":"","R_unst":""},{"id":"work_layoff_01","who":"老板","whoId":"laoban","avatar":"😰","tag":"职场","text":"公司要优化，名单下周公布，你心里有个数。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"多陪陪家人","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":6,"L_addst":"","L_unst":"","R_label":"赌一把，加仓","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"work_options_01","who":"老板","whoId":"laoban","avatar":"😰","tag":"职场","text":"今年年终奖取消，改成期权，大家理解一下。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"我不理解","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":-6,"L_addst":"","L_unst":"","R_label":"理解","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":3,"R_addst":"","R_unst":""},{"id":"work_fired_01","who":"HR","whoId":"hr","avatar":"📦","tag":"职场","text":"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。","when":"no:fired","alwaysStatus":"fired:-1","window":"","weight":"","once":false,"hidden":false,"L_label":"我早就不想干了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":8000,"L_mind":-3,"L_risk":"","L_social":-2,"L_addst":"","L_unst":"","R_label":"再给我一次机会","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-9,"R_risk":"","R_social":-5,"R_addst":"","R_unst":""},{"id":"work_jobhunt_01","who":"招聘软件","whoId":"zhaopin","avatar":"📱","tag":"职场","text":"对方已读，没有回。","when":"has:fired","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"先接点零活","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":2500,"L_mind":-2,"L_risk":"","L_social":2,"L_addst":"","L_unst":"","R_label":"再降低点期望","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":-3,"R_addst":"","R_unst":""},{"id":"work_offer_01","who":"老同事","whoId":"laotongshi","avatar":"🤝","tag":"职场","text":"我们组缺人，就是降薪三成。来不来？","when":"has:fired; social>52","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"再等等","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"来","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":3000,"R_mind":6,"R_risk":"","R_social":6,"R_addst":"","R_unst":"fired"},{"id":"work_gossip_01","who":"同事","whoId":"tongshi","avatar":"☕","tag":"职场","text":"茶水间都在聊这只票，已经连着涨好几天了。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"不接最后一棒","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"上车 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"work_tip_01","who":"同事小王","whoId":"tongshi_xiaowang","avatar":"👨‍💼","tag":"职场","text":"我表哥在券商，说最近有个大动作。跟不跟？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"不信小道消息","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"跟 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":4,"R_social":"","R_addst":"","R_unst":""},{"id":"work_overtime_01","who":"项目","whoId":"xiangmu","avatar":"🌃","tag":"职场","text":"今晚上线，全组通宵。你走吗？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"准时走","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":-4,"L_addst":"","L_unst":"","R_label":"留下来","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"inc_salary_01","who":"工资","whoId":"gongzi","avatar":"💵","tag":"收入","text":"这个月工资到账了。","when":"no:fired","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"留着过日子","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":6500,"L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"投进去 5,000","R_spend":"","R_buy":5000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"inc_sidejob_01","who":"私活","whoId":"sihuo","avatar":"🧰","tag":"收入","text":"朋友介绍一个活，做完给 4,000，要占掉两个周末。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"算了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":-2,"L_addst":"","L_unst":"","R_label":"接了","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":4000,"R_mind":-5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"inc_bonus_01","who":"年终奖","whoId":"nianzhongjiang","avatar":"🧧","tag":"收入","text":"年终奖发了 15,000。","when":"no:fired; day>24","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"给家里买点东西","L_spend":5200,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":9,"L_addst":"","L_unst":"","R_label":"全部加仓","R_spend":"","R_buy":8000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"soc_wedding_01","who":"朋友","whoId":"pengyou","avatar":"💌","tag":"人情","text":"我下个月结婚，你知道的。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"装没看见","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"随 1,600","R_spend":1600,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-1,"R_risk":"","R_social":5,"R_addst":"","R_unst":""},{"id":"soc_lend_01","who":"朋友","whoId":"pengyou","avatar":"💌","tag":"人情","text":"借我两万周转一下，下个月一定还。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"说自己也紧","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"借他 3,900","R_spend":3900,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":5,"R_addst":"","R_unst":""},{"id":"soc_reunion_01","who":"同学","whoId":"tongxue","avatar":"🍻","tag":"人情","text":"老同学聚会，人均 600。听说你最近在做投资？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"不去","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":-5,"L_addst":"","L_unst":"","R_label":"去，AA 也行","R_spend":1600,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":4,"R_risk":"","R_social":8,"R_addst":"","R_unst":""},{"id":"soc_banquet_01","who":"张阿姨","whoId":"zhangayi","avatar":"🏘","tag":"人情","text":"楼下办寿宴，整栋楼都去了。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"装不在家","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":"","L_risk":"","L_social":-6,"L_addst":"","L_unst":"","R_label":"随 800","R_spend":1000,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":"","R_risk":"","R_social":6,"R_addst":"","R_unst":""},{"id":"soc_scam_01","who":"老同学","whoId":"laotongxue","avatar":"🤳","tag":"人情","text":"有个项目，稳赚，就是得先投点钱。","when":"social>48","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"算了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":2,"L_risk":"","L_social":-4,"L_addst":"","L_unst":"","R_label":"投 6,500","R_spend":6500,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":8,"R_social":3,"R_addst":"","R_unst":""},{"id":"soc_whisper_01","who":"饭局","whoId":"fanju","avatar":"🥢","tag":"人情","text":"有人凑到你耳边说了几句，就几句。","when":"no:insider; social>45","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"当没听见","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"记住这个消息","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":8,"R_social":"","R_addst":"insider:6","R_unst":""},{"id":"self_checkup_01","who":"体检报告","whoId":"tijian","avatar":"🏥","tag":"自己","text":"血压偏高，熬夜太多。医生让你少盯屏幕。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"今晚不看了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":10,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"没事，我扛得住","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"self_night_01","who":"凌晨三点","whoId":"lingsan","avatar":"🌙","tag":"自己","text":"你还没睡。屏幕的蓝光里，那根线还在跳。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"睡了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":8,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"再看五分钟","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":1,"R_social":"","R_addst":"","R_unst":""},{"id":"self_mirror_01","who":"镜子","whoId":"jingzi","avatar":"🪞","tag":"自己","text":"你盯着屏幕，忽然问自己：我到底在干什么？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"……不知道","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"为了自由","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"self_weekend_01","who":"周末","whoId":"zhoumo","avatar":"🌿","tag":"自己","text":"难得一个完整的周末，没人找你，也没什么消息。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"带家人出去走走","L_spend":1000,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":9,"L_risk":"","L_social":7,"L_addst":"","L_unst":"","R_label":"研究一下行情","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"self_hairloss_01","who":"地漏","whoId":"dilou","avatar":"🚿","tag":"自己","text":"洗完头，地漏上是一层头发。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"去挂个号","L_spend":1600,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"没事","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"self_birthday_01","who":"生日","whoId":"shengri","avatar":"🎂","tag":"自己","text":"今天你生日。没有人记得。","when":"social<36","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"照常过","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-7,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"给自己买点东西","R_spend":1000,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_easing_01","who":"银行","whoId":"yinhang","avatar":"🏦","tag":"市场","text":"新闻说银行要放水了，市面上的钱会变多。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"听过太多次了","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"加仓 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_macro_01","who":"新闻","whoId":"xinwen","avatar":"🌐","tag":"市场","text":"美国那边利息涨了，据说全球的钱都在往回跑。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"先看看","L_spend":"","L_buy":"","L_sell":0.3,"L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"抄底 2,000","R_spend":"","R_buy":2000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_policy_01","who":"新闻联播","whoId":"xinwenlianbo","avatar":"📺","tag":"市场","text":"要活跃资本市场，提振投资者信心。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"政策底不是市场底","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"加仓 4,000","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_earnings_01","who":"公司公告","whoId":"gongsi_gonggao","avatar":"⚠️","tag":"市场","text":"你持有的这家公司说，今年赚的钱少了九成。","when":"equity>500","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"卖一半","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"补仓摊薄成本","R_spend":"","R_buy":2000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-7,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_insidersell_01","who":"公司公告","whoId":"gongsi_gonggao","avatar":"📉","tag":"市场","text":"公司老板自己在卖股票，卖了不少。","when":"equity>500","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"跟着卖一半","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":2,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"相信公司","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"dec_takeprofit_01","who":"你的票","whoId":"nidepiao","avatar":"📈","tag":"决策","text":"它今天又涨了。卖掉一部分落袋，还是再等等？","when":"equity>800; equity>cost","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"落袋为安","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"还能涨，再等等","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"dec_stoploss_01","who":"你的票","whoId":"nidepiao","avatar":"📉","tag":"决策","text":"它已经跌去两成。止损，还是扛着？","when":"equity>800; equity<cost*0.85","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"割了","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"扛着，会回来的","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"dec_limitup_01","who":"你的票","whoId":"nidepiao","avatar":"🔴","tag":"决策","text":"今天它封住了涨停。群里都在喊明天还有。","when":"equity>600","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"见好就收","L_spend":"","L_buy":"","L_sell":0.6,"L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"拿着，明天还有","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_bubble_01","who":"所有人","whoId":"suoyouren","avatar":"🫧","tag":"市场","text":"半年没人亏过钱了。连门口的保安都在问你买的什么。","when":"no:bubble; day>7","alwaysStatus":"bubble:-1","window":"","weight":"","once":false,"hidden":false,"L_label":"我怕了","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"我也加点","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-2,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_fomo_01","who":"所有人","whoId":"suoyouren","avatar":"🫧","tag":"市场","text":"菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。","when":"has:bubble","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"全部清掉","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"再拿一天","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_paperwin_01","who":"你的票","whoId":"nidepiao","avatar":"🤩","tag":"市场","text":"你赚的钱，已经比一整年工资还多。","when":"has:bubble; equity>1000","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"够了，走人","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":6,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"还能更多","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_crisis_01","who":"新闻头条","whoId":"xinwentoutiao","avatar":"❄️","tag":"市场","text":"有一家很大的银行，一夜之间没了。街上没人笑得出来。","when":"no:crisis; day>11","alwaysStatus":"crisis:12","window":"","weight":"","once":false,"hidden":false,"L_label":"先躲一躲","L_spend":"","L_buy":"","L_sell":0.5,"L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"这是抄底的机会","R_spend":"","R_buy":2500,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_panic_01","who":"公司群","whoId":"gongsiqun","avatar":"❄️","tag":"市场","text":"群里在传第三轮裁员。这次是真的。","when":"has:crisis","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"认了，先跑","L_spend":"","L_buy":"","L_sell":1,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"再扛一天","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_halt_01","who":"交易所","whoId":"jiaoyisuo","avatar":"🚫","tag":"市场","text":"公司公告：筹划重大事项，明日起停牌，复牌时间待定。","when":"no:halt; equity>500","alwaysStatus":"halt:5","window":"","weight":"","once":false,"hidden":false,"L_label":"拿着等消息","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-2,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"赶紧先卖出来","R_spend":"","R_buy":"","R_sell":1,"R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"mkt_haltwait_01","who":"交易所","whoId":"jiaoyisuo","avatar":"🚫","tag":"市场","text":"还是没有复牌的消息。","when":"has:halt","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"不看就不难受","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":2,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"刷公告","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"risk_margin_01","who":"配资公司","whoId":"peizigongsi","avatar":"📞","tag":"风险","text":"您好，十倍杠杆，资金秒到账，日息只要万分之八。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"直接挂断","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"先配 12,000","R_spend":"","R_buy":"","R_sell":"","R_borrow":12000,"R_repay":"","R_cash":"","R_mind":-8,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"risk_loanad_01","who":"网贷广告","whoId":"wangdai","avatar":"📱","tag":"风险","text":"额度 50,000，日息万三，三分钟到账。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"关掉","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"借来抄底","R_spend":"","R_buy":"","R_sell":"","R_borrow":12000,"R_repay":"","R_cash":"","R_mind":-9,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"risk_card_01","who":"信用卡","whoId":"xinyongka","avatar":"💳","tag":"风险","text":"账单 8,000。还最低，还是还全额？","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"咬牙全额还","L_spend":10400,"L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"还最低","R_spend":"","R_buy":"","R_sell":"","R_borrow":8000,"R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"risk_scam_01","who":"荐股群","whoId":"jianguqun","avatar":"🎯","tag":"风险","text":"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"这就是骗局","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":5,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"交钱","R_spend":3900,"R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-6,"R_risk":8,"R_social":"","R_addst":"","R_unst":""},{"id":"risk_influencer_01","who":"大 V","whoId":"dawei","avatar":"⭐","tag":"风险","text":"十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"大 V 也亏钱","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":4,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"跟 3,000","R_spend":"","R_buy":3000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-3,"R_risk":5,"R_social":"","R_addst":"","R_unst":""},{"id":"risk_leak_01","who":"微信群","whoId":"weixinqun","avatar":"👥","tag":"风险","text":"群里有人说，这只票下周要有大动作，内部消息。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"这话我听过二十遍","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"满仓埋伏","R_spend":"","R_buy":4000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":9,"R_social":"","R_addst":"","R_unst":""},{"id":"risk_callmargin_01","who":"券商短信","whoId":"quanshang","avatar":"📲","tag":"风险","text":"你借的钱快不够抵押了，请追加保证金。","when":"risk>34 | debt>8000","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"认了，让他们卖","L_spend":"","L_buy":"","L_sell":0.6,"L_borrow":"","L_repay":"","L_cash":"","L_mind":-8,"L_risk":-5,"L_social":"","L_addst":"","L_unst":"","R_label":"再借 5,000 补上","R_spend":"","R_buy":"","R_sell":"","R_borrow":5000,"R_repay":"","R_cash":"","R_mind":-6,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"risk_repay_01","who":"你的债","whoId":"nidezhai","avatar":"🧮","tag":"风险","text":"要不要先把欠的钱还掉一部分？","when":"debt>3000","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"留着翻身","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":2,"L_social":"","L_addst":"","L_unst":"","R_label":"还 6,000","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":6000,"R_cash":"","R_mind":4,"R_risk":-7,"R_social":"","R_addst":"","R_unst":""},{"id":"risk_dca_01","who":"网友","whoId":"wangyou","avatar":"💬","tag":"风险","text":"别天天看了，每月固定买一点就行，长期拿着。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"我就是要择时","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"每月投 2,000","R_spend":"","R_buy":2000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":7,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"risk_scoreboard_01","who":"年度账单","whoId":"nianduzhangdan","avatar":"📊","tag":"风险","text":"你今年的收益，跑赢了 1.2% 的人。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"删掉 App","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-2,"L_risk":-3,"L_social":"","L_addst":"","L_unst":"","R_label":"再来一年","R_spend":"","R_buy":"","R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-5,"R_risk":"","R_social":"","R_addst":"","R_unst":""},{"id":"acc_cat_01","who":"你的猫","whoId":"nidemao","avatar":"🐱","tag":"意外","text":"猫从键盘上踩过去。等你回过神，一笔 8,000 已经买进去了。","when":"","alwaysStatus":"","window":"","weight":"","once":false,"hidden":false,"L_label":"赶紧撤单","L_spend":"","L_buy":"","L_sell":"","L_borrow":"","L_repay":"","L_cash":"","L_mind":-3,"L_risk":"","L_social":"","L_addst":"","L_unst":"","R_label":"就当长线投资","R_spend":"","R_buy":8000,"R_sell":"","R_borrow":"","R_repay":"","R_cash":"","R_mind":-4,"R_risk":"","R_social":"","R_addst":"","R_unst":""}];
 const ORIGINAL = JSON.parse(JSON.stringify(ROWS));
-let sortKey = null, sortDir = 1, dirty = 0;
+let sortKey = null, sortDir = 1, dirty = 0, ISSUES = [];
+
+/* ---------- 内嵌校验：与 tools/validate-cards.js 同一份函数 ---------- */
+function validateCards(data) {
+  var ISSUES = [];
+  function err(rule, id, field, msg) { ISSUES.push({ rule: rule, id: id, field: field, msg: msg, level: 'error' }); }
+  function warn(rule, id, field, msg) { ISSUES.push({ rule: rule, id: id, field: field, msg: msg, level: 'warn' }); }
+
+  var TAGS = ['家庭', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
+  var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over'];
+  var STAT_KEYS = ['cash', 'equity', 'cost', 'mind', 'risk', 'social', 'day'];
+  var WHEN_VARS = ['mind', 'social', 'risk', 'day', 'equity', 'cash', 'debt', 'cost'];
+  var MONEY_KEYS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'equity', 'cost'];
+  var ID_RE = /^[a-z]+(_[a-z]+){1,3}_[0-9]{2}$/;
+
+  var cards = (data && data.cards) || [];
+  var ids = {};
+  cards.forEach(function (c) { if (c && c.id) ids[c.id] = true; });
+
+  // when 解析器：与 prototype.html 的 whenOK/andOK/oneCond/exprVal 语义一致，
+  // 并扩展 v2 谓词 did:/seen:/pick:（引擎 N3 实装，校验先行）
+  function parseWhen(w) {
+    var problems = [];
+    String(w).split('|').forEach(function (orGroup) {
+      orGroup.split(/[;&]/).forEach(function (raw) {
+        var t = raw.trim();
+        if (!t) return;
+        var m = t.match(/^(has|no):(\w+)$/);
+        if (m) {
+          if (STS.indexOf(m[2]) < 0) problems.push('未知状态「' + m[2] + '」（可用：' + STS.join('/') + '）');
+          return;
+        }
+        m = t.match(/^(did):([\w]+)\.(l|r)$/i);
+        if (m) { if (!ids[m[2]]) problems.push('did: 引用的卡「' + m[2] + '」不存在'); return; }
+        m = t.match(/^(seen):([\w]+)$/);
+        if (m) { if (!ids[m[2]]) problems.push('seen: 引用的卡「' + m[2] + '」不存在'); return; }
+        m = t.match(/^(pick):([a-z]+)\s*(<=|>=|<|>)\s*(\d+)$/);
+        if (m) { if (TAGS.indexOf(m[2]) < 0) problems.push('pick: 的 tag「' + m[2] + '」不在分类表里'); return; }
+        m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);
+        if (m) {
+          if (WHEN_VARS.indexOf(m[1]) < 0) { problems.push('未知属性「' + m[1] + '」（可用：' + WHEN_VARS.join(' ') + '）'); return; }
+          var rv = m[3].trim();
+          var mc = rv.match(/^cost\s*\*\s*([\d.]+)$/);
+          if (mc) return;
+          if (rv === 'cost') return;
+          if (isNaN(parseFloat(rv)) || String(parseFloat(rv)) !== rv.replace(/^\+/, '')) {
+            // 允许纯数字；其他一律报错（保守，和引擎 oneCond 的「无法识别=不满足」对齐）
+            if (!/^-?[\d.]+$/.test(rv)) problems.push('比较右侧「' + rv + '」既不是数字也不是 cost 表达式');
+          }
+          return;
+        }
+        problems.push('无法解析的条件「' + t + '」');
+      });
+    });
+    return problems;
+  }
+
+  function checkEffect(ruleId, side, eff) {
+    for (var k in (eff || {})) {
+      var v = eff[k];
+      if (k === 'addst') {
+        if (typeof v !== 'object' || Array.isArray(v)) { err('effect-key', ruleId, side + '.addst', 'addst 必须是 {状态:天数} 对象'); continue; }
+        for (var s in v) {
+          if (STS.indexOf(s) < 0) err('effect-key', ruleId, side + '.addst.' + s, '未知状态「' + s + '」');
+          var d = v[s];
+          if (typeof d !== 'number' || d === 0 || (!Number.isInteger(d)) || (d !== -1 && (d < 1 || d > 30)))
+            err('effect-range', ruleId, side + '.addst.' + s, '状态天数应为 1..30 的整数或 -1（永久），当前 ' + d);
+        }
+        continue;
+      }
+      if (k === 'unst') {
+        if (!Array.isArray(v)) { err('effect-key', ruleId, side + '.unst', 'unst 必须是状态名数组'); continue; }
+        v.forEach(function (s) { if (STS.indexOf(s) < 0) err('effect-key', ruleId, side + '.unst', '未知状态「' + s + '」'); });
+        continue;
+      }
+      if (MONEY_KEYS.indexOf(k) < 0 && ['mind', 'risk', 'social'].indexOf(k) < 0) {
+        err('effect-key', ruleId, side + '.' + k, '未知效果键「' + k + '」');
+        continue;
+      }
+      if (typeof v !== 'number' || isNaN(v)) { err('effect-range', ruleId, side + '.' + k, '效果值必须是数字，当前 ' + v); continue; }
+      if (k === 'sell') {
+        if (v <= 0 || v > 1) err('effect-range', ruleId, side + '.sell', 'sell 是卖出比例，应在 (0,1]，当前 ' + v);
+      } else if (k === 'mind' || k === 'risk' || k === 'social') {
+        if (v === 0) warn('effect-range', ruleId, side + '.' + k, '加减 0 通常是无意义的占位，请确认');
+        if (Math.abs(v) > 30) err('effect-range', ruleId, side + '.' + k, k + ' 单卡变动 |' + v + '| 超过 30');
+      } else if (['spend', 'buy', 'borrow', 'repay'].indexOf(k) >= 0) {
+        if (v <= 0) err('effect-range', ruleId, side + '.' + k, k + ' 应为正数，当前 ' + v);
+        if (v > 30000) err('effect-range', ruleId, side + '.' + k, k + ' 数额 ' + v + ' 超过 30000，确认是否手滑');
+      } else { // cash / equity / cost
+        if (Math.abs(v) > 100000) err('effect-range', ruleId, side + '.' + k, k + ' 变动 ' + v + ' 超过 100000');
+      }
+    }
+  }
+
+  cards.forEach(function (c) {
+    var id = (c && c.id) || '(无id)';
+
+    /* 1. id */
+    if (!c.id) err('id', id, 'id', '缺少 id');
+    else {
+      if (!ID_RE.test(c.id)) err('id', id, 'id', 'id「' + c.id + '」不符合命名规则：小写拼音_场景_两位序号，如 fam_mortgage_01');
+      if (ids[c.id] !== true) err('id', id, 'id', 'id「' + c.id + '」重复'); // 用 seen 集合判重
+    }
+
+    /* 2. 必填字段 */
+    ['who', 'avatar', 'tag', 'text', 'left', 'right'].forEach(function (k) {
+      if (c[k] === undefined || c[k] === null || c[k] === '') err('required', id, k, '缺少必填字段 ' + k);
+    });
+    if (!c.whoId) warn('required', id, 'whoId', '缺少 whoId（N4 素材锚点），建议补上');
+    if (TAGS.indexOf(c.tag) < 0) err('required', id, 'tag', 'tag「' + c.tag + '」不在分类表：' + TAGS.join('/'));
+    ['left', 'right'].forEach(function (s) {
+      var sd = c[s];
+      if (!sd) return;
+      if (!sd.label) err('required', id, s + '.label', s + ' 缺选项文案');
+      var ef = sd.effects || {};
+      var n = 0; for (var k in ef) n++;
+      if (n === 0) err('required', id, s + '.effects', s + ' 没有任何效果');
+      if (!sd.effects) err('required', id, s + '.effects', s + ' 缺 effects');
+    });
+
+    /* 3+7. when 语法 / did 引用 */
+    if (c.when) parseWhen(c.when).forEach(function (p) {
+      if (p.indexOf('引用') >= 0) err('did-ref', id, 'when', p);
+      else err('when', id, 'when', p);
+    });
+
+    /* 4+5. 效果键与数值 */
+    ['left', 'right'].forEach(function (s) { if (c[s]) checkEffect(id, s, c[s].effects); });
+
+    /* alwaysStatus */
+    if (c.alwaysStatus) {
+      var as = c.alwaysStatus;
+      if (typeof as !== 'object' || Array.isArray(as)) err('effect-key', id, 'alwaysStatus', '必须是 {状态:天数}');
+      else for (var s2 in as) {
+        if (STS.indexOf(s2) < 0) err('effect-key', id, 'alwaysStatus.' + s2, '未知状态「' + s2 + '」');
+        var d2 = as[s2];
+        if (typeof d2 !== 'number' || d2 === 0 || (d2 !== -1 && (d2 < 1 || d2 > 30)))
+          err('effect-range', id, 'alwaysStatus.' + s2, '状态天数应为 1..30 或 -1，当前 ' + d2);
+      }
+    }
+
+    /* 6. 文案长度 */
+    if (c.text && [...c.text].length > 31) err('text-len', id, 'text', '卡面 ' + [...c.text].length + ' 字，超过 31（卡面放不下）');
+    ['left', 'right'].forEach(function (s) {
+      if (c[s] && c[s].label && [...c[s].label].length > 11)
+        err('text-len', id, s + '.label', s + ' 选项 ' + [...c[s].label].length + ' 字，超过 11');
+    });
+
+    /* 8. window / weight / once / hidden */
+    if (c.window !== undefined && c.window !== null) {
+      var w = c.window;
+      if (!Array.isArray(w) || w.length !== 2 || !Number.isInteger(w[0]) || !Number.isInteger(w[1]) ||
+          w[0] < 1 || w[1] > 60 || w[0] > w[1])
+        err('window', id, 'window', 'window 应为 [起,止]，1..60 的整数且起≤止，当前 ' + JSON.stringify(w));
+    }
+    if (c.weight !== undefined && (typeof c.weight !== 'number' || c.weight < 0.1 || c.weight > 10))
+      err('window', id, 'weight', 'weight 应在 0.1..10，当前 ' + c.weight);
+    if (c.once !== undefined && typeof c.once !== 'boolean') err('window', id, 'once', 'once 应为布尔值');
+    if (c.hidden !== undefined && typeof c.hidden !== 'boolean') err('window', id, 'hidden', 'hidden 应为布尔值');
+  });
+
+  // id 判重（第二轮，避免第一轮里的 ids 集合被自身覆盖逻辑干扰）
+  var seen = {};
+  cards.forEach(function (c) {
+    if (!c || !c.id) return;
+    if (seen[c.id]) err('id', c.id, 'id', 'id「' + c.id + '」重复出现');
+    seen[c.id] = true;
+  });
+
+  return ISSUES;
+}
+let vTimer = null;
+function scheduleValidate(){ clearTimeout(vTimer); vTimer = setTimeout(runValidate, 400); }
+function runValidate(){
+  ISSUES = validateCards({ cards: unflat(ROWS) });
+  const errs = ISSUES.filter(i => i.level === 'error');
+  const box = document.getElementById('issues');
+  box.innerHTML = ISSUES.length
+    ? ISSUES.map(i => '<div>' + (i.level === 'error' ? '✗' : '⚠') + ' <b>' + i.id + '</b> · ' + i.field + ' — ' + i.msg + '</div>').join('')
+    : '<div style="color:#27865a">✓ 校验通过，8 类检查全绿</div>';
+  renderStat();
+  return errs.length;
+}
 
 const NUMK = COLS.filter(c => c.num).map(c => c.k);
-
-function headCell(c){
-  const th = document.createElement('th');
-  th.style.minWidth = c.w + 'px';
-  th.textContent = c.t + (sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : '');
-  th.title = c.hint || '';
-  if(c.k === 'id'){ th.className = 'nosort'; return th; }
-  th.onclick = () => {
-    if(sortKey === c.k) sortDir = -sortDir; else { sortKey = c.k; sortDir = (c.num ? -1 : 1); }
-    render();
-  };
-  return th;
-}
+function errMap(){ const m = {}; ISSUES.forEach(i => { if(i.level==='error'){ (m[i.id] = m[i.id] || []).push(i.field + ': ' + i.msg); } }); return m; }
 
 function view(){
   const tag = document.getElementById('fTag').value;
@@ -132,11 +333,25 @@ function view(){
     r = r.slice().sort((a,b) => {
       let x = a[sortKey], y = b[sortKey];
       if(typeof x === 'number' && typeof y === 'number') return (x - y) * sortDir;
+      if(typeof x === 'boolean' || typeof y === 'boolean') return ((x?1:0) - (y?1:0)) * sortDir;
       x = String(x == null ? '' : x); y = String(y == null ? '' : y);
       return x.localeCompare(y, 'zh') * sortDir;
     });
   }
   return r;
+}
+
+function headCell(c){
+  const th = document.createElement('th');
+  th.style.minWidth = c.w + 'px';
+  th.textContent = c.t + (sortKey === c.k ? (sortDir > 0 ? ' ▲' : ' ▼') : '');
+  th.title = c.hint || '';
+  if(c.k === 'id' || c.k === '__ops'){ th.className = 'nosort'; return th; }
+  th.onclick = () => {
+    if(sortKey === c.k) sortDir = -sortDir; else { sortKey = c.k; sortDir = (c.num ? -1 : 1); }
+    render();
+  };
+  return th;
 }
 
 function render(){
@@ -146,49 +361,140 @@ function render(){
 
   const tb = document.getElementById('bodyRows');
   tb.innerHTML = '';
-  const rows = view();
-  rows.forEach(row => {
+  const bad = errMap();
+  const data = view();
+  data.forEach(row => {
     const tr = document.createElement('tr');
     COLS.forEach(c => {
       const td = document.createElement('td');
-      if(c.k === 'id'){ td.className = 'id'; td.textContent = row.id; tr.appendChild(td); return; }
+      if(c.k === '__ops'){
+        td.className = 'ops';
+        const b = document.createElement('button');
+        b.className = 'mini ghost'; b.textContent = '复';
+        b.title = '复制这张卡（id 自动顺延）';
+        b.onclick = () => dupRow(row);
+        td.appendChild(b); tr.appendChild(td); return;
+      }
+      if(c.k === 'id'){
+        td.className = 'id' + (bad[row.id] ? ' bad' : '');
+        if(bad[row.id]) td.title = bad[row.id].join('\n');
+        td.textContent = row.id; tr.appendChild(td); return;
+      }
+      if(c.bool){
+        td.className = 'chk';
+        const inp = document.createElement('input');
+        inp.type = 'checkbox'; inp.checked = !!row[c.k]; inp.title = c.hint || '';
+        inp.onchange = () => { row[c.k] = inp.checked; markDirty(); scheduleValidate(); };
+        td.appendChild(inp); tr.appendChild(td); return;
+      }
       const inp = document.createElement('input');
       inp.type = 'text';
       inp.value = (row[c.k] == null ? '' : row[c.k]);
       inp.title = c.hint || '';
       if(c.num){
-        inp.className = 'num';
+        inp.className = 'num' + (c.plain ? ' plain' : '');
         const v = parseFloat(inp.value);
-        if(!isNaN(v) && v > 0) inp.classList.add('pos');
-        if(!isNaN(v) && v < 0) inp.classList.add('neg');
+        if(!c.plain && !isNaN(v) && v > 0) inp.classList.add('pos');
+        if(!c.plain && !isNaN(v) && v < 0) inp.classList.add('neg');
       }
       inp.oninput = () => {
         let v = inp.value;
         if(c.num){
           if(v === '' ){ row[c.k] = ''; }
           else { const n = Number(v); row[c.k] = isNaN(n) ? v : n; }
-          inp.className = 'num';
+          inp.className = 'num' + (c.plain ? ' plain' : '');
           const n = parseFloat(v);
-          if(!isNaN(n) && n > 0) inp.classList.add('pos');
-          if(!isNaN(n) && n < 0) inp.classList.add('neg');
+          if(!c.plain && !isNaN(n) && n > 0) inp.classList.add('pos');
+          if(!c.plain && !isNaN(n) && n < 0) inp.classList.add('neg');
         } else row[c.k] = v;
-        markDirty();
+        markDirty(); scheduleValidate();
       };
       td.appendChild(inp);
       tr.appendChild(td);
     });
     tb.appendChild(tr);
   });
-  document.getElementById('stat').textContent =
-    '显示 ' + rows.length + ' / ' + ROWS.length + ' 张' + (isDirty() ? ' · 已修改未导出' : '');
+  renderStat();
+}
+
+function renderStat(){
+  const errs = ISSUES.filter(i => i.level === 'error').length;
+  const warns = ISSUES.length - errs;
+  document.getElementById('stat').innerHTML =
+    '显示 ' + view().length + ' / ' + ROWS.length + ' 张 · 校验 ' +
+    (errs ? '<b class="bad">' + errs + ' 错误</b>' : '✓') + (warns ? ' / ' + warns + ' 提醒' : '') +
+    (dirty ? ' · 已修改未导出' : '');
 }
 
 function markDirty(){
   dirty = JSON.stringify(ROWS) === JSON.stringify(ORIGINAL) ? 0 : 1;
-  document.getElementById('stat').textContent =
-    '显示 ' + view().length + ' / ' + ROWS.length + ' 张' + (dirty ? ' · 已修改未导出' : '');
+  renderStat();
 }
-function isDirty(){ return dirty === 1; }
+
+/* ---------- 新增 / 复制：id 自动顺延 ---------- */
+function nextId(base){
+  const used = new Set(ROWS.map(r => r.id));
+  for(let n = 1; n < 100; n++){
+    const cand = base + '_' + String(n).padStart(2, '0');
+    if(!used.has(cand)) return cand;
+  }
+  return base + '_xx';
+}
+function sceneBase(tag){
+  const p = TAG_PREFIX[tag] || 'misc';
+  return p + '_scene';
+}
+function dupRow(row){
+  const base = (row.id || sceneBase(row.tag)).replace(/_\d{2}$/, '');
+  const nr = JSON.parse(JSON.stringify(row));
+  nr.id = nextId(base);
+  ROWS.push(nr);
+  markDirty(); runValidate(); render();
+  const tb = document.getElementById('bodyRows');
+  tb.lastElementChild.scrollIntoView({ block: 'center' });
+}
+document.getElementById('btnAdd').onclick = () => {
+  const tag = document.getElementById('fTag').value || '自己';
+  const nr = { id: nextId(sceneBase(tag)), who: '？', whoId: '', avatar: '❓', tag: tag,
+               text: '（新卡面文案，≤31 字）', when: '', alwaysStatus: '',
+               window: '', weight: '', once: false, hidden: false,
+               L_label: '', R_label: '' };
+  NUM_EFFECTS.forEach(f => { nr['L_' + f] = ''; nr['R_' + f] = ''; });
+  nr['L_addst'] = ''; nr['R_addst'] = ''; nr['L_unst'] = ''; nr['R_unst'] = '';
+  ROWS.push(nr);
+  markDirty(); runValidate(); render();
+  document.getElementById('bodyRows').lastElementChild.scrollIntoView({ block: 'center' });
+};
+
+/* ---------- 批量改数值 ---------- */
+document.getElementById('btnBatch').onclick = () => {
+  const box = document.getElementById('batchBox');
+  box.style.display = box.style.display === 'none' ? '' : 'none';
+};
+document.getElementById('bApply').onclick = () => {
+  const side = document.getElementById('bSide').value;
+  const eff = document.getElementById('bEff').value;
+  const raw = document.getElementById('bVal').value;
+  if(raw === ''){ alert('先填数值（要清空请用「清空该值」）'); return; }
+  const targets = view();
+  if(!targets.length){ alert('当前筛选结果为空'); return; }
+  if(!confirm('把 ' + (side === 'L' ? '左' : '右') + '·' + eff + ' = ' + raw +
+      ' 应用到筛选出的 ' + targets.length + ' 张卡？')) return;
+  targets.forEach(r => { r[side + '_' + eff] = Number(raw); });
+  markDirty(); runValidate(); render();
+};
+document.getElementById('bClear').onclick = () => {
+  const side = document.getElementById('bSide').value;
+  const eff = document.getElementById('bEff').value;
+  const targets = view();
+  if(!targets.length){ alert('当前筛选结果为空'); return; }
+  if(!confirm('把筛选出的 ' + targets.length + ' 张卡的 ' + (side === 'L' ? '左' : '右') + '·' + eff + ' 清空？')) return;
+  targets.forEach(r => { r[side + '_' + eff] = ''; });
+  markDirty(); runValidate(); render();
+};
+
+document.getElementById('btnIssues').onclick = () =>
+  document.getElementById('issues').classList.toggle('on');
 
 function parseSt(s){
   s = String(s == null ? '' : s).trim();
@@ -215,8 +521,17 @@ function buildSide(r, s){
 function unflat(rows){
   return rows.map(r => {
     const card = { id:r.id, who:r.who, avatar:r.avatar, tag:r.tag, text:r.text };
+    if(String(r.whoId || '').trim()) card.whoId = String(r.whoId).trim();
     card.when = String(r.when == null ? '' : r.when).trim() || null;
     card.alwaysStatus = parseSt(r.alwaysStatus);
+    const win = String(r.window == null ? '' : r.window).trim();
+    if(win){
+      const m = win.match(/^(\d+)\s*-\s*(\d+)$/);
+      if(m) card.window = [Number(m[1]), Number(m[2])];
+    }
+    if(r.weight !== '' && r.weight != null && !isNaN(Number(r.weight))) card.weight = Number(r.weight);
+    if(r.once) card.once = true;
+    if(r.hidden) card.hidden = true;
     card.left = buildSide(r, 'L');
     card.right = buildSide(r, 'R');
     return card;
@@ -224,8 +539,10 @@ function unflat(rows){
 }
 
 function download(){
+  const errs = ISSUES.filter(i => i.level === 'error').length;
+  if(errs && !confirm('校验还有 ' + errs + ' 个错误，导出的 JSON 可能不合法。仍要导出？')) return;
   const out = {
-    version: "v3",
+    version: "v3-schema2",
     source: 'data/cards.json',
     total: ROWS.length,
     cards: unflat(ROWS)
@@ -256,12 +573,14 @@ document.getElementById('fileIn').onchange = e => {
       const cards = Array.isArray(j) ? j : (j.cards || []);
       if(!cards.length) throw new Error('没有卡牌数据');
       ROWS = flat(cards);
-      render();
+      ORIGINAL.length = 0; ORIGINAL.push(...JSON.parse(JSON.stringify(ROWS)));
+      dirty = 0; runValidate(); render();
       alert('已载入 ' + ROWS.length + ' 张卡');
     }catch(err){ alert('导入失败：' + err.message); }
   };
   rd.readAsText(f);
 };
+runValidate();
 render();
 </script>
 </body>

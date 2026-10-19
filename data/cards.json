@@ -1,10 +1,10 @@
 {
-  "version": "v3",
-  "source": "prototype.html",
+  "version": "v3-schema2",
+  "source": "data/cards.json",
   "total": 63,
   "cards": [
     {
-      "id": "c001",
+      "id": "fam_mortgage_01",
       "who": "老婆",
       "avatar": "💍",
       "tag": "家庭",
@@ -25,10 +25,11 @@
           "social": 6,
           "mind": 2
         }
-      }
+      },
+      "whoId": "laopo"
     },
     {
-      "id": "c002",
+      "id": "fam_tutor_01",
       "who": "老婆",
       "avatar": "💍",
       "tag": "家庭",
@@ -49,10 +50,11 @@
           "social": 7,
           "mind": 3
         }
-      }
+      },
+      "whoId": "laopo"
     },
     {
-      "id": "c003",
+      "id": "fam_confess_01",
       "who": "老婆",
       "avatar": "💍",
       "tag": "家庭",
@@ -72,10 +74,11 @@
           "mind": -3,
           "social": 3
         }
-      }
+      },
+      "whoId": "laopo"
     },
     {
-      "id": "c004",
+      "id": "fam_dinner_01",
       "who": "老婆",
       "avatar": "💍",
       "tag": "家庭",
@@ -96,10 +99,11 @@
           "mind": 7,
           "social": 8
         }
-      }
+      },
+      "whoId": "laopo"
     },
     {
-      "id": "c005",
+      "id": "fam_pregnant_01",
       "who": "老婆",
       "avatar": "💍",
       "tag": "家庭",
@@ -123,10 +127,11 @@
             "baby": -1
           }
         }
-      }
+      },
+      "whoId": "laopo"
     },
     {
-      "id": "c006",
+      "id": "fam_divorce_01",
       "who": "老婆",
       "avatar": "💍",
       "tag": "家庭",
@@ -148,10 +153,11 @@
           "mind": 12,
           "social": 8
         }
-      }
+      },
+      "whoId": "laopo"
     },
     {
-      "id": "c007",
+      "id": "fam_daughter_01",
       "who": "女儿",
       "avatar": "👧",
       "tag": "家庭",
@@ -171,10 +177,11 @@
           "mind": -4,
           "social": -4
         }
-      }
+      },
+      "whoId": "nver"
     },
     {
-      "id": "c008",
+      "id": "fam_parentmeet_01",
       "who": "老师",
       "avatar": "🏫",
       "tag": "家庭",
@@ -194,10 +201,11 @@
           "mind": 4,
           "social": 8
         }
-      }
+      },
+      "whoId": "laoshi"
     },
     {
-      "id": "c009",
+      "id": "fam_hospital_01",
       "who": "老妈",
       "avatar": "👵",
       "tag": "家庭",
@@ -218,10 +226,11 @@
           "mind": 2,
           "social": 8
         }
-      }
+      },
+      "whoId": "laoma"
     },
     {
-      "id": "c010",
+      "id": "fam_eldermoney_01",
       "who": "老妈",
       "avatar": "👵",
       "tag": "家庭",
@@ -242,10 +251,11 @@
           "mind": -9,
           "social": -6
         }
-      }
+      },
+      "whoId": "laoma"
     },
     {
-      "id": "c011",
+      "id": "fam_inlaws_01",
       "who": "丈母娘",
       "avatar": "🧓",
       "tag": "家庭",
@@ -266,10 +276,11 @@
           "mind": -8,
           "social": -5
         }
-      }
+      },
+      "whoId": "zhangmuniang"
     },
     {
-      "id": "c012",
+      "id": "fam_fever_01",
       "who": "孩子",
       "avatar": "🤒",
       "tag": "家庭",
@@ -290,10 +301,11 @@
           "mind": -3,
           "social": 6
         }
-      }
+      },
+      "whoId": "haizi"
     },
     {
-      "id": "c013",
+      "id": "fam_babysfirst_01",
       "who": "孩子",
       "avatar": "👶",
       "tag": "家庭",
@@ -313,10 +325,11 @@
           "mind": -4,
           "social": -5
         }
-      }
+      },
+      "whoId": "haizi"
     },
     {
-      "id": "c014",
+      "id": "fam_rent_01",
       "who": "房东",
       "avatar": "🏠",
       "tag": "家庭",
@@ -337,10 +350,11 @@
           "spend": 1000,
           "social": 2
         }
-      }
+      },
+      "whoId": "fangdong"
     },
     {
-      "id": "c015",
+      "id": "work_layoff_01",
       "who": "老板",
       "avatar": "😰",
       "tag": "职场",
@@ -360,10 +374,11 @@
           "buy": 4000,
           "mind": -6
         }
-      }
+      },
+      "whoId": "laoban"
     },
     {
-      "id": "c016",
+      "id": "work_options_01",
       "who": "老板",
       "avatar": "😰",
       "tag": "职场",
@@ -383,10 +398,11 @@
           "mind": -4,
           "social": 3
         }
-      }
+      },
+      "whoId": "laoban"
     },
     {
-      "id": "c017",
+      "id": "work_fired_01",
       "who": "HR",
       "avatar": "📦",
       "tag": "职场",
@@ -409,10 +425,11 @@
           "mind": -9,
           "social": -5
         }
-      }
+      },
+      "whoId": "hr"
     },
     {
-      "id": "c018",
+      "id": "work_jobhunt_01",
       "who": "招聘软件",
       "avatar": "📱",
       "tag": "职场",
@@ -433,10 +450,11 @@
           "mind": -4,
           "social": -3
         }
-      }
+      },
+      "whoId": "zhaopin"
     },
     {
-      "id": "c019",
+      "id": "work_offer_01",
       "who": "老同事",
       "avatar": "🤝",
       "tag": "职场",
@@ -459,10 +477,11 @@
             "fired"
           ]
         }
-      }
+      },
+      "whoId": "laotongshi"
     },
     {
-      "id": "c020",
+      "id": "work_gossip_01",
       "who": "同事",
       "avatar": "☕",
       "tag": "职场",
@@ -481,10 +500,11 @@
           "buy": 3000,
           "mind": -3
         }
-      }
+      },
+      "whoId": "tongshi"
     },
     {
-      "id": "c021",
+      "id": "work_tip_01",
       "who": "同事小王",
       "avatar": "👨‍💼",
       "tag": "职场",
@@ -504,10 +524,11 @@
           "risk": 4,
           "mind": -2
         }
-      }
+      },
+      "whoId": "tongshi_xiaowang"
     },
     {
-      "id": "c022",
+      "id": "work_overtime_01",
       "who": "项目",
       "avatar": "🌃",
       "tag": "职场",
@@ -527,10 +548,11 @@
           "mind": -6,
           "social": 6
         }
-      }
+      },
+      "whoId": "xiangmu"
     },
     {
-      "id": "c023",
+      "id": "inc_salary_01",
       "who": "工资",
       "avatar": "💵",
       "tag": "收入",
@@ -550,10 +572,11 @@
           "buy": 5000,
           "mind": -2
         }
-      }
+      },
+      "whoId": "gongzi"
     },
     {
-      "id": "c024",
+      "id": "inc_sidejob_01",
       "who": "私活",
       "avatar": "🧰",
       "tag": "收入",
@@ -573,10 +596,11 @@
           "cash": 4000,
           "mind": -5
         }
-      }
+      },
+      "whoId": "sihuo"
     },
     {
-      "id": "c025",
+      "id": "inc_bonus_01",
       "who": "年终奖",
       "avatar": "🧧",
       "tag": "收入",
@@ -597,10 +621,11 @@
           "buy": 8000,
           "mind": -4
         }
-      }
+      },
+      "whoId": "nianzhongjiang"
     },
     {
-      "id": "c026",
+      "id": "soc_wedding_01",
       "who": "朋友",
       "avatar": "💌",
       "tag": "人情",
@@ -621,10 +646,11 @@
           "social": 5,
           "mind": -1
         }
-      }
+      },
+      "whoId": "pengyou"
     },
     {
-      "id": "c027",
+      "id": "soc_lend_01",
       "who": "朋友",
       "avatar": "💌",
       "tag": "人情",
@@ -645,10 +671,11 @@
           "social": 5,
           "mind": -2
         }
-      }
+      },
+      "whoId": "pengyou"
     },
     {
-      "id": "c028",
+      "id": "soc_reunion_01",
       "who": "同学",
       "avatar": "🍻",
       "tag": "人情",
@@ -669,10 +696,11 @@
           "social": 8,
           "mind": 4
         }
-      }
+      },
+      "whoId": "tongxue"
     },
     {
-      "id": "c029",
+      "id": "soc_banquet_01",
       "who": "张阿姨",
       "avatar": "🏘",
       "tag": "人情",
@@ -691,10 +719,11 @@
           "spend": 1000,
           "social": 6
         }
-      }
+      },
+      "whoId": "zhangayi"
     },
     {
-      "id": "c030",
+      "id": "soc_scam_01",
       "who": "老同学",
       "avatar": "🤳",
       "tag": "人情",
@@ -716,10 +745,11 @@
           "mind": -5,
           "social": 3
         }
-      }
+      },
+      "whoId": "laotongxue"
     },
     {
-      "id": "c031",
+      "id": "soc_whisper_01",
       "who": "饭局",
       "avatar": "🥢",
       "tag": "人情",
@@ -741,10 +771,11 @@
             "insider": 6
           }
         }
-      }
+      },
+      "whoId": "fanju"
     },
     {
-      "id": "c032",
+      "id": "self_checkup_01",
       "who": "体检报告",
       "avatar": "🏥",
       "tag": "自己",
@@ -762,10 +793,11 @@
         "effects": {
           "mind": -6
         }
-      }
+      },
+      "whoId": "tijian"
     },
     {
-      "id": "c033",
+      "id": "self_night_01",
       "who": "凌晨三点",
       "avatar": "🌙",
       "tag": "自己",
@@ -784,10 +816,11 @@
           "mind": -5,
           "risk": 1
         }
-      }
+      },
+      "whoId": "lingsan"
     },
     {
-      "id": "c034",
+      "id": "self_mirror_01",
       "who": "镜子",
       "avatar": "🪞",
       "tag": "自己",
@@ -805,10 +838,11 @@
         "effects": {
           "mind": 6
         }
-      }
+      },
+      "whoId": "jingzi"
     },
     {
-      "id": "c035",
+      "id": "self_weekend_01",
       "who": "周末",
       "avatar": "🌿",
       "tag": "自己",
@@ -828,10 +862,11 @@
         "effects": {
           "mind": -3
         }
-      }
+      },
+      "whoId": "zhoumo"
     },
     {
-      "id": "c036",
+      "id": "self_hairloss_01",
       "who": "地漏",
       "avatar": "🚿",
       "tag": "自己",
@@ -850,10 +885,11 @@
         "effects": {
           "mind": -3
         }
-      }
+      },
+      "whoId": "dilou"
     },
     {
-      "id": "c037",
+      "id": "self_birthday_01",
       "who": "生日",
       "avatar": "🎂",
       "tag": "自己",
@@ -872,10 +908,11 @@
           "spend": 1000,
           "mind": 5
         }
-      }
+      },
+      "whoId": "shengri"
     },
     {
-      "id": "c038",
+      "id": "mkt_easing_01",
       "who": "银行",
       "avatar": "🏦",
       "tag": "市场",
@@ -894,10 +931,11 @@
           "buy": 3000,
           "mind": -2
         }
-      }
+      },
+      "whoId": "yinhang"
     },
     {
-      "id": "c039",
+      "id": "mkt_macro_01",
       "who": "新闻",
       "avatar": "🌐",
       "tag": "市场",
@@ -917,10 +955,11 @@
           "buy": 2000,
           "mind": -3
         }
-      }
+      },
+      "whoId": "xinwen"
     },
     {
-      "id": "c040",
+      "id": "mkt_policy_01",
       "who": "新闻联播",
       "avatar": "📺",
       "tag": "市场",
@@ -939,10 +978,11 @@
           "buy": 4000,
           "mind": -3
         }
-      }
+      },
+      "whoId": "xinwenlianbo"
     },
     {
-      "id": "c041",
+      "id": "mkt_earnings_01",
       "who": "公司公告",
       "avatar": "⚠️",
       "tag": "市场",
@@ -962,10 +1002,11 @@
           "buy": 2000,
           "mind": -7
         }
-      }
+      },
+      "whoId": "gongsi_gonggao"
     },
     {
-      "id": "c042",
+      "id": "mkt_insidersell_01",
       "who": "公司公告",
       "avatar": "📉",
       "tag": "市场",
@@ -984,10 +1025,11 @@
         "effects": {
           "mind": -3
         }
-      }
+      },
+      "whoId": "gongsi_gonggao"
     },
     {
-      "id": "c043",
+      "id": "dec_takeprofit_01",
       "who": "你的票",
       "avatar": "📈",
       "tag": "决策",
@@ -1006,10 +1048,11 @@
         "effects": {
           "mind": -2
         }
-      }
+      },
+      "whoId": "nidepiao"
     },
     {
-      "id": "c044",
+      "id": "dec_stoploss_01",
       "who": "你的票",
       "avatar": "📉",
       "tag": "决策",
@@ -1028,10 +1071,11 @@
         "effects": {
           "mind": -6
         }
-      }
+      },
+      "whoId": "nidepiao"
     },
     {
-      "id": "c045",
+      "id": "dec_limitup_01",
       "who": "你的票",
       "avatar": "🔴",
       "tag": "决策",
@@ -1050,10 +1094,11 @@
         "effects": {
           "mind": -3
         }
-      }
+      },
+      "whoId": "nidepiao"
     },
     {
-      "id": "c046",
+      "id": "mkt_bubble_01",
       "who": "所有人",
       "avatar": "🫧",
       "tag": "市场",
@@ -1075,10 +1120,11 @@
           "buy": 4000,
           "mind": -2
         }
-      }
+      },
+      "whoId": "suoyouren"
     },
     {
-      "id": "c047",
+      "id": "mkt_fomo_01",
       "who": "所有人",
       "avatar": "🫧",
       "tag": "市场",
@@ -1097,10 +1143,11 @@
         "effects": {
           "mind": -3
         }
-      }
+      },
+      "whoId": "suoyouren"
     },
     {
-      "id": "c048",
+      "id": "mkt_paperwin_01",
       "who": "你的票",
       "avatar": "🤩",
       "tag": "市场",
@@ -1119,10 +1166,11 @@
         "effects": {
           "mind": -4
         }
-      }
+      },
+      "whoId": "nidepiao"
     },
     {
-      "id": "c049",
+      "id": "mkt_crisis_01",
       "who": "新闻头条",
       "avatar": "❄️",
       "tag": "市场",
@@ -1144,10 +1192,11 @@
           "buy": 2500,
           "mind": -3
         }
-      }
+      },
+      "whoId": "xinwentoutiao"
     },
     {
-      "id": "c050",
+      "id": "mkt_panic_01",
       "who": "公司群",
       "avatar": "❄️",
       "tag": "市场",
@@ -1166,10 +1215,11 @@
         "effects": {
           "mind": -5
         }
-      }
+      },
+      "whoId": "gongsiqun"
     },
     {
-      "id": "c051",
+      "id": "mkt_halt_01",
       "who": "交易所",
       "avatar": "🚫",
       "tag": "市场",
@@ -1190,10 +1240,11 @@
           "sell": 1,
           "mind": -3
         }
-      }
+      },
+      "whoId": "jiaoyisuo"
     },
     {
-      "id": "c052",
+      "id": "mkt_haltwait_01",
       "who": "交易所",
       "avatar": "🚫",
       "tag": "市场",
@@ -1211,10 +1262,11 @@
         "effects": {
           "mind": -3
         }
-      }
+      },
+      "whoId": "jiaoyisuo"
     },
     {
-      "id": "c053",
+      "id": "risk_margin_01",
       "who": "配资公司",
       "avatar": "📞",
       "tag": "风险",
@@ -1233,10 +1285,11 @@
           "borrow": 12000,
           "mind": -8
         }
-      }
+      },
+      "whoId": "peizigongsi"
     },
     {
-      "id": "c054",
+      "id": "risk_loanad_01",
       "who": "网贷广告",
       "avatar": "📱",
       "tag": "风险",
@@ -1255,10 +1308,11 @@
           "borrow": 12000,
           "mind": -9
         }
-      }
+      },
+      "whoId": "wangdai"
     },
     {
-      "id": "c055",
+      "id": "risk_card_01",
       "who": "信用卡",
       "avatar": "💳",
       "tag": "风险",
@@ -1278,10 +1332,11 @@
           "borrow": 8000,
           "mind": -4
         }
-      }
+      },
+      "whoId": "xinyongka"
     },
     {
-      "id": "c056",
+      "id": "risk_scam_01",
       "who": "荐股群",
       "avatar": "🎯",
       "tag": "风险",
@@ -1301,10 +1356,11 @@
           "risk": 8,
           "mind": -6
         }
-      }
+      },
+      "whoId": "jianguqun"
     },
     {
-      "id": "c057",
+      "id": "risk_influencer_01",
       "who": "大 V",
       "avatar": "⭐",
       "tag": "风险",
@@ -1324,10 +1380,11 @@
           "risk": 5,
           "mind": -3
         }
-      }
+      },
+      "whoId": "dawei"
     },
     {
-      "id": "c058",
+      "id": "risk_leak_01",
       "who": "微信群",
       "avatar": "👥",
       "tag": "风险",
@@ -1347,10 +1404,11 @@
           "risk": 9,
           "mind": -5
         }
-      }
+      },
+      "whoId": "weixinqun"
     },
     {
-      "id": "c059",
+      "id": "risk_callmargin_01",
       "who": "券商短信",
       "avatar": "📲",
       "tag": "风险",
@@ -1371,10 +1429,11 @@
           "borrow": 5000,
           "mind": -6
         }
-      }
+      },
+      "whoId": "quanshang"
     },
     {
-      "id": "c060",
+      "id": "risk_repay_01",
       "who": "你的债",
       "avatar": "🧮",
       "tag": "风险",
@@ -1395,10 +1454,11 @@
           "mind": 4,
           "risk": -7
         }
-      }
+      },
+      "whoId": "nidezhai"
     },
     {
-      "id": "c061",
+      "id": "risk_dca_01",
       "who": "网友",
       "avatar": "💬",
       "tag": "风险",
@@ -1417,10 +1477,11 @@
           "buy": 2000,
           "mind": 7
         }
-      }
+      },
+      "whoId": "wangyou"
     },
     {
-      "id": "c062",
+      "id": "risk_scoreboard_01",
       "who": "年度账单",
       "avatar": "📊",
       "tag": "风险",
@@ -1439,10 +1500,11 @@
         "effects": {
           "mind": -5
         }
-      }
+      },
+      "whoId": "nianduzhangdan"
     },
     {
-      "id": "c063",
+      "id": "acc_cat_01",
       "who": "你的猫",
       "avatar": "🐱",
       "tag": "意外",
@@ -1461,7 +1523,8 @@
           "buy": 8000,
           "mind": -4
         }
-      }
+      },
+      "whoId": "nidemao"
     }
   ]
 }
