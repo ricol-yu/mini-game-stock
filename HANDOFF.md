@@ -6,12 +6,18 @@
 
 ---
 
-**最后更新**：2026-10-19 18:30
-**在哪台设备上写的**：公司 Mac（`ricol-yu@ricol-yu-Mac`）
+**最后更新**：2026-10-19 22:55（Windows 端补记）
+**在哪台设备上写的**：家里 Windows（`ZhuanZ`）
 **当前分支**：main
-**最后一次 commit**：`b07083b`（已 push，远端与此一致，工作区干净）
+**最后一次 commit**：本文档与该提交一起推送，实际 SHA 见 `git log --oneline -1`
+**状态**：P0（spike 真机验证）由用户本人待办，其余工作按 `docs/plan/next-phase.md` 推进
 
 ## 0. 回家验收清单（2026-10-19 收工时写的，给 Windows 端）
+
+> **Windows 端执行结果（2026-10-19 夜）**
+> ③ 通过：`node tools/sync-json-to-prototype.js` 后 `git status` 零 diff，63 张卡、CARDS 块 8780 字节前后一致，5 个关键函数都在。
+> ④ 通过：Windows 侧建了独立 venv 并装 `openpyxl 3.1.5`，`export-xlsx.py` 可跑；导出内容与仓库版本逐格相同（仅二进制元数据不同），**故还原未提交**，避免 Mac 端 pull 出现无意义二进制 diff。
+> ① ② 需要人实际玩，尚未执行。
 
 **先同步，别跳过**：
 
@@ -119,16 +125,28 @@ prototype.html    ← 单文件自包含、双击即玩（由真源生成，别�
 
 ## 2. 下一步第一件事
 
-**在 Mac 微信开发者工具里跑 `~/mini-game-stock/spike/wxs-swipe`，验 WXS 滑卡手感。** 具体步骤：
+**P0 已转为待办，由用户本人在 Windows 上跑 `spike/wxs-swipe` 验手感**（微信开发者工具已装好，
+测通之后再推进任何与手感/交互动效有关的决策）。
+
+**在 P0 之外，第一件可推进的事是 P1「内容地基」** —— 见 `docs/plan/next-phase.md`：
+
+1. 卡牌 id 从顺序 `c001` 改为语义不可变 id（`fam_mortgage_01`）——这是关联卡 / 隐藏卡的前提
+2. 写 `tools/validate-cards.js`（8 类校验）+ `tools/simulate.js`（无头跑 10 万局）
+3. 用仿真报告拿到三个现在完全未知的数：单局重复率、13 个结局的真实分布、每张卡的出现率
+
+顺序原因：id 一改所有卡都要动一次，220 张之后再改就是 220 次返工。
+
+<details>
+<summary>原来的 P0 步骤（保留备查）</summary>
 
 1. 装 Mac 版微信开发者工具（如果还没装），微信扫码登录
 2. 申请测试号拿 AppID：https://developers.weixin.qq.com/miniprogram/dev/devtools/sandbox
-3. **导入项目时目录选 `~/mini-game-stock/spike/wxs-swipe`，不是仓库根目录** —— 仓库根目录现在还不是小程序工程
+3. **导入项目时目录选 `~/mini-game-stock/spike/wxs-swipe`，不是仓库根目录**
 4. 把 `spike/wxs-swipe/project.config.json` 里的 `"appid": "touristappid"` 换成测试号 AppID
-5. 先在模拟器里看布局（四根属性条、卡面、印章），**这一步不要下任何关于手感的结论**
+5. 先在模拟器里看布局，**这一步不要下任何关于手感的结论**
 6. 点「预览」用手机扫码，滑五次，看底部面板的四个数
 
-判据：滑起来手指和卡片之间没有可见延迟。数字只要不出现明显掉帧（帧间隔最大 > 34ms 连续出现），就算通过。
+</details>
 
 ## 3. 卡在哪
 
