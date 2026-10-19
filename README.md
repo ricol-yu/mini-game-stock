@@ -51,6 +51,7 @@ WXS 滑卡验证工程已写完、还没在任何设备上跑过。
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案与坑（WXS 手势、WXSS 兼容、类目风险） |
 | `docs/tech/testing.md` | 四层测试环境、手感为什么只能在真机验、PC 端边界、广告变现约束 |
 | `docs/plan/next-phase.md` | **下个阶段路线图**：先做什么、卡池扩容到多少、素材规范、铺量门槛 |
+| `docs/plan/development-plan.md` | **执行清单**：N0–N8 节点打勾表，每完成一项写日期，开工先看这里 |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。导入时目录要选这一层，不是仓库根 |
 | `prototype.html` | 可玩的网页原型，双击即开。**由 `cards.json` 生成，不要手改** |
 | `data/cards.json` | **63 张卡的唯一真源**，改数值改这里 |

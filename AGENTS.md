@@ -39,6 +39,7 @@
 |---|---|
 | `docs/design/game-design.md` | 完整玩法规格：四属性、每日结算公式、七种状态、结局优先级 |
 | `docs/plan/next-phase.md` | **下个阶段路线图**：卡池扩容目标、schema v2、素材规范、系统顺序、铺量门槛 |
+| `docs/plan/development-plan.md` | **执行清单（按节点推进）**：每完成一项打勾写日期，开工先看这里 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
 | `docs/tech/testing.md` | 四层测试环境、真机验证流程、PC 端边界、广告变现硬约束 |
 | `data/cards.json` | **63 张卡的唯一真源**。改卡面文案或数值一律改它 |
