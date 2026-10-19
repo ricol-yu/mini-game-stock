@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>韭菜之王 · 可玩原型 v3</title>
+<style>
+  :root{
+    --bg:#f2f3f5; --panel:#fff; --ink:#1f2329; --ink-2:#646a73; --ink-3:#8f959e;
+    --line:#e5e6eb; --up:#e02020; --down:#0aa344; --gold:#d48806; --blue:#1a6dff;
+    --shadow:0 8px 28px rgba(31,35,41,.10), 0 2px 6px rgba(31,35,41,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;}
+  .wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 12px 36px}
+  .head{text-align:center;margin-bottom:12px}
+  .head h1{font-size:19px;margin:0 0 6px;letter-spacing:1px}
+  .head p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+
+  .phone{width:344px;height:700px;background:var(--panel);border-radius:30px;position:relative;
+    box-shadow:var(--shadow);overflow:hidden;border:1px solid #e9eaee;display:flex;flex-direction:column}
+  .nav{height:66px;padding:22px 14px 0;display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 auto}
+  .nav .title{font-size:15.5px;font-weight:700;letter-spacing:3px}
+  .capsule{position:absolute;right:12px;top:26px;width:78px;height:29px;border-radius:15px;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;gap:12px;background:#fbfbfc}
+  .capsule i{width:4px;height:4px;border-radius:50%;background:var(--ink-3);display:block;position:relative}
+  .capsule i::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--ink-3);border-radius:50%;top:-2.5px;left:-2.5px}
+  .capsule .dot{width:14px;height:14px;border:1px solid var(--ink-3);border-radius:50%}
+
+  .hud{padding:0 14px 2px;flex:0 0 auto}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .row .nm{font-size:11px;color:var(--ink-2);width:28px;flex:0 0 auto}
+  .bar{flex:1;height:8px;border-radius:4px;background:#eef0f3;overflow:hidden;position:relative}
+  .bar i{position:absolute;top:0;height:100%;transition:width .45s cubic-bezier(.4,1.2,.4,1),left .45s cubic-bezier(.4,1.2,.4,1)}
+  .row .vl{font-size:11px;width:62px;text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .s-cash{background:linear-gradient(90deg,#ffc07a,#f79c1e);left:0}
+  .s-eq{background:linear-gradient(90deg,#ff8a8a,#e02020)}
+  .s-debt{background:repeating-linear-gradient(-45deg,#8f959e 0 3px,#c9ced6 3px 6px);right:0;opacity:.85}
+  .f-mind i{background:linear-gradient(90deg,#9fc0ff,#1a6dff);left:0}
+  .f-risk i{background:linear-gradient(90deg,#ffd666,#d4380d);left:0}
+  .f-soc i{background:linear-gradient(90deg,#95de64,#237804);left:0}
+  .warn i{animation:bl .9s infinite}
+  @keyframes bl{50%{opacity:.35}}
+
+  .strip{padding:3px 14px 0;display:flex;gap:5px;flex-wrap:wrap;min-height:0;flex:0 0 auto}
+  .strip:empty{display:none}
+  .chip{font-size:10px;color:var(--ink-2);background:#f7f8fa;border:1px solid var(--line);
+    border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5}
+  .chip b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .chip.hot{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
+
+  .mkt{margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
+    padding:6px 10px;flex:0 0 auto}
+  .mkt .t{display:flex;align-items:baseline;justify-content:space-between}
+  .mkt .t b{font-size:15px;font-variant-numeric:tabular-nums}
+  .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-2)}
+  small{font-size:10.5px}
+
+  .stage{flex:1;position:relative;margin:0 16px;touch-action:none;user-select:none;-webkit-user-select:none;min-height:150px}
+  .card{position:absolute;inset:4px 0 8px;background:#fff;border-radius:16px;border:1px solid var(--line);
+    box-shadow:0 10px 26px rgba(31,35,41,.11);padding:16px 17px 12px;display:flex;flex-direction:column;
+    will-change:transform;cursor:grab;overflow:hidden}
+  .card.under{transform:scale(.955) translateY(9px);opacity:.55;box-shadow:0 4px 12px rgba(31,35,41,.07)}
+  .card.under2{transform:scale(.91) translateY(18px);opacity:.28}
+  .card .who{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .card .who .av{width:31px;height:31px;border-radius:50%;background:#f4f5f7;display:flex;align-items:center;
+    justify-content:center;font-size:16px}
+  .card .who .nm{font-size:12.5px;color:var(--ink-2)}
+  .card .who .tag{margin-left:auto;font-size:10px;color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .card .txt{font-size:16px;line-height:1.72;color:var(--ink);flex:1;letter-spacing:.2px}
+  .card .foot{border-top:1px dashed var(--line);padding-top:8px;font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between}
+  .card .foot .l{color:var(--down)} .card .foot .r{color:var(--up)}
+
+  .stamp{position:absolute;top:14px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;
+    letter-spacing:.5px;border:3px solid;opacity:0;pointer-events:none;background:rgba(255,255,255,.94);max-width:200px}
+  .stamp.L{left:13px;color:var(--down);border-color:var(--down);transform:rotate(-11deg)}
+  .stamp.R{right:13px;color:var(--up);border-color:var(--up);transform:rotate(11deg)}
+
+  .tips{padding:0 16px 10px;text-align:center;font-size:10.5px;color:var(--ink-3);flex:0 0 auto;line-height:1.6}
+  .toast{position:absolute;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);background:rgba(31,35,41,.92);
+    color:#fff;font-size:11.5px;padding:7px 13px;border-radius:14px;opacity:0;transition:.28s;pointer-events:none;
+    max-width:300px;text-align:center;line-height:1.6;z-index:9}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .over{position:absolute;inset:0;background:rgba(255,255,255,.985);z-index:20;display:none;
+    flex-direction:column;align-items:center;justify-content:center;padding:26px 26px;text-align:center}
+  .over.on{display:flex}
+  .over .em{font-size:38px;margin-bottom:6px}
+  .over h2{margin:0 0 4px;font-size:20px;letter-spacing:2px}
+  .over .sub{font-size:11.5px;color:var(--ink-3);margin-bottom:15px}
+  .quote{font-size:13.5px;line-height:2;color:var(--ink);margin:0 0 16px;padding:0 4px;letter-spacing:.4px}
+  .life{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;width:100%;max-width:262px;margin-bottom:18px;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 0}
+  .life div{font-size:10.5px;color:var(--ink-3);text-align:left}
+  .life div b{display:block;font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:1px}
+  .btn{background:var(--ink);color:#fff;border:0;border-radius:22px;padding:11px 30px;font-size:14px;cursor:pointer}
+  .legend{margin-top:14px;font-size:11.5px;color:var(--ink-3);text-align:center;line-height:1.9;max-width:540px}
+  @media (max-width:420px){.phone{width:100%;max-width:344px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>韭菜之王 · 原型 v3</h1>
+    <p>你只有一只票，它甚至没有名字。<br>
+       右滑 = 投入 / 认了 &nbsp;·&nbsp; 左滑 = 抽身 / 算了</p>
+  </div>
+
+  <div class="phone">
+    <div class="nav"><div class="title">韭菜之王</div>
+      <div class="capsule"><i></i><span class="dot"></span></div></div>
+
+    <div class="hud">
+      <div class="row f-money" id="r-money"><span class="nm">金钱</span>
+        <span class="bar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></span>
+        <span class="vl" id="v-money"></span></div>
+      <div class="row f-mind" id="r-mind"><span class="nm">心态</span>
+        <span class="bar"><i id="b-mind"></i></span><span class="vl" id="v-mind"></span></div>
+      <div class="row f-risk" id="r-risk"><span class="nm">风险</span>
+        <span class="bar"><i id="b-risk"></i></span><span class="vl" id="v-risk"></span></div>
+      <div class="row f-soc" id="r-soc"><span class="nm">社会</span>
+        <span class="bar"><i id="b-soc"></i></span><span class="vl" id="v-soc"></span></div>
+    </div>
+
+    <div class="strip" id="strip"></div>
+
+    <div class="mkt">
+      <div class="t"><b id="v-net">¥18,000</b> <small id="v-pnl" class="flat">0.0%</small></div>
+      <div class="d"><span>第 <b id="v-day">1</b> 天 <b id="v-det"></b></span><span id="v-tr5">近五日 —</span></div>
+    </div>
+
+    <div class="stage" id="stage"></div>
+    <div class="tips">← 左滑：减仓 / 抽身 / 拒绝　　右滑 →：加仓 / 投入 / 认了</div>
+    <div class="toast" id="toast"></div>
+
+    <div class="over" id="over">
+      <div class="em" id="o-em">📉</div>
+      <h2 id="o-t"></h2>
+      <div class="sub" id="o-s"></div>
+      <p class="quote" id="o-q"></p>
+      <div class="life">
+        <div>这一辈子<b id="o-d"></b></div><div>最后剩下<b id="o-a"></b></div>
+        <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
+      </div>
+      <button class="btn" id="o-b">再来一辈子</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    虚构作品。所有行情、人物与公司均为虚构，不构成任何投资建议。<br>
+    v3：定名《韭菜之王》· 四属性（金钱/心态/风险/社会）· 状态系统（泡沫、冬天、停牌、添丁、失业、内线、上头）· 每 15 天自动发薪。<br>
+    平衡：600 局模拟 — 随机乱滑平均活 36 天、通关 16%；按趋势操作可到 32%。
+  </div>
+</div>
+
+<script>
+var S, MAX_DAY = 60, INIT = 18000, MONEY_CAP = 40000, CARDS = [], ST = {};
+
+/* ============ 状态（Buff / Debuff）字典 ============ */
+ST = {
+  bubble :{nm:"泡沫",  ic:"🫧", tip:"每天都在涨。所有人都觉得自己是天才。"},
+  crisis :{nm:"冬天",  ic:"❄️", tip:"行情一天比一天差，也一天比一天冷。"},
+  halt   :{nm:"停牌",  ic:"🚫", tip:"你的票卖不掉。你也拿不回来。"},
+  baby   :{nm:"添丁",  ic:"👶", tip:"每天都在花钱。奇怪的是，你并不后悔。"},
+  fired  :{nm:"失业",  ic:"📦", tip:"没有工资进来了。"},
+  insider:{nm:"内线",  ic:"🕵️", tip:"你知道别人不知道的事。这本身就是风险。"},
+  over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。"}
+};
+
+function reset(){
+  S = { cash:INIT, equity:0, cost:0, debt:0,
+        mind:58, risk:0, social:56, day:1,
+        st:{}, flags:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
+        index:3000, hist:[3000] };
+  CARDS.forEach(function(c){ c._used = 0; });
+  render(); nextCard();
+}
+function net(){ return S.cash + S.equity - S.debt; }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function money(n){ return (n<0?"-¥":"¥") + Math.round(Math.abs(n)).toLocaleString("en-US"); }
+
+/* ============ 金钱操作 ============ */
+function buy(x){
+  var amt = Math.min(Math.max(S.cash,0), x * (S.st.over ? 1.35 : 1));
+  if(amt <= 0) return;
+  S.cash -= amt; S.equity += amt; S.cost += amt; S.trades++; S.neverBought = false;
+}
+function sell(r){
+  if(S.equity <= 0) return;
+  if(S.st.halt){ return; }                          // 停牌：卖不掉
+  var amt = S.equity * r, pay = Math.min(S.debt, amt);
+  S.equity -= amt; S.cost -= S.cost * r; S.trades++;
+  S.debt -= pay; S.cash += (amt - pay);
+  S.risk = clamp(S.risk - amt / 1400, 0, 100);      // 减仓 = 降低风险
+}
+function spend(x){
+  if(S.cash >= x){ S.cash -= x; return; }
+  var need = x - S.cash; S.cash = 0;
+  var cut = Math.min(S.equity, need);
+  if(cut > 0 && !S.st.halt){
+    S.cost -= S.cost * (S.equity > 0 ? cut / S.equity : 1);
+    S.equity -= cut; S.mind -= 5; S.trades++; need -= cut;
+  }
+  if(need > 0){ S.debt += need; S.social -= 3; }
+}
+function borrow(x){
+  S.debt += x; S.equity += x; S.cost += x; S.trades++; S.neverBought = false;
+  S.risk = clamp(S.risk + Math.min(16, 5 + x / 1300), 0, 100);
+}
+function repay(x){
+  var pay = Math.min(Math.max(S.cash,0), x, S.debt);
+  if(pay <= 0) return;
+  S.cash -= pay; S.debt -= pay;
+  S.risk = clamp(S.risk - pay / 620, 0, 100);
+}
+function setST(key, d){ S.st[key] = d; }
+function clearST(key){ delete S.st[key]; }
+
+function apply(e){
+  if(e.buy)   buy(e.buy);
+  if(e.sell)  sell(e.sell);
+  if(e.spend) spend(e.spend);
+  if(e.borrow)borrow(e.borrow);
+  if(e.repay) repay(e.repay);
+  S.cash   = S.cash   + (e.cash   || 0);
+  S.equity = clamp(S.equity + (e.equity || 0), 0, 999999);
+  S.cost   = clamp(S.cost   + (e.cost   || 0), 0, 999999);
+  S.mind   = clamp(S.mind   + (e.mind   || 0), 0, 100);
+  S.risk   = clamp(S.risk   + (e.risk   || 0), 0, 100);
+  S.social = clamp(S.social + (e.social || 0), 0, 100);
+  if(e.addst) for(var k in e.addst) setST(k, e.addst[k]);
+  if(e.unst)  e.unst.forEach(clearST);
+}
+function resolve(c, dir){                            // 打出一张卡
+  var sel = dir === "R" ? c.R : c.L;
+  apply(sel.e);
+  if(c.st) for(var k in c.st) setST(k, c.st[k]);     // 事件自带的状态，与选择无关
+}
+
+/* ============ 一天过去 ============ */
+var cyc = 0;
+function trend5(){                                  // 近 5 日涨跌幅：给玩家一个可读的信号
+  var h = S.hist, n = h.length;
+  if(n < 6) return 0;
+  return (h[n-1] / h[n-6] - 1) * 100;
+}
+function tick(){
+  cyc++;
+  var st = S.st, msg = [];
+  // 长期微微向上（时间站在耐心的人一边）+ 明显的牛熊周期（让人读得出趋势）
+  var drift = 0.003 + Math.sin(cyc / 14) * 0.024;
+  if(st.bubble) drift += 0.028;
+  if(st.crisis) drift -= 0.024;
+
+  if(st.halt){
+    // 停牌：价格冻结，什么都做不了
+    msg.push("停牌中，价格冻结");
+  }else{
+    var vol = 0.030 * (st.crisis ? 1.7 : 1) * (st.bubble ? 1.4 : 1);
+    var r = drift + (Math.random() - 0.5) * vol;
+    if(st.insider) r += 0.014;                      // 提前知道消息，确实是赚得快
+    S.index = (S.index || 3000) * (1 + r);
+    S.hist.push(S.index); if(S.hist.length > 40) S.hist.shift();
+
+    var m = 1 + S.risk / 42;                        // 风险放大波动：1x ~ 3.4x
+    var sr = r * 1.3 * m + (Math.random() - 0.5) * 0.018;
+    var before = S.equity;
+    if(S.equity > 0) S.equity = Math.max(0, S.equity * (1 + sr));
+
+    if(before > 0){
+      var pct = (S.equity - before) / before;
+      if(pct < -0.06)      S.mind -= 3.5;
+      else if(pct < -0.02) S.mind -= 1.2;
+      else if(pct > 0.03)  S.mind += 1.6;
+      var d = S.equity - before;
+      msg.push("这只票" + (d >= 0 ? "涨" : "跌") + Math.abs(pct * 100).toFixed(1) + "%");
+    } else msg.push("空仓，与你无关");
+  }
+
+  // 泡沫：每天大涨，每天都有破的概率；撑到第 14 天必破
+  if(st.bubble){
+    st.bubble = st.bubble > 0 ? st.bubble - 1 : -1;
+    var age = (S.flags.bubbleAge = (S.flags.bubbleAge || 0) + 1);
+    var p = 0.09 + 0.05 * age;
+    if(Math.random() < p || age >= 14){
+      var drop = 0.30 + Math.random() * 0.28;
+      if(!S.st.halt) S.equity *= (1 - drop);
+      S.mind -= 14; S.flags.burst = true; S.flags.burstDay = S.day; S.flags.burstDrop = drop;
+      clearST("bubble"); S.flags.bubbleAge = 0;
+      msg.push("🫧 泡沫破了 −" + Math.round(drop * 100) + "%");
+    }
+  }
+  // 内线：迟早会被证伪或被查
+  if(st.insider){
+    st.insider = st.insider > 0 ? st.insider - 1 : -1;
+    S.risk = clamp(S.risk + 1.4, 0, 100);
+    if(Math.random() < 0.14){
+      clearST("insider"); S.risk = clamp(S.risk + 16, 0, 100); S.mind -= 10; S.social -= 5;
+      msg.push("🕵️ 消息是假的");
+    }
+  }
+  if(st.crisis){ st.crisis = st.crisis > 0 ? st.crisis - 1 : -1; S.mind -= 1.3; }
+  if(st.halt){ st.halt = st.halt > 0 ? st.halt - 1 : -1; S.mind -= 0.8; }
+  if(st.fired){ S.mind -= 1.1; }
+  if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; }
+  if(st.over){ S.mind -= 0.5; S.risk = clamp(S.risk + 0.3, 0, 100); }
+
+  // 上头状态：心态高位自动进入，回落值以下自动解除（100 不再是死刑，但上头会替你下单）
+  if(S.mind >= 88 && !st.over) setST("over", -1);
+  if(S.mind < 74) clearST("over");
+
+  // 风险堆到一定程度，事情会自己发生，不需要你动手
+  if(S.risk >= 72 && Math.random() < 0.075){
+    if(S.st.halt){ S.mind -= 8; S.social -= 4; msg.push("💥 催债的电话打到了家里"); }
+    else if(S.equity > 0){
+      var cut = S.equity * 0.35; S.equity -= cut; S.cost -= S.cost * 0.35;
+      S.mind -= 12; S.social -= 4;
+      msg.push("💥 有人替你平了仓 −" + money(cut).replace("¥","¥"));
+    } else { S.mind -= 9; S.social -= 5; S.debt += 2000; msg.push("💥 欠款又滚了一圈"); }
+    S.risk = clamp(S.risk - 18, 0, 100);
+  }
+
+  // 发薪日：日子照过，钱照来（失业之后就没有这一天了）
+  if(S.day % 15 === 0){
+    if(S.st.fired) msg.push("今天别人发工资");
+    else { S.cash += 7500; S.mind += 2; msg.push("工资到账 ¥7,500"); }
+  }
+
+  var interest = S.debt * 0.0015 * (1 + S.risk / 70);   // 风险越高，钱越贵
+  S.cash -= interest;
+  S.risk = clamp(S.risk - 0.15, 0, 100);                      // 风险消退得很慢
+  S.social = clamp(S.social - 0.22, 0, 100);                  // 人情是会淡的
+  if(S.equity > 0 && S.equity >= (S.cash + S.equity) * 0.75)
+    S.risk = clamp(S.risk + 0.45, 0, 100);                    // 重仓本身就是风险
+  S.mind = clamp(S.mind + 0.55 + (S.social >= 70 ? 0.35 : 0), 0, 100);
+
+  for(var k2 in S.st){ if(S.st[k2] === 0) clearST(k2); }
+  if(interest > 0.5) msg.push("利息 −" + money(interest).replace("-¥","¥"));
+  S.day++;
+  var n = net();
+  if(n > S.peak) S.peak = n;
+  if(S.peak > 0) S.mdd = Math.max(S.mdd, (S.peak - n) / S.peak);
+  return msg.join("　·　");
+}
+
+/* ============ 渲染 ============ */
+var $ = function(id){ return document.getElementById(id); };
+function render(){
+  var wC = clamp(S.cash / MONEY_CAP * 100, 0, 100), wE = clamp(S.equity / MONEY_CAP * 100, 0, 100);
+  if(wC + wE > 100){ var t = 100 / (wC + wE); wC *= t; wE *= t; }
+  $("b-cash").style.width = wC + "%"; $("b-cash").style.left = "0";
+  $("b-eq").style.width = wE + "%";   $("b-eq").style.left = wC + "%";
+  $("b-debt").style.width = clamp(S.debt / MONEY_CAP * 100, 0, 100) + "%";
+
+  var n = net();
+  $("v-money").textContent = money(n);
+  $("r-money").classList.toggle("warn", n < INIT * 0.35);
+
+  $("b-mind").style.width = S.mind + "%";  $("v-mind").textContent = Math.round(S.mind);
+  $("r-mind").classList.toggle("warn", S.mind < 22 || S.mind > 88);
+
+  $("b-risk").style.width = S.risk + "%";  $("v-risk").textContent = Math.round(S.risk);
+  $("r-risk").classList.toggle("warn", S.risk > 68);
+
+  $("b-soc").style.width = S.social + "%"; $("v-soc").textContent = Math.round(S.social);
+  $("r-soc").classList.toggle("warn", S.social < 22);
+
+  var strip = $("strip"), html = "";
+  for(var k in S.st){
+    var left = S.st[k], info = ST[k] || {nm:k, ic:"•"};
+    html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"?" hot":"") + '" title="' + (info.tip||"") + '">' +
+            info.ic + info.nm + (left > 0 ? ' <b>' + left + '</b>天' : '') + '</span>';
+  }
+  strip.innerHTML = html;
+
+  $("v-net").textContent = money(n);
+  var rate = (n - INIT) / INIT * 100, p = $("v-pnl");
+  p.textContent = (rate >= 0 ? "+" : "") + rate.toFixed(1) + "%";
+  p.className = rate > 0.5 ? "up" : (rate < -0.5 ? "down" : "flat");
+  $("v-day").textContent = S.day;
+  var t = $("v-tr5"), t5 = trend5();
+  if(S.hist.length < 6){ t.textContent = "还没开盘几天"; t.className = "flat"; }
+  else{
+    t.textContent = "近五日 " + (t5 >= 0 ? "+" : "") + t5.toFixed(1) + "%";
+    t.className = t5 > 0.4 ? "up" : (t5 < -0.4 ? "down" : "flat");
+  }
+  $("v-det").textContent = "· 现金 " + money(S.cash) + " · 持仓 " + money(S.equity) +
+                           (S.debt > 1 ? " · 欠 " + money(S.debt).replace("¥","¥") : "");
+}
+function toast(t){
+  var el = $("toast"); el.textContent = t; el.classList.add("on");
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove("on"); }, 2400);
+}
+
+/* ============ 卡牌交互 ============ */
+var stage = $("stage"), cur = null, busy = false;
+function pick(){
+  var pool = CARDS.filter(function(c){ return (c._used|0) < 2 && (!c.when || c.when()); });
+  if(!pool.length){ CARDS.forEach(function(c){ c._used = 0; }); pool = CARDS.filter(function(c){ return !c.when || c.when(); }); }
+  var c = pool[Math.floor(Math.random() * pool.length)];
+  c._used = (c._used|0) + 1; return c;
+}
+function build(c){
+  var d = document.createElement("div"); d.className = "card";
+  d.innerHTML = '<div class="stamp L"></div><div class="stamp R"></div>' +
+    '<div class="who"><div class="av">' + c.av + '</div><div class="nm">' + c.who + '</div>' +
+    '<div class="tag">' + c.tag + '</div></div><div class="txt">' + c.txt + '</div>' +
+    '<div class="foot"><span class="l">← ' + c.L.s + '</span><span class="r">' + c.R.s + ' →</span></div>';
+  d._c = c; return d;
+}
+function nextCard(){
+  if(busy) return;
+  var old = stage.querySelectorAll(".card");
+  for(var i = 0; i < old.length; i++) old[i].remove();
+  var a = build(pick()), b = build(pick()), c = build(pick());
+  c.className = "card under2"; b.className = "card under";
+  stage.appendChild(c); stage.appendChild(b); stage.appendChild(a);
+  cur = a; bind(a);
+}
+function bind(card){
+  var x0 = 0, y0 = 0, dx = 0, on = false;
+  card.addEventListener("pointerdown", function(e){
+    if(S.over) return; on = true; x0 = e.clientX; y0 = e.clientY;
+    card.setPointerCapture(e.pointerId); card.style.transition = "none";
+  });
+  card.addEventListener("pointermove", function(e){
+    if(!on) return;
+    dx = e.clientX - x0;
+    var dy = (e.clientY - y0) * 0.25;
+    card.style.transform = "translate(" + dx + "px," + dy + "px) rotate(" + (dx * 0.045) + "deg)";
+    var t = clamp(Math.abs(dx) / 90, 0, 1);
+    card.querySelector(".stamp.L").style.opacity = dx < 0 ? t : 0;
+    card.querySelector(".stamp.R").style.opacity = dx > 0 ? t : 0;
+  });
+  function end(){
+    if(!on) return; on = false;
+    card.style.transition = "transform .32s cubic-bezier(.3,.9,.3,1), opacity .32s";
+    if(Math.abs(dx) > 78) fly(dx > 0 ? "R" : "L");
+    else { card.style.transform = "translate(0,0) rotate(0deg)";
+      card.querySelector(".stamp.L").style.opacity = 0; card.querySelector(".stamp.R").style.opacity = 0; }
+  }
+  card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+}
+function fly(dir){
+  if(busy || S.over) return; busy = true;
+  var c = cur._c, sel = dir === "R" ? c.R : c.L;
+  var stp = cur.querySelector(".stamp." + dir);
+  stp.textContent = sel.s; stp.style.opacity = 1;
+  cur.style.transition = "transform .34s ease-out, opacity .34s";
+  cur.style.transform = "translate(" + (dir === "R" ? 460 : -460) + "px,10px) rotate(" + (dir === "R" ? 26 : -26) + "deg)";
+  cur.style.opacity = 0;
+
+  resolve(c, dir);
+  // 卡牌自带状态：给玩家一个提示
+  if(c.st) for(var k in c.st){
+    var info = ST[k]; if(info) toast(info.ic + " " + info.nm + "：" + info.tip);
+  }
+  var m = tick();
+  render();
+  setTimeout(function(){ if(m) toast(m); }, c.st ? 1800 : 260);
+  setTimeout(function(){ busy = false; check(); if(!S.over) nextCard(); }, 340);
+}
+
+/* ============ 结局 ============ */
+function check(){
+  var n = net(), d = S.day, rate = (n - INIT) / INIT * 100, f = S.flags, e = null;
+  if(f.burst && d - f.burstDay <= 10 && n <= INIT * 0.5 && f.burstDrop > 0.42)
+    e = ["🫧","泡沫之后","第 " + d + " 天 · 它终于跌回来了",
+         "它涨的时候你也觉得不真实。只是那时候，所有人都在笑。"];
+  else if(S.risk >= 100)
+    e = ["💥","爆了","第 " + d + " 天 · 系统替你做了决定",
+         "一开始只是想再借一点点。后来每一个这样想的人，都长得差不多。"];
+  else if(S.st.over && S.risk >= 55 && n <= 0)
+    e = ["🎈","最后一把","第 " + d + " 天 · 那一单比平时大得多",
+         "点下去的时候，你的手很稳。"];
+  else if(n <= 0 && S.debt > 5000)
+    e = ["💀","穿仓","第 " + d + " 天 · 你欠的比拥有的多",
+         "那些钱从来不是你的，它们只是路过你的账户。"];
+  else if(n <= 0 && S.st.crisis)
+    e = ["❄️","冬天还没过完","第 " + d + " 天 · 你倒在了最后一段路上",
+         "你没有做错什么。只是正好站在了那儿。"];
+  else if(n <= 0)
+    e = ["🧾","一无所有","第 " + d + " 天 · 账户比你的人生还干净",
+         "钱是一点一点少的，少到最后，你自己都拼不出中间的过程。"];
+  else if(S.mind <= 0)
+    e = ["🧊","不动了","第 " + d + " 天 · 你关掉了那个软件",
+         "后来你再也没打开过。只是偶尔，还会梦见那根线。"];
+  else if(S.social <= 0)
+    e = ["🪑","没有人","第 " + d + " 天 · 通讯录很久没响过",
+         "很久没有人问你最近怎么样了。连你自己也不问。"];
+  else if(n >= 80000)
+    e = ["🪙","自由","第 " + d + " 天 · 你终于可以不用看了",
+         "账面上的数字够你安静很久。你花了整个人才走到这里，然后发现自己还是每天打开它。"];
+  else if(d > MAX_DAY && S.neverBought)
+    e = ["👁","一次都没买","活满 60 天 · 你站在场外",
+         "你一次都没下场。你管这叫清醒。"];
+  else if(d > MAX_DAY && rate >= 60)
+    e = ["🏆","六十天","活满 60 天 · 你还站着",
+         "你活着，而且赢了。至于哪一步靠的是运气，你自己清楚。"];
+  else if(d > MAX_DAY && rate >= 0)
+    e = ["🌤","六十天","活满 60 天 · 钱没多，人也没散",
+         "这样的年份，往后你会怀念。"];
+  else if(d > MAX_DAY)
+    e = ["🌧","六十天","活满 60 天 · 钱没了，人还在",
+         "账可以慢慢算，日子不行。"];
+  if(!e) return;
+  S.over = true;
+  $("o-em").textContent = e[0]; $("o-t").textContent = e[1]; $("o-s").textContent = e[2]; $("o-q").textContent = e[3];
+  $("o-d").textContent = d + " 天";
+  var a = $("o-a"); a.textContent = money(n); a.className = n >= INIT ? "up" : "down";
+  $("o-n").textContent = S.trades + " 次";
+  var mm = $("o-m"); mm.textContent = "-" + (S.mdd * 100).toFixed(0) + "%"; mm.className = "down";
+  $("over").classList.add("on");
+}
+$("o-b").onclick = function(){ $("over").classList.remove("on"); reset(); };
+
+/* ================= 卡池 =================
+   e 字段：buy 加仓 · sell 减仓(比例) · spend 出金 · borrow 借钱 · repay 还钱
+           cash/equity 直接增减 · mind 心态 · risk 风险 · social 社会
+           addst 开启状态 · unst 解除状态
+   卡牌级 st：无论怎么选都会发生的事（时代、公告、命运）
+========================================= */
+CARDS = [
+ /* ---------- 家庭 ---------- */
+ {who:"老婆",av:"💍",tag:"家庭",txt:"这个月房贷 6,800。你看着办。",
+  R:{s:"出 5,500",e:{spend:5500,social:6,mind:2}},L:{s:"先拖两天",e:{mind:-5,social:-5}}},
+ {who:"老婆",av:"💍",tag:"家庭",txt:"孩子要上补习班，一年两万八。",
+  R:{s:"出 3,900 报名",e:{spend:3900,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6}}},
+ {who:"老婆",av:"💍",tag:"家庭",txt:"你到底亏了多少？我要听实话。",
+  R:{s:"说实话",e:{mind:-3,social:3}},L:{s:"报喜不报忧",e:{mind:-3,social:-5}}},
+ {who:"老婆",av:"💍",tag:"家庭",txt:"我们多久没一起吃饭了？",
+  R:{s:"出去吃，我请",e:{spend:1200,mind:7,social:8}},L:{s:"最近有点忙",e:{mind:-3,social:-7}}},
+ {who:"老婆",av:"💍",tag:"家庭",when:function(){return !S.st.baby;},txt:"我怀孕了。",
+  R:{s:"留着吧",e:{spend:5200,mind:15,social:12,addst:{baby:-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
+ {who:"老婆",av:"💍",tag:"家庭",when:function(){return S.mind<30;},txt:"这日子没法过了。离婚吧。",
+  R:{s:"挽留，转 5,800",e:{spend:5800,mind:12,social:8}},L:{s:"……好",e:{mind:-14,social:-20,cash:-3000}}},
+ {who:"女儿",av:"👧",tag:"家庭",txt:"爸爸，你为什么总在看手机？",
+  R:{s:"爸爸在工作",e:{mind:-4,social:-4}},L:{s:"陪她玩一会儿",e:{mind:9,social:5}}},
+ {who:"老师",av:"🏫",tag:"家庭",txt:"今晚家长会，你来不来？",
+  R:{s:"我去",e:{mind:4,social:8}},L:{s:"让妈妈去吧",e:{mind:-3,social:-7}}},
+ {who:"老妈",av:"👵",tag:"家庭",txt:"你爸住院了，要先垫三万。",
+  R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
+ {who:"老妈",av:"👵",tag:"家庭",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
+  R:{s:"收下，投进去",e:{borrow:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5}}},
+ {who:"丈母娘",av:"🧓",tag:"家庭",txt:"听说你最近在做投资？妈这里有点闲钱。",
+  R:{s:"拿 20,000",e:{borrow:15000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5}}},
+ {who:"孩子",av:"🤒",tag:"家庭",when:function(){return !!S.st.baby;},txt:"半夜发烧 39 度。",
+  R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6}},L:{s:"先观察一晚",e:{mind:-7,social:-8}}},
+ {who:"孩子",av:"👶",tag:"家庭",when:function(){return !!S.st.baby;},txt:"他第一次叫爸爸。你正在看盘。",
+  R:{s:"再看一会儿",e:{mind:-4,social:-5}},L:{s:"把他抱起来",e:{mind:10,social:7}}},
+ {who:"房东",av:"🏠",tag:"家庭",txt:"下个月房租要涨 800。",
+  R:{s:"认了",e:{spend:1000,social:2}},L:{s:"搬家",e:{spend:2100,mind:-4,social:-4}}},
+
+ /* ---------- 职场 ---------- */
+ {who:"老板",av:"😰",tag:"职场",txt:"公司要优化，名单下周公布，你心里有个数。",
+  R:{s:"赌一把，加仓",e:{buy:4000,mind:-6}},L:{s:"多陪陪家人",e:{social:6,mind:-3}}},
+ {who:"老板",av:"😰",tag:"职场",txt:"今年年终奖取消，改成期权，大家理解一下。",
+  R:{s:"理解",e:{mind:-4,social:3}},L:{s:"我不理解",e:{mind:-5,social:-6}}},
+ {who:"HR",av:"📦",tag:"职场",when:function(){return !S.st.fired;},txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
+  st:{fired:-1},
+  R:{s:"再给我一次机会",e:{mind:-9,social:-5}},L:{s:"我早就不想干了",e:{cash:8000,mind:-3,social:-2}}},
+ {who:"招聘软件",av:"📱",tag:"职场",when:function(){return !!S.st.fired;},txt:"对方已读，没有回。",
+  R:{s:"再降低点期望",e:{mind:-4,social:-3}},L:{s:"先接点零活",e:{cash:2500,mind:-2,social:2}}},
+ {who:"老同事",av:"🤝",tag:"职场",when:function(){return !!S.st.fired && S.social>52;},txt:"我们组缺人，就是降薪三成。来不来？",
+  R:{s:"来",e:{cash:3000,mind:6,social:6,unst:["fired"]}},L:{s:"再等等",e:{mind:-5}}},
+ {who:"同事",av:"☕",tag:"职场",txt:"茶水间都在聊这只票，已经连着涨好几天了。",
+  R:{s:"上车 3,000",e:{buy:3000,mind:-3}},L:{s:"不接最后一棒",e:{mind:4}}},
+ {who:"同事小王",av:"👨‍💼",tag:"职场",txt:"我表哥在券商，说最近有个大动作。跟不跟？",
+  R:{s:"跟 3,000",e:{buy:3000,risk:4,mind:-2}},L:{s:"不信小道消息",e:{mind:3}}},
+ {who:"项目",av:"🌃",tag:"职场",txt:"今晚上线，全组通宵。你走吗？",
+  R:{s:"留下来",e:{mind:-6,social:6}},L:{s:"准时走",e:{mind:5,social:-4}}},
+ {who:"工资",av:"💵",tag:"收入",when:function(){return !S.st.fired;},txt:"这个月工资到账了。",
+  R:{s:"投进去 5,000",e:{buy:5000,mind:-2}},L:{s:"留着过日子",e:{cash:6500,mind:5}}},
+ {who:"私活",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 4,000，要占掉两个周末。",
+  R:{s:"接了",e:{cash:4000,mind:-5}},L:{s:"算了",e:{mind:3,social:-2}}},
+ {who:"年终奖",av:"🧧",tag:"收入",when:function(){return !S.st.fired && S.day>24;},txt:"年终奖发了 15,000。",
+  R:{s:"全部加仓",e:{buy:8000,mind:-4}},L:{s:"给家里买点东西",e:{spend:5200,mind:6,social:9}}},
+
+ /* ---------- 人情 ---------- */
+ {who:"朋友",av:"💌",tag:"人情",txt:"我下个月结婚，你知道的。",
+  R:{s:"随 1,600",e:{spend:1600,social:5,mind:-1}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
+ {who:"朋友",av:"💌",tag:"人情",txt:"借我两万周转一下，下个月一定还。",
+  R:{s:"借他 3,900",e:{spend:3900,social:5,mind:-2}},L:{s:"说自己也紧",e:{social:-5,mind:-3}}},
+ {who:"同学",av:"🍻",tag:"人情",txt:"老同学聚会，人均 600。听说你最近在做投资？",
+  R:{s:"去，AA 也行",e:{spend:1600,social:8,mind:4}},L:{s:"不去",e:{social:-5,mind:-3}}},
+ {who:"张阿姨",av:"🏘",tag:"人情",txt:"楼下办寿宴，整栋楼都去了。",
+  R:{s:"随 800",e:{spend:1000,social:6}},L:{s:"装不在家",e:{social:-6}}},
+ {who:"老同学",av:"🤳",tag:"人情",when:function(){return S.social>48;},txt:"有个项目，稳赚，就是得先投点钱。",
+  R:{s:"投 6,500",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
+ {who:"饭局",av:"🥢",tag:"人情",when:function(){return !S.st.insider && S.social>45;},txt:"有人凑到你耳边说了几句，就几句。",
+  R:{s:"记住这个消息",e:{mind:-3,risk:8,addst:{insider:6}}},L:{s:"当没听见",e:{mind:4}}},
+
+ /* ---------- 自己 ---------- */
+ {who:"体检报告",av:"🏥",tag:"自己",txt:"血压偏高，熬夜太多。医生让你少盯屏幕。",
+  R:{s:"没事，我扛得住",e:{mind:-6}},L:{s:"今晚不看了",e:{mind:10}}},
+ {who:"凌晨三点",av:"🌙",tag:"自己",txt:"你还没睡。屏幕的蓝光里，那根线还在跳。",
+  R:{s:"再看五分钟",e:{mind:-5,risk:1}},L:{s:"睡了",e:{mind:8}}},
+ {who:"镜子",av:"🪞",tag:"自己",txt:"你盯着屏幕，忽然问自己：我到底在干什么？",
+  R:{s:"为了自由",e:{mind:6}},L:{s:"……不知道",e:{mind:-5}}},
+ {who:"周末",av:"🌿",tag:"自己",txt:"难得一个完整的周末，没人找你，也没什么消息。",
+  R:{s:"研究一下行情",e:{mind:-3}},L:{s:"带家人出去走走",e:{spend:1000,mind:9,social:7}}},
+ {who:"地漏",av:"🚿",tag:"自己",txt:"洗完头，地漏上是一层头发。",
+  R:{s:"没事",e:{mind:-3}},L:{s:"去挂个号",e:{spend:1600,mind:6}}},
+ {who:"生日",av:"🎂",tag:"自己",when:function(){return S.social<36;},txt:"今天你生日。没有人记得。",
+  R:{s:"给自己买点东西",e:{spend:1000,mind:5}},L:{s:"照常过",e:{mind:-7}}},
+
+ /* ---------- 市场 ---------- */
+ {who:"银行",av:"🏦",tag:"市场",txt:"新闻说银行要放水了，市面上的钱会变多。",
+  R:{s:"加仓 3,000",e:{buy:3000,mind:-2}},L:{s:"听过太多次了",e:{mind:3}}},
+ {who:"新闻",av:"🌐",tag:"市场",txt:"美国那边利息涨了，据说全球的钱都在往回跑。",
+  R:{s:"抄底 2,000",e:{buy:2000,mind:-3}},L:{s:"先看看",e:{sell:0.3,mind:3}}},
+ {who:"新闻联播",av:"📺",tag:"市场",txt:"要活跃资本市场，提振投资者信心。",
+  R:{s:"加仓 4,000",e:{buy:4000,mind:-3}},L:{s:"政策底不是市场底",e:{mind:4}}},
+ {who:"公司公告",av:"⚠️",tag:"市场",when:function(){return S.equity>500;},txt:"你持有的这家公司说，今年赚的钱少了九成。",
+  R:{s:"补仓摊薄成本",e:{buy:2000,mind:-7}},L:{s:"卖一半",e:{sell:0.5,mind:-4}}},
+ {who:"公司公告",av:"📉",tag:"市场",when:function(){return S.equity>500;},txt:"公司老板自己在卖股票，卖了不少。",
+  R:{s:"相信公司",e:{mind:-3}},L:{s:"跟着卖一半",e:{sell:0.5,mind:2}}},
+ {who:"你的票",av:"📈",tag:"决策",when:function(){return S.equity>800 && S.equity>S.cost;},txt:"它今天又涨了。卖掉一部分落袋，还是再等等？",
+  R:{s:"还能涨，再等等",e:{mind:-2}},L:{s:"落袋为安",e:{sell:0.5,mind:6}}},
+ {who:"你的票",av:"📉",tag:"决策",when:function(){return S.equity>800 && S.equity<S.cost*0.85;},txt:"它已经跌去两成。止损，还是扛着？",
+  R:{s:"扛着，会回来的",e:{mind:-6}},L:{s:"割了",e:{sell:1,mind:-4}}},
+ {who:"你的票",av:"🔴",tag:"决策",when:function(){return S.equity>600;},txt:"今天它封住了涨停。群里都在喊明天还有。",
+  R:{s:"拿着，明天还有",e:{mind:-3}},L:{s:"见好就收",e:{sell:0.6,mind:5}}},
+ {who:"所有人",av:"🫧",tag:"市场",when:function(){return !S.st.bubble && S.day>7;},txt:"半年没人亏过钱了。连门口的保安都在问你买的什么。",
+  st:{bubble:-1},
+  R:{s:"我也加点",e:{buy:4000,mind:-2}},L:{s:"我怕了",e:{sell:0.5,mind:3}}},
+ {who:"所有人",av:"🫧",tag:"市场",when:function(){return !!S.st.bubble;},txt:"菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。",
+  R:{s:"再拿一天",e:{mind:-3}},L:{s:"全部清掉",e:{sell:1,mind:4}}},
+ {who:"你的票",av:"🤩",tag:"市场",when:function(){return !!S.st.bubble && S.equity>1000;},txt:"你赚的钱，已经比一整年工资还多。",
+  R:{s:"还能更多",e:{mind:-4}},L:{s:"够了，走人",e:{sell:1,mind:6}}},
+ {who:"新闻头条",av:"❄️",tag:"市场",when:function(){return !S.st.crisis && S.day>11;},txt:"有一家很大的银行，一夜之间没了。街上没人笑得出来。",
+  st:{crisis:12},
+  R:{s:"这是抄底的机会",e:{buy:2500,mind:-3}},L:{s:"先躲一躲",e:{sell:0.5,mind:3}}},
+ {who:"公司群",av:"❄️",tag:"市场",when:function(){return !!S.st.crisis;},txt:"群里在传第三轮裁员。这次是真的。",
+  R:{s:"再扛一天",e:{mind:-5}},L:{s:"认了，先跑",e:{sell:1,mind:-3}}},
+ {who:"交易所",av:"🚫",tag:"市场",when:function(){return !S.st.halt && S.equity>500;},txt:"公司公告：筹划重大事项，明日起停牌，复牌时间待定。",
+  st:{halt:5},
+  R:{s:"赶紧先卖出来",e:{sell:1,mind:-3}},L:{s:"拿着等消息",e:{mind:-2}}},
+ {who:"交易所",av:"🚫",tag:"市场",when:function(){return !!S.st.halt;},txt:"还是没有复牌的消息。",
+  R:{s:"刷公告",e:{mind:-3}},L:{s:"不看就不难受",e:{mind:2}}},
+
+ /* ---------- 风险 ---------- */
+ {who:"配资公司",av:"📞",tag:"风险",txt:"您好，十倍杠杆，资金秒到账，日息只要万分之八。",
+  R:{s:"先配 12,000",e:{borrow:12000,mind:-8}},L:{s:"直接挂断",e:{mind:5}}},
+ {who:"网贷广告",av:"📱",tag:"风险",txt:"额度 50,000，日息万三，三分钟到账。",
+  R:{s:"借来抄底",e:{borrow:12000,mind:-9}},L:{s:"关掉",e:{mind:4}}},
+ {who:"信用卡",av:"💳",tag:"风险",txt:"账单 8,000。还最低，还是还全额？",
+  R:{s:"还最低",e:{borrow:8000,mind:-4}},L:{s:"咬牙全额还",e:{spend:10400,mind:5}}},
+ {who:"荐股群",av:"🎯",tag:"风险",txt:"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
+  R:{s:"交钱",e:{spend:3900,risk:8,mind:-6}},L:{s:"这就是骗局",e:{mind:5}}},
+ {who:"大 V",av:"⭐",tag:"风险",txt:"十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。",
+  R:{s:"跟 3,000",e:{buy:3000,risk:5,mind:-3}},L:{s:"大 V 也亏钱",e:{mind:4}}},
+ {who:"微信群",av:"👥",tag:"风险",txt:"群里有人说，这只票下周要有大动作，内部消息。",
+  R:{s:"满仓埋伏",e:{buy:4000,risk:9,mind:-5}},L:{s:"这话我听过二十遍",e:{mind:3}}},
+ {who:"券商短信",av:"📲",tag:"风险",when:function(){return S.risk>34 || S.debt>8000;},txt:"你借的钱快不够抵押了，请追加保证金。",
+  R:{s:"再借 5,000 补上",e:{borrow:5000,mind:-6}},L:{s:"认了，让他们卖",e:{sell:0.6,mind:-8,risk:-5}}},
+ {who:"你的债",av:"🧮",tag:"风险",when:function(){return S.debt>3000;},txt:"要不要先把欠的钱还掉一部分？",
+  R:{s:"还 6,000",e:{repay:6000,mind:4,risk:-7}},L:{s:"留着翻身",e:{mind:-3,risk:2}}},
+ {who:"网友",av:"💬",tag:"风险",txt:"别天天看了，每月固定买一点就行，长期拿着。",
+  R:{s:"每月投 2,000",e:{buy:2000,mind:7}},L:{s:"我就是要择时",e:{mind:-3}}},
+ {who:"年度账单",av:"📊",tag:"风险",txt:"你今年的收益，跑赢了 1.2% 的人。",
+  R:{s:"再来一年",e:{mind:-5}},L:{s:"删掉 App",e:{mind:-2,risk:-3}}},
+
+ /* ---------- 意外 ---------- */
+ {who:"你的猫",av:"🐱",tag:"意外",txt:"猫从键盘上踩过去。等你回过神，一笔 8,000 已经买进去了。",
+  R:{s:"就当长线投资",e:{buy:8000,mind:-4}},L:{s:"赶紧撤单",e:{mind:-3}}}
+];
+reset();
+</script>
+</body>
+</html>

@@ -19,9 +19,9 @@
         }
       },
       "right": {
-        "label": "出 4,200",
+        "label": "出 5,500",
         "effects": {
-          "spend": 4200,
+          "spend": 5500,
           "social": 6,
           "mind": 2
         }
@@ -43,9 +43,9 @@
         }
       },
       "right": {
-        "label": "出 3,000 报名",
+        "label": "出 3,900 报名",
         "effects": {
-          "spend": 3000,
+          "spend": 3900,
           "social": 7,
           "mind": 3
         }
@@ -92,7 +92,7 @@
       "right": {
         "label": "出去吃，我请",
         "effects": {
-          "spend": 900,
+          "spend": 1200,
           "mind": 7,
           "social": 8
         }
@@ -116,7 +116,7 @@
       "right": {
         "label": "留着吧",
         "effects": {
-          "spend": 4000,
+          "spend": 5200,
           "mind": 15,
           "social": 12,
           "addst": {
@@ -142,9 +142,9 @@
         }
       },
       "right": {
-        "label": "挽留，转 4,500",
+        "label": "挽留，转 5,800",
         "effects": {
-          "spend": 4500,
+          "spend": 5800,
           "mind": 12,
           "social": 8
         }
@@ -212,9 +212,9 @@
         }
       },
       "right": {
-        "label": "我出 5,000",
+        "label": "我出 6,500",
         "effects": {
-          "spend": 5000,
+          "spend": 6500,
           "mind": 2,
           "social": 8
         }
@@ -286,7 +286,7 @@
       "right": {
         "label": "连夜去医院",
         "effects": {
-          "spend": 1200,
+          "spend": 1600,
           "mind": -3,
           "social": 6
         }
@@ -326,7 +326,7 @@
       "left": {
         "label": "搬家",
         "effects": {
-          "spend": 1600,
+          "spend": 2100,
           "mind": -4,
           "social": -4
         }
@@ -334,7 +334,7 @@
       "right": {
         "label": "认了",
         "effects": {
-          "spend": 800,
+          "spend": 1000,
           "social": 2
         }
       }
@@ -586,7 +586,7 @@
       "left": {
         "label": "给家里买点东西",
         "effects": {
-          "spend": 4000,
+          "spend": 5200,
           "mind": 6,
           "social": 9
         }
@@ -615,9 +615,9 @@
         }
       },
       "right": {
-        "label": "随 1,200",
+        "label": "随 1,600",
         "effects": {
-          "spend": 1200,
+          "spend": 1600,
           "social": 5,
           "mind": -1
         }
@@ -639,9 +639,9 @@
         }
       },
       "right": {
-        "label": "借他 3,000",
+        "label": "借他 3,900",
         "effects": {
-          "spend": 3000,
+          "spend": 3900,
           "social": 5,
           "mind": -2
         }
@@ -663,9 +663,9 @@
         }
       },
       "right": {
-        "label": "去，我请客",
+        "label": "去，AA 也行",
         "effects": {
-          "spend": 1200,
+          "spend": 1600,
           "social": 8,
           "mind": 4
         }
@@ -688,7 +688,7 @@
       "right": {
         "label": "随 800",
         "effects": {
-          "spend": 800,
+          "spend": 1000,
           "social": 6
         }
       }
@@ -709,9 +709,9 @@
         }
       },
       "right": {
-        "label": "投 5,000",
+        "label": "投 6,500",
         "effects": {
-          "spend": 5000,
+          "spend": 6500,
           "risk": 8,
           "mind": -5,
           "social": 3
@@ -818,7 +818,7 @@
       "left": {
         "label": "带家人出去走走",
         "effects": {
-          "spend": 800,
+          "spend": 1000,
           "mind": 9,
           "social": 7
         }
@@ -841,7 +841,7 @@
       "left": {
         "label": "去挂个号",
         "effects": {
-          "spend": 1200,
+          "spend": 1600,
           "mind": 6
         }
       },
@@ -869,7 +869,7 @@
       "right": {
         "label": "给自己买点东西",
         "effects": {
-          "spend": 800,
+          "spend": 1000,
           "mind": 5
         }
       }
@@ -1268,7 +1268,7 @@
       "left": {
         "label": "咬牙全额还",
         "effects": {
-          "spend": 8000,
+          "spend": 10400,
           "mind": 5
         }
       },
@@ -1297,7 +1297,7 @@
       "right": {
         "label": "交钱",
         "effects": {
-          "spend": 3000,
+          "spend": 3900,
           "risk": 8,
           "mind": -6
         }

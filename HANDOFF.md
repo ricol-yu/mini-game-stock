@@ -6,21 +6,29 @@
 
 ---
 
-**最后更新**：2026-10-19 15:33
+**最后更新**：2026-10-19 16:06
 **在哪台设备上写的**：公司 Mac（`ricol-yu@ricol-yu-Mac`）
 **当前分支**：main
-**最后一次 commit**：`88124b2` + 本次 Mac 接入的交接提交
+**最后一次 commit**：`a6ab5ff` + 本次 v3 原型合并提交
 
 ## 1. 做到哪了
 
-**Mac 端接入完成**，尚未跑 spike、未写一行游戏代码。本轮产出三件事：
+**Mac 端接入 + v3 原型合并** 已完成。本轮产出：
 
 - `git clone git@github.com:ricol-yu/mini-game-stock.git` → `~/mini-game-stock`，目录名按 README 约定保持 `mini-game-stock`
 - 验证 `ssh -T git@github.com` → `Hi ricol-yu!`（Mac 上 id_ed25519 已配）
 - 验证 `git config --global user.name/email` → `ricol-yu / 595619863@qq.com`（与 Windows 端一致）
-- 本次 `HANDOFF.md` 提交 + push，相当于通知 Windows 端「另一端已上线」
+- `HANDOFF.md` 切到 Mac → commit `4d33148` → push
+- `docs/devlog/2026-10-19.md` 记录接入 → commit `a6ab5ff` → push
+- **v3 原型合并入仓库**（`prototype.html` + `design.html` + 同步重抽 `data/cards.json`）→ 即将 commit
 
-**Mac 上的 v3 网页原型（`/Users/zhinan009/WorkBuddy/game-stock/prototype.html` + `design.html`）仍未导入仓库**——按 README 的明确警告，「先跑 spike 验手感，验通后再导代码」，所以现在 `~/mini-game-stock` 仓库里只有 Windows 那晚的产物（文档、卡池数据、spike 工程）。
+**冲突检查结果**（合并前做的，三项分别给出）：
+
+- 路径零冲突：`prototype.html` / `design.html` 仓库中不存在，是净新增
+- **真实隐性冲突已修复**：`data/cards.json` 是 10-16 生活成本定标（×1.3）前的旧版，当前 `prototype.html` 是定标后版本。20 处 `spend` 数值 + 8 处卡面文案差异。重抽后已对齐
+- `design.html` 的技术选型/变现结论与 `AGENTS.md` 一致（小程序、纯广告、版号做 Plan B）
+
+**合并后约定**：`/Users/zhinan009/WorkBuddy/game-stock/` 不再是原型真源。如需修改 v3，请直接改仓库里的 `prototype.html`（推送后 Windows 端 `git pull` 即可同步），不要再回头改原目录。
 
 ## 2. 下一步第一件事
 
@@ -55,16 +63,16 @@
 - [x] **Mac 上 SSH key 已配**（id_ed25519，7 月生成），`ssh -T git@github.com` 返回 `Hi ricol-yu!`
 - [x] **Mac 上 git 全局用户已配**：`ricol-yu / 595619863@qq.com`（与 Windows 端一致）
 - [x] **Mac 仓库位置**：`~/mini-game-stock`（按 README 约定，没改名）
+- [x] **v3 原型已合并入仓库**（`prototype.html` + `design.html` + 重抽后的 `data/cards.json`）—— 路径零冲突，但 `data/cards.json` 与旧 prototype 有 20 处数值差异（生活成本 ×1.3 定标前），已重抽对齐
 - [ ] **Mac 端未装微信开发者工具** —— 装上之后才能跑 spike
 - [ ] **AppID 还没填**，两端都还是 `touristappid`。谁拿到测试号就填上并提交，另一端 pull 即可
-- [ ] **v3 原型未导入**（`/Users/zhinan009/WorkBuddy/game-stock/`），按 README/HANDOFF 流程，等 spike 验通后再说
-- [ ] 没有未提交的文件（本次只有 HANDOFF.md 改动）
+- [ ] 没有未提交的文件
 
 ## 5. 下次别忘
 
-- **`prototype.html` 不要改** —— 它在 Mac 上 `/Users/zhinan009/WorkBuddy/game-stock/`，是 v3 的唯一真源。Windows 那晚只做了新增文件，一行都没碰它
-- **正式工程骨架还没建**。不要在仓库根目录随手 `git init` 或新建小程序工程，
-  正确做法是 clone 后拷（README 的「Mac 端导入现有代码」一节），不要 git init 后强推
+- **`prototype.html` 不要改** —— 现在它在仓库根 `/Users/zhinan009/mini-game-stock/prototype.html`，是 v3 的唯一真源（Mac 原目录 `/Users/zhinan009/WorkBuddy/game-stock/` 已不再维护，改了没人同步）
+- **`prototype.html` / `design.html` 已在仓库根，但它们不是小程序代码**。spike 导入时目录仍选 `spike/wxs-swipe`。将来建正式工程时，这两个文件不能被打进主包（HTML 不是小程序页面，但要在 `packOptions.ignore` 里排除，别忘）
+- **正式工程骨架还没建**。不要在仓库根目录随手 `git init` 或新建小程序工程；现在已经 clone 好了，直接在里面建即可
 - 验证完把结论回写 `docs/tech/testing.md` 的「待验证清单」，然后 `spike/` 就可以删了 ——
   它的价值是把结论带出来，不是留下来当代码用
 - 手感参数（`TH` 松手阈值 92px、`ROT` 旋转角 9、`BASE` 归一化基准 300）现在是拍脑袋定的，调完记进 devlog

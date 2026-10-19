@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>《韭菜之王》· 设计与落地方案 v3</title>
+<style>
+  :root{--bg:#f7f8fa;--panel:#fff;--ink:#1f2329;--ink2:#5a6069;--ink3:#8f959e;
+    --line:#e6e8eb;--up:#e02020;--down:#0aa344;--gold:#d48806;--chip:#f2f4f7}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif}
+  .doc{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  header{padding:52px 0 30px;border-bottom:1px solid var(--line);margin-bottom:34px}
+  .kicker{font-size:12px;letter-spacing:2px;color:var(--ink3);margin-bottom:10px}
+  h1{font-size:29px;margin:0 0 12px;letter-spacing:.5px;line-height:1.35}
+  .lead{font-size:15px;color:var(--ink2);margin:0;max-width:680px}
+  .meta{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+  .chip{background:var(--chip);border-radius:6px;padding:3px 10px;font-size:12px;color:var(--ink2)}
+  h2{font-size:20px;margin:46px 0 14px;padding-left:12px;border-left:4px solid var(--ink);letter-spacing:.5px}
+  h3{font-size:15.5px;margin:26px 0 8px}
+  p{margin:0 0 12px}
+  ul{margin:0 0 12px;padding-left:22px}
+  li{margin-bottom:6px}
+  code{background:var(--chip);border-radius:4px;padding:1px 6px;font-size:13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:0 0 16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0 14px;background:#fff;
+    border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#fafbfc;font-weight:600;font-size:12.5px;color:var(--ink2)}
+  tr:last-child td{border-bottom:0}
+  .kv{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+  .kv .b{width:30px;height:30px;border-radius:8px;flex:0 0 auto;display:flex;align-items:center;
+    justify-content:center;font-size:14px;background:var(--chip);font-weight:600}
+  .kv .t b{display:block;font-size:14px;margin-bottom:1px}
+  .kv .t span{font-size:13px;color:var(--ink2);line-height:1.65}
+  .note{border-left:3px solid var(--gold);background:#fffaeb;padding:12px 16px;border-radius:0 8px 8px 0;
+    font-size:13.5px;color:#7a5a00;margin:12px 0}
+  .warn{border-left:3px solid var(--up);background:#fff2f0;padding:12px 16px;border-radius:0 8px 8px 0;
+    font-size:13.5px;color:#8c1a1a;margin:12px 0}
+  .ok{border-left:3px solid var(--down);background:#f0faf4;padding:12px 16px;border-radius:0 8px 8px 0;font-size:13.5px}
+  .steps{counter-reset:s;margin:0;padding:0;list-style:none}
+  .steps li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:14px}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;
+    background:var(--ink);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin:6px 0 16px}
+  .flow span{background:#fff;border:1px solid var(--line);border-radius:20px;padding:5px 13px}
+  .flow i{color:var(--ink3);font-style:normal}
+  .end{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .end:last-child{border-bottom:0}
+  .end .e{font-size:16px;width:22px;text-align:center;flex:0 0 auto}
+  .end .r{flex:1}
+  .end .r b{display:block;font-size:13.5px;margin-bottom:2px}
+  .end .r i{font-style:normal;font-size:13px;color:var(--ink);display:block;margin-bottom:2px}
+  .end .r span{color:var(--ink3);font-size:12.5px}
+  .qa{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+  .qa h4{margin:0 0 8px;font-size:14.5px}
+  .qa .opt{font-size:13px;color:var(--ink2);padding-left:16px;position:relative;margin-bottom:4px}
+  .qa .opt::before{content:"○";position:absolute;left:0;color:var(--ink3)}
+  footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink3)}
+  .num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header>
+  <div class="kicker">设计梳理 · v3 · 2026-10</div>
+  <h1>《韭菜之王》<br>滑牌之间，把一辈子过完</h1>
+  <p class="lead">Reigns 式左右滑动 × 中国股市。一卡 = 一天，一次不可逆的判断。<br>
+     你只有一只票，它甚至没有名字。</p>
+  <div class="meta">
+    <span class="chip">已定名：韭菜之王</span>
+    <span class="chip">单只无名股票</span>
+    <span class="chip">四属性</span>
+    <span class="chip">状态系统</span>
+    <span class="chip">63 张卡 / 13 个结局</span>
+    <span class="chip">数值已用 600 局模拟验证</span>
+  </div>
+</header>
+
+<h2>v3 改了什么</h2>
+<div class="grid2">
+  <div class="kv"><div class="b">1</div><div class="t"><b>定名《韭菜之王》</b><span>暂定名，后续可做查重调整。</span></div></div>
+  <div class="kv"><div class="b">2</div><div class="t"><b>四属性重构</b><span>金钱（现金+持仓合一）、心态、风险、社会。「杠杆」升级为更宽的「风险」，「监管热度」彻底下线。</span></div></div>
+  <div class="kv"><div class="b">3</div><div class="t"><b>状态系统</b><span>7 个 Reigns 式 buff/debuff：泡沫、冬天、停牌、添丁、失业、内线、上头。它们会解锁专属卡并改写每天的规则。</span></div></div>
+  <div class="kv"><div class="b">4</div><div class="t"><b>资质路径已定</b><span>企业主体 + 游戏类目 + 纯激励视频（最快上线）。执行清单见第九节。</span></div></div>
+  <div class="kv"><div class="b">5</div><div class="t"><b>结局语气已定</b><span>克制、有余味、不说教。全文重写，"教育"交给机制，不交给旁白。</span></div></div>
+</div>
+
+<h2>一、定位：给谁玩</h2>
+<p>面向<b>泛用户</b>，不是股民。术语全部改掉（降准 →「银行要放水了」；维持担保比例 →「你借的钱快不够抵押了」），一个专业词都不出现不影响玩法。真正的主线是<b>人生两难</b>：房贷、补习班、住院、裁员、女儿问你为什么总在看手机。</p>
+<p>基调是<b>黑色幽默 + 讽刺</b>，笑点在"这件事真的会发生"，而不是谐音梗。副产品是<b>教育意义</b>——但它必须通过<b>机制</b>传达：加杠杆不产生任何净资产，只是把同样的本金暴露在更大波动里；这条规则本身就是最狠的一句评语，不需要旁白说一个字。</p>
+
+<h2>二、核心循环</h2>
+<div class="flow">
+  <span>抽一张卡</span><i>→</i><span>读它的两难</span><i>→</i><span>左右滑</span><i>→</i><span>属性变化</span><i>→</i>
+  <span>日终：行情 + 状态结算</span><i>→</i><span>四条同时逼近边界</span><i>→</i><span>结局</span>
+</div>
+<p>关键手感来自《王权》的两点：<b>① 松手前能看到代价</b>（拖到一半，红色/绿色印章浮出），犹豫感让人上瘾；<b>② 每条选择的代价不对称</b>——付了房贷保住社会、掉了现金，六个字段同时在动，所以每一滑都是多目标权衡。</p>
+
+<h2>三、四条属性</h2>
+<p>四条的危险方向<b>刻意不对称</b>，这是整个游戏张力的来源：</p>
+<table>
+  <tr><th>属性</th><th>怎么涨</th><th>怎么掉</th><th>到边界会怎样</th><th>界面</th></tr>
+  <tr>
+    <td><b>金钱</b></td>
+    <td>发薪（每 15 天）、私活、年终奖、股价上涨</td>
+    <td>房贷/住院/随礼/聚会每一次人生开销；亏损；借钱利息</td>
+    <td>净资产 = 现金 + 持仓 − 负债 ≤ 0 → 出局</td>
+    <td><b>一条双色</b>：现金（橙）+ 持仓（红），右端斜纹 = 负债</td>
+  </tr>
+  <tr>
+    <td><b>心态</b></td>
+    <td>早睡、陪家人、承认现实、大涨带来的多巴胺</td>
+    <td>熬夜、说谎、被套、每笔亏损按跌幅扣</td>
+    <td>≤ 0 →「不动了」<br><b>满格不致死</b>，≥ 88 进入「上头」状态</td>
+    <td>蓝</td>
+  </tr>
+  <tr>
+    <td><b>风险</b></td>
+    <td>配资、网贷、信用卡最低还款、内幕、荐股群、长期重仓</td>
+    <td>减仓、还债、时间（每天 −0.15，消退极慢）</td>
+    <td>≥ 100 →「爆了」<br>≥ 72 时每天有 7.5% 概率<b>事情自己发生</b>（被强平/催债上门）</td>
+    <td>橙红</td>
+  </tr>
+  <tr>
+    <td><b>社会</b></td>
+    <td>赴宴、随礼、家长会、挽留、添丁</td>
+    <td>每拒绝一次人情；每天自然衰减 −0.22</td>
+    <td>≤ 0 →「没有人」（通讯录很久没响过）</td>
+    <td>绿</td>
+  </tr>
+</table>
+<div class="ok"><b>「社会」是这套系统里最重要的一个改动。</b>它是唯一一条<b>必须花钱才保得住</b>的属性——不经营就慢慢掉，经营就掉钱和心态。于是每一笔人情都有了双重身份：既是感情，也是成本。这在《王权》的四维里是缺失的那一维。</div>
+
+<h3>为什么心态满格不再是死刑</h3>
+<p>v1 里「心态 100 → 上头暴毙」在模拟中暴露出一个反直觉的错误：<b>做所有正确选择的人会死得最快</b>（早睡 +9、陪女儿 +9、陪家人 +9，全部理性选择叠加起来直接顶到 100）。这既不合理，也让游戏变成了反智。</p>
+<p>v3 的改法是：心态高 <b>= 你状态很好</b>，纯收益；但 ≥ 88 会点亮「🎈上头」状态，这个状态下<b>你的每次买入金额自动 ×1.35</b>——不是判决，是诱惑。真正杀人的是那笔变大的单子，不是好心情。</p>
+
+<h2>四、状态系统（这套游戏的骨架）</h2>
+<p>《王权》最狠的一点是：有些选择不给你即时反馈，它开启一段<b>持续若干天的处境</b>，而之后的每一张卡都在那个处境里被重新解读。我们一共 7 个状态：</p>
+<table>
+  <tr><th>状态</th><th>怎么来</th><th>持续</th><th>每天发生什么</th><th>想传达的</th></tr>
+  <tr><td>🫧 <b>泡沫</b></td><td>「所有人」事件卡（第 8 天后）</td>
+      <td>直到自己破掉，最长 14 天</td>
+      <td>大盘每天额外 <b>+2.8%</b>；每天有 9% + 5%×天数 的概率破裂，一次性跌 30–58%</td>
+      <td>涨得越确定，越危险。唯一的解是提前下车——但下车要错过明天的涨幅</td></tr>
+  <tr><td>❄️ <b>冬天</b></td><td>新闻头条卡（第 12 天后）</td><td>12 天</td>
+      <td>大盘每天额外 <b>−2.4%</b>，心态 −1.3</td>
+      <td>系统性风险和你的努力无关</td></tr>
+  <tr><td>🚫 <b>停牌</b></td><td>交易所公告卡</td><td>5 天</td>
+      <td>价格冻结、卖不掉、心态 −0.8</td>
+      <td>有些仓位你以为随时能退，其实不能</td></tr>
+  <tr><td>👶 <b>添丁</b></td><td>「我怀孕了」选择留下</td><td>永久</td>
+      <td>每天 −180 元、心态 +1.0、社会 +0.4；解锁孩子专属卡</td>
+      <td>花钱，但它是少数能<b>持续</b>补心态的东西</td></tr>
+  <tr><td>📦 <b>失业</b></td><td>HR 卡（怎么选都会失业）</td><td>直到找到新工作</td>
+      <td>每天心态 −1.1、<b>没有发薪日</b>、解锁求职卡</td>
+      <td>收入不是理所当然的</td></tr>
+  <tr><td>🕵️ <b>内线</b></td><td>饭局上选择「记住这个消息」</td><td>6 天</td>
+      <td>股票每天额外 +1.4%，但风险 +1.4/天；14% 概率某天发现「消息是假的」</td>
+      <td>内幕是收益的捷径，同时也是风险的快车道</td></tr>
+  <tr><td>🎈 <b>上头</b></td><td>心态 ≥ 88 自动进入</td><td>心态回落到 74 以下自动解除</td>
+      <td>每次买入金额 ×1.35，风险缓慢上升</td>
+      <td>好心情不等于好判断</td></tr>
+</table>
+<div class="note"><b>状态带来的三个额外价值：</b>① 它们是<b>解锁器</b>——停牌中才会出现「复牌时间待定」，失业中才会出现「对方已读不回」，让不同周目长出不同的叙事线；② 它们制造<b>记忆点</b>——玩家记住的不是某张卡，是"那年泡沫破了我的那笔"；③ 它们让"时代"变成可操作对象，而不是背景。</div>
+
+<h2>五、手势语义</h2>
+<table>
+  <tr><th></th><th>右滑 →</th><th>← 左滑</th></tr>
+  <tr><td><b>钱</b></td><td>加仓 / 把钱投进去 / 花这笔钱</td><td>减仓 / 出金 / 不花</td></tr>
+  <tr><td><b>人生</b></td><td>认了 / 承担 / 出席</td><td>算了 / 躲开 / 拒绝</td></tr>
+  <tr><td><b>颜色</b></td><td class="num" style="color:var(--up)">红 = 买入/投入</td><td class="num" style="color:var(--down)">绿 = 卖出/抽身</td></tr>
+</table>
+<p>墨守中国习惯：<b>涨红跌绿</b>，右滑印章红色、左滑印章绿色。阈值 78px（约屏宽 22%），拖动过程关掉 transition 保证跟手，只在松手时开。</p>
+
+<h2>六、卡牌内容：63 张</h2>
+<table>
+  <tr><th>类别</th><th>张数</th><th>代表卡</th></tr>
+  <tr><td>家庭</td><td class="num">14</td><td>房贷 / 补习班 / 家长会 / 我怀孕了 / 离婚吧 / 他第一次叫爸爸</td></tr>
+  <tr><td>市场</td><td class="num">12</td><td>银行放水 / 新闻联播 / 老板减持 / 封住涨停 / 所有人都在赚钱</td></tr>
+  <tr><td>风险</td><td class="num">10</td><td>十倍杠杆 / 额度五万 / 荐股群 / 内部消息 / 追加保证金</td></tr>
+  <tr><td>职场</td><td class="num">8</td><td>优化名单 / HR 找你聊了十分钟 / 全组通宵 / 取消年终奖改期权</td></tr>
+  <tr><td>人情</td><td class="num">6</td><td>我下个月结婚 / 借我两万周转 / 楼下办寿宴 / 有人凑到你耳边说了几句</td></tr>
+  <tr><td>自己</td><td class="num">6</td><td>体检报告 / 凌晨三点 / 地漏上一层头发 / 今天你生日，没有人记得</td></tr>
+  <tr><td>决策 / 收入 / 意外</td><td class="num">7</td><td>跌去两成，止损还是扛着 / 工资到账 / 猫踩了键盘</td></tr>
+</table>
+<p>人生类 34 张、市场类 22 张——<b>人生过半</b>，符合"泛用户向"的定位。所有分支都用 <code>when()</code> 做数据驱动的条件判断（<code>已失业</code>、<code>处于泡沫</code>、<code>社会值 &lt; 36</code>），加卡不改代码。</p>
+
+<h2>七、结局：这一辈子的一句话评价</h2>
+<p>三段式：<b>死法 → 一句话评价 → 你这一辈子的四个数据</b>（活了多少天、最后剩下、买卖次数、最大回落）。用玩家自己的数据说话，一句评价点到为止。</p>
+<div class="card">
+  <div class="end"><span class="e">🫧</span><div class="r"><b>泡沫之后</b><i>"它涨的时候你也觉得不真实。只是那时候，所有人都在笑。"</i><span>泡沫破裂后 10 天内资产腰斩</span></div></div>
+  <div class="end"><span class="e">💥</span><div class="r"><b>爆了</b><i>"一开始只是想再借一点点。后来每一个这样想的人，都长得差不多。"</i><span>风险拉满</span></div></div>
+  <div class="end"><span class="e">🎈</span><div class="r"><b>最后一把</b><i>"点下去的时候，你的手很稳。"</i><span>上头状态下押重注，归零</span></div></div>
+  <div class="end"><span class="e">💀</span><div class="r"><b>穿仓</b><i>"那些钱从来不是你的，它们只是路过你的账户。"</i><span>净资产归零且身负债务</span></div></div>
+  <div class="end"><span class="e">❄️</span><div class="r"><b>冬天还没过完</b><i>"你没有做错什么。只是正好站在了那儿。"</i><span>在熊市里耗尽</span></div></div>
+  <div class="end"><span class="e">🧾</span><div class="r"><b>一无所有</b><i>"钱是一点一点少的，少到最后，你自己都拼不出中间的过程。"</i><span>净资产归零，但没欠债</span></div></div>
+  <div class="end"><span class="e">🧊</span><div class="r"><b>不动了</b><i>"后来你再也没打开过。只是偶尔，还会梦见那根线。"</i><span>心态归零</span></div></div>
+  <div class="end"><span class="e">🪑</span><div class="r"><b>没有人</b><i>"很久没有人问你最近怎么样了。连你自己也不问。"</i><span>社会值归零</span></div></div>
+  <div class="end"><span class="e">🪙</span><div class="r"><b>自由</b><i>"账面上的数字够你安静很久。你花了整个人才走到这里，然后发现自己还是每天打开它。"</i><span>净资产 ≥ 8 万</span></div></div>
+  <div class="end"><span class="e">👁</span><div class="r"><b>一次都没买</b><i>"你一次都没下场。你管这叫清醒。"</i><span>活满 60 天而从未持有</span></div></div>
+  <div class="end"><span class="e">🏆</span><div class="r"><b>六十天</b><i>"你活着，而且赢了。至于哪一步靠的是运气，你自己清楚。"</i><span>活满 60 天，收益 ≥ +60%</span></div></div>
+  <div class="end"><span class="e">🌤</span><div class="r"><b>六十天</b><i>"这样的年份，往后你会怀念。"</i><span>活满 60 天，收益为正</span></div></div>
+  <div class="end"><span class="e">🌧</span><div class="r"><b>六十天</b><i>"账可以慢慢算，日子不行。"</i><span>活满 60 天，收益为负</span></div></div>
+</div>
+<div class="ok"><b>下一步可加</b>：基于玩家本局行为的个性化一句，例如"你交易了 47 次，其中 31 次发生在亏钱之后"。数据来自玩家自己的手，比任何说教都有说服力。</div>
+
+<h2>八、数值平衡（600 局模拟验证）</h2>
+<p>原型跑了两组各 600 局对照实验——<b>随机乱滑</b>代表最差玩家的下限，<b>按趋势操作</b>代表理解了机制的玩家：</p>
+<table>
+  <tr><th>指标</th><th>随机乱滑</th><th>按趋势操作</th></tr>
+  <tr><td>平均存活</td><td class="num">36.1 天</td><td class="num">39.7 天</td></tr>
+  <tr><td>中位数</td><td class="num">34 天</td><td class="num">41 天</td></tr>
+  <tr><td>通关率</td><td class="num">16.5%</td><td class="num">31.7%</td></tr>
+  <tr><td>主要死法</td><td>不动了 28.5% / 穿仓 19% / 泡沫之后 15%</td><td>一无所有 34.5% / 泡沫之后 18%</td></tr>
+</table>
+<p>技巧回报约 <b>2 倍通关率</b>，且死法结构明显不同：随机的人被情绪和杠杆杀死，会玩的人多半是<b>被生活账单慢慢磨死</b>——这正是想要的差异。对照过程中一共修掉四个设计缺陷：</p>
+<div class="note">
+  <b>① 心态满格即死</b> → 做所有正确选择反而死得最快。改成 100 不死、≥ 88 进入「上头」状态（见第三节）。<br>
+  <b>② 大盘是纯随机游走</b> → 趋势不可读，技巧无处安放，会玩和乱滑胜率几乎一样。改成 <b>+0.3%/天长期漂移 + ±2.4% 周期振幅</b>，并在 HUD 显示<b>近五日涨跌</b>——给玩家一个可读的信号，让"顺势"成为一种真实存在的策略。<br>
+  <b>③ 工资只在抽到卡时才发</b> → 理性玩家第 10 天就破产，游戏在行情还没开始之前就结束了。改成<b>每 15 天自动发薪 7,500</b>（失业后停发），这才符合"日子照过"的现实。<br>
+  <b>④ 风险条形同虚设</b> → 只有 0.3% 的人死在风险上。加入「≥ 72 时每天 7.5% 概率自己出事（强制平仓 / 催债上门）」，这条从此有了重量。<br>
+  生活成本的绝对值用参数扫描定标：系数从 1.0 到 1.6 逐档实测，取 <b>1.3</b>——这一档上随机 16% / 会玩 34%，技巧差最大。
+</div>
+
+<h2>九、技术架构</h2>
+<h3>做小程序，不做小游戏</h3>
+<p>本作是 UI 驱动（卡牌 + 动画）而非 Canvas 渲染。用<b>小程序</b>可以拿到 WXML/WXSS 布局、分享卡片、订阅消息、广告组件；用<b>小游戏</b>则所有中文换行都要在 Canvas 上手写。开发效率差一个量级。</p>
+<h3>手势实现要点</h3>
+<ul>
+  <li><code>bindtouchstart / move / end</code> 直接改 <code>transform: translate3d() rotate()</code>；不用已废弃的 <code>wx.createAnimation</code>，也不用 <code>movable-view</code>。</li>
+  <li>拖动中关掉 <code>transition</code>，只在 touchend 打开，避免跟手延迟。</li>
+  <li>阈值 78–90px，配 <code>catchtouchmove</code> 防止整页跟着滑。</li>
+  <li>卡堆只留 3 个节点（当前 + 2 张底牌），滑出即回收。</li>
+</ul>
+<h3>工程结构</h3>
+<table>
+  <tr><th>模块</th><th>说明</th></tr>
+  <tr><td><code>data/cards.js</code></td><td>卡池，纯数据：<code>who / txt / L / R / when / 效果</code>；效果字段 <code>buy sell spend borrow repay cash mind risk social addst unst</code></td></tr>
+  <tr><td><code>data/states.js</code></td><td>7 个状态的定义与每日结算规则</td></tr>
+  <tr><td><code>core/engine.js</code></td><td>状态机：资金动作 + 行情 tick + 状态结算 + 结局判定，与 UI 完全解耦</td></tr>
+  <tr><td><code>core/endings.js</code></td><td>结局条件表 + 一句话评价</td></tr>
+  <tr><td><code>components/card/</code></td><td>卡片组件，内部封装手势</td></tr>
+  <tr><td>云开发（可选）</td><td>卡池云端下发，加卡不发包</td></tr>
+</table>
+<div class="note"><b>务必数据驱动</b>：卡牌和状态全是 JSON，加内容不改代码。这决定了后续能不能靠内容更新留住人。</div>
+
+<h2>十、⚠️ 合规与资质（路径已定：企业主体 + 游戏类目 + 纯激励视频）</h2>
+<div class="ok"><b>内容层面的风险已经基本清零。</b>单只无名股票——没有真实股票代码、没有公司名、没有真实行情，也就谈不上投资建议。需要保留的是：启动页与设置页常驻「本作纯属虚构，不构成任何投资建议」，且玩法上永远不要出现"教你赚钱"的引导。</div>
+<div class="warn">
+  <b>资质才是真正的门槛，而且规则正在收紧，以下按 2026 年现行情况整理，提交前务必在微信公众平台后台核对最新清单。</b><br><br>
+  · <b>软著是硬门槛</b>：无论是否收费都需要《计算机软件著作权登记证书》。<b>周期 30–60 个工作日，加急 7–10 天</b>——这是整条链路上最慢的一环，<b>应当在开发中途就同步申请</b>，不要等做完再补。<br>
+  · <b>工信部备案</b>：所有小程序/小游戏都需要，通过公众平台提交，数日至数周。它和版号是两件事，不可互相替代。<br>
+  · <b>版号</b>：一致的说法是——<b>开通虚拟支付（内购）必须有版号</b>；仅靠广告变现、且属于平台允许的无版号品类，目前多数情况下不需要。但 2026 年有收紧的动向，存在"无版号一律清退"的说法。稳妥做法是：<b>按"无版号可变现"推进，同时把版号当成 Plan B</b>，一旦口径变化不至于停摆。<br>
+  · <b>企业主体是必须的</b>：2025 年 4 月起，微信已不接受<b>个人主体的角色类游戏</b>新增发布和线上更新。本作有大量人物关系与剧情，大概率被归入此类——企业营业执照 + 对公账户是前提。<br>
+  · <b>名称查重</b>：「韭菜之王」建议在微信搜索先查是否被占用，被占则及时改备选名，避免提交后被驳回。
+</div>
+<h3>执行清单（按时间顺序）</h3>
+<ol class="steps">
+  <li><b>同步启动软著申请</b>（今天就能开始，不阻塞开发）——这是最短板。</li>
+  <li>企业营业执照 / 对公账户齐备，完成微信认证。</li>
+  <li>开发到可玩版本后：上传代码 → 提交工信部备案 → 提审（内容审核一般 3–7 个工作日）。</li>
+  <li>累计独立用户达到门槛后开通<b>流量主</b>，接入激励视频。</li>
+  <li>同步评估版号（海南、苏州等地有扶持政策与集中受理通道）。</li>
+</ol>
+<h3>变现：为什么激励视频和这个游戏天生一对</h3>
+<p>本作的核心节奏就是「死 → 再来一辈子」，复活点天然存在。可用的点位：<b>① 死后看广告原地复活一次</b>（本金减半，最自然）；<b>② 翻倍本局的最终收益</b>（结局页）；<b>③ 解锁每日挑战</b>（固定种子，同一天所有人的卡序一样，适合做排行榜）。</p>
+<p>另外，微信平台对 <b>IAA（广告变现）游戏有流量激励政策</b>——2026 年再次上调，活跃时长门槛已降到"累计 3 分钟"量级，长线流水的激励周期延长到 180 天。纯广告路线在平台侧现在是<b>被鼓励</b>的，这进一步支持了路径选择。</p>
+
+<h2>十一、后续路线</h2>
+<ol class="steps">
+  <li><b>v3 手感与数值验证（已完成）</b>：63 张卡、四属性、7 个状态、13 个结局，平衡已用 600 局 × 2 组验证。</li>
+  <li><b>小程序骨架</b>：手势组件 + HUD + engine，跑通 60 天一局。</li>
+  <li><b>内容量产</b>：卡池扩到 100 张，并给老婆 / 老妈 / 老板 / 配资哥各自做一条<b>可追踪的关系状态</b>（信任度会在关键节点决定她走还是留）。</li>
+  <li><b>元游戏</b>：结局图鉴、分享卡、每日挑战（固定种子）、本地存档。</li>
+  <li><b>赛季</b>：2015 杠杆牛 / 2018 去杠杆 / 熊市生存 / 全民炒股元年——每个赛季换一套状态组合与卡池权重。</li>
+</ol>
+
+<h2>十二、还差一个名字</h2>
+<div class="qa"><h4>第四条属性「社会」到底叫什么？</h4>
+  <p style="color:var(--ink2);font-size:13.5px;margin:0 0 8px">UI 上只能放 2–3 个字（「金钱 / 心态 / 风险」都是两个字）。它的内涵是：人情世故、家庭琐事、那些不付代价就会慢慢失去的东西。</p>
+  <div class="opt"><b>人情</b> —— 最准，且和中文里"还人情 / 欠人情"天然接得上；缺点是覆盖面偏窄（同事那份有点勉强）</div>
+  <div class="opt"><b>牵挂</b> —— 最有余味，贴合游戏的调性；缺点是不像消耗品，新手可能读不懂为什么会掉</div>
+  <div class="opt"><b>关系</b> —— 最直白</div>
+  <div class="opt"><b>世故</b> —— 呼应"人情世故"，略文言</div>
+  <div class="opt">保持「社会」不动 —— 够口语，够荒诞</div>
+</div>
+<div class="qa"><h4>已确定，不用再想了</h4>
+  <div class="opt">✔ 游戏名：《韭菜之王》</div>
+  <div class="opt">✔ 资质路径：企业主体 + 游戏类目 + 纯激励视频（最快上线）</div>
+  <div class="opt">✔ 结局评价语气：克制、有余味、不说教、有深度</div>
+</div>
+
+<footer>
+  《韭菜之王》· 设计梳理 v3 — 配套可玩原型见 <code>prototype.html</code>。<br>
+  虚构作品。所有行情、人物与公司均为虚构，不构成任何投资建议。<br>
+  资质部分基于 2026 年公开信息整理，规则处于收紧期，提交前请在微信公众平台核对最新清单。
+</footer>
+</div>
+</body>
+</html>
