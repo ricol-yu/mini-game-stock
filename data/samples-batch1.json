@@ -1,0 +1,125 @@
+{
+  "note": "N2 批 1 样板卡 ×10 —— 供用户审定语气与力度，审定后并入 data/cards.json。非真源，仿真不计入。",
+  "cards": [
+    {
+      "id": "fam_reportcard_01",
+      "who": "孩子",
+      "whoId": "haizi",
+      "avatar": "🧒",
+      "tag": "家庭",
+      "text": "孩子举着卷子过来。你摆摆手：「等一下。」",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "等一下", "effects": { "mind": 1, "social": -8 } },
+      "right": { "label": "现在就签", "effects": { "mind": -2, "social": 6, "spend": 200 } }
+    },
+    {
+      "id": "fam_laopo_02",
+      "who": "老婆",
+      "whoId": "laopo",
+      "avatar": "💍",
+      "tag": "家庭",
+      "text": "「今晚吃什么？」你盯着 K 线，回了句「随便」。",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "随便", "effects": { "mind": 1, "social": -6 } },
+      "right": { "label": "放下手机问她", "effects": { "mind": -2, "social": 7 } }
+    },
+    {
+      "id": "fam_inlaws_02",
+      "who": "丈母娘",
+      "whoId": "zhangmuniang",
+      "avatar": "👵",
+      "tag": "家庭",
+      "text": "饭桌上，丈母娘随口问：「今年，攒下了吧？」",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "还行，还行", "effects": { "social": 5, "spend": 3000 } },
+      "right": { "label": "说了实话", "effects": { "social": -7, "mind": -5 } }
+    },
+    {
+      "id": "work_follower_01",
+      "who": "同事小王",
+      "whoId": "tongshi_xiaowang",
+      "avatar": "👔",
+      "tag": "职场",
+      "text": "小王压低声音：「哥，你买啥，我跟着买。」",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "别跟着我", "effects": { "social": -6, "mind": 2 } },
+      "right": { "label": "把持仓给他看", "effects": { "social": 7, "risk": 8 } }
+    },
+    {
+      "id": "work_review_01",
+      "who": "HR",
+      "whoId": "hr",
+      "avatar": "🗂",
+      "tag": "职场",
+      "text": "HR 笑着说：「聊聊你下半年的规划吧。」",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "表了个态", "effects": { "social": 4, "mind": -8 } },
+      "right": { "label": "问补偿方案", "effects": { "social": -5, "mind": 3 } }
+    },
+    {
+      "id": "self_night_02",
+      "who": "凌晨三点",
+      "whoId": "lingsan",
+      "avatar": "🌙",
+      "tag": "自己",
+      "text": "凌晨三点。美股开盘了，你算了算明天的账。",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "接着算", "effects": { "mind": -6, "risk": -4 } },
+      "right": { "label": "扣下手机", "effects": { "mind": 5, "risk": 6 } }
+    },
+    {
+      "id": "risk_bill_01",
+      "who": "你的债",
+      "whoId": "nidezhai",
+      "avatar": "🧾",
+      "tag": "风险",
+      "text": "账单日到了。你数了数，还差四千。",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "再借一笔", "effects": { "borrow": 4000, "mind": -2, "risk": 4 } },
+      "right": { "label": "卖点票周转", "effects": { "sell": 0.3, "mind": -5, "risk": -6 } }
+    },
+    {
+      "id": "mkt_headline_01",
+      "who": "新闻",
+      "whoId": "xinwen",
+      "avatar": "📰",
+      "tag": "市场",
+      "text": "头条推送：「重磅利好，明天开盘见分晓。」",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "激动转发", "effects": { "mind": 4, "risk": 8 } },
+      "right": { "label": "关掉推送", "effects": { "mind": -2, "risk": -6 } }
+    },
+    {
+      "id": "soc_insider_01",
+      "who": "张阿姨",
+      "whoId": "zhangayi",
+      "avatar": "🧶",
+      "tag": "人情",
+      "text": "张阿姨拉住你：「有个内部渠道，稳得很。」",
+      "when": null,
+      "alwaysStatus": null,
+      "left": { "label": "婉拒了", "effects": { "social": -4, "risk": -2, "mind": 1 } },
+      "right": { "label": "投五千试试", "effects": { "spend": 5000, "risk": 10, "social": 4 } }
+    },
+    {
+      "id": "self_mirror_02",
+      "who": "镜子",
+      "whoId": "jingzi",
+      "avatar": "🪞",
+      "tag": "自己",
+      "text": "镜子里的人眼下乌青，像在问：还来吗？",
+      "when": "mind<45",
+      "alwaysStatus": null,
+      "left": { "label": "再战一次", "effects": { "mind": 4, "risk": 6 } },
+      "right": { "label": "笑了笑，没说话", "effects": { "mind": -2, "risk": -4 } }
+    }
+  ]
+}
