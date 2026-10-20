@@ -1,0 +1,874 @@
+{
+  "meta": {
+    "runs": 10000,
+    "seed": 20261020,
+    "date": "2026-10-20 16:58",
+    "elapsedSec": 16.3,
+    "engine": "prototype.html 真实脚本（vm 无头）+ when 快版过滤器（对拍 11200 组一致）",
+    "playerModel": "随机乱滑（50/50），与原型图例 600 局口径一致"
+  },
+  "summary": {
+    "avgDays": 37.4,
+    "p50Days": 36,
+    "p90Days": 60,
+    "earlyEndPct": 78.43,
+    "repeatRatePct": 13.8,
+    "repeatRateFullPct": 17.5,
+    "fullGames": 2157,
+    "avgUniquePerGame": 32.3,
+    "poolResetsPct": 22.4
+  },
+  "endings": [
+    {
+      "ending": "不动了|你关掉了那个软件",
+      "count": 2596,
+      "pct": 25.96,
+      "avgDay": 35.3
+    },
+    {
+      "ending": "穿仓|你欠的比拥有的多",
+      "count": 1580,
+      "pct": 15.8,
+      "avgDay": 28.1
+    },
+    {
+      "ending": "一无所有|账户比你的人生还干净",
+      "count": 1496,
+      "pct": 14.96,
+      "avgDay": 24.4
+    },
+    {
+      "ending": "六十天|你还站着",
+      "count": 996,
+      "pct": 9.96,
+      "avgDay": 60
+    },
+    {
+      "ending": "泡沫之后|它终于跌回来了",
+      "count": 963,
+      "pct": 9.63,
+      "avgDay": 29.1
+    },
+    {
+      "ending": "没有人|通讯录很久没响过",
+      "count": 680,
+      "pct": 6.8,
+      "avgDay": 36.3
+    },
+    {
+      "ending": "六十天|钱没多，人也没散",
+      "count": 558,
+      "pct": 5.58,
+      "avgDay": 60
+    },
+    {
+      "ending": "六十天|钱没了，人还在",
+      "count": 545,
+      "pct": 5.45,
+      "avgDay": 60
+    },
+    {
+      "ending": "自由|你终于可以不用看了",
+      "count": 382,
+      "pct": 3.82,
+      "avgDay": 41.5
+    },
+    {
+      "ending": "冬天还没过完|你倒在了最后一段路上",
+      "count": 164,
+      "pct": 1.64,
+      "avgDay": 32.1
+    },
+    {
+      "ending": "爆了|系统替你做了决定",
+      "count": 26,
+      "pct": 0.26,
+      "avgDay": 44.3
+    },
+    {
+      "ending": "最后一把|那一单比平时大得多",
+      "count": 14,
+      "pct": 0.14,
+      "avgDay": 43.9
+    }
+  ],
+  "cards": [
+    {
+      "id": "work_options_01",
+      "when": null,
+      "picks": 13618,
+      "plays": 4653,
+      "pickPct": 1.213,
+      "playsPerGame": 0.47
+    },
+    {
+      "id": "work_headhunt_01",
+      "when": null,
+      "picks": 13524,
+      "plays": 4646,
+      "pickPct": 1.205,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "work_layoff_01",
+      "when": null,
+      "picks": 13574,
+      "plays": 4638,
+      "pickPct": 1.209,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "risk_scam_01",
+      "when": null,
+      "picks": 13650,
+      "plays": 4637,
+      "pickPct": 1.216,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "risk_card_01",
+      "when": null,
+      "picks": 13927,
+      "plays": 4632,
+      "pickPct": 1.241,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "work_xiaowang_02",
+      "when": null,
+      "picks": 13758,
+      "plays": 4632,
+      "pickPct": 1.226,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "fam_teacher_01",
+      "when": null,
+      "picks": 13471,
+      "plays": 4623,
+      "pickPct": 1.2,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "soc_lend_02",
+      "when": null,
+      "picks": 13758,
+      "plays": 4619,
+      "pickPct": 1.226,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "fam_anniv_01",
+      "when": null,
+      "picks": 13599,
+      "plays": 4614,
+      "pickPct": 1.211,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "work_screen_01",
+      "when": null,
+      "picks": 13621,
+      "plays": 4583,
+      "pickPct": 1.213,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "self_weekend_02",
+      "when": null,
+      "picks": 13447,
+      "plays": 4578,
+      "pickPct": 1.198,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "fam_hospital_01",
+      "when": null,
+      "picks": 13723,
+      "plays": 4565,
+      "pickPct": 1.223,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "risk_influencer_01",
+      "when": null,
+      "picks": 13595,
+      "plays": 4565,
+      "pickPct": 1.211,
+      "playsPerGame": 0.46
+    },
+    {
+      "id": "self_dilou_02",
+      "when": null,
+      "picks": 13472,
+      "plays": 4546,
+      "pickPct": 1.2,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "soc_wedding_01",
+      "when": null,
+      "picks": 13513,
+      "plays": 4545,
+      "pickPct": 1.204,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_kidsfee_01",
+      "when": null,
+      "picks": 13819,
+      "plays": 4543,
+      "pickPct": 1.231,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_bossmeet_01",
+      "when": null,
+      "picks": 13419,
+      "plays": 4543,
+      "pickPct": 1.195,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_landlordfix_01",
+      "when": null,
+      "picks": 13447,
+      "plays": 4542,
+      "pickPct": 1.198,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_review_01",
+      "when": null,
+      "picks": 13504,
+      "plays": 4539,
+      "pickPct": 1.203,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_mortgage_01",
+      "when": null,
+      "picks": 13644,
+      "plays": 4537,
+      "pickPct": 1.215,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_inlaws_02",
+      "when": null,
+      "picks": 13554,
+      "plays": 4531,
+      "pickPct": 1.207,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "self_hairloss_01",
+      "when": null,
+      "picks": 13515,
+      "plays": 4530,
+      "pickPct": 1.204,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_inlaws_01",
+      "when": null,
+      "picks": 13611,
+      "plays": 4526,
+      "pickPct": 1.213,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "mkt_easing_01",
+      "when": null,
+      "picks": 13517,
+      "plays": 4523,
+      "pickPct": 1.204,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "risk_bill_01",
+      "when": null,
+      "picks": 13463,
+      "plays": 4522,
+      "pickPct": 1.199,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "risk_dca_01",
+      "when": null,
+      "picks": 13554,
+      "plays": 4519,
+      "pickPct": 1.207,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_confess_01",
+      "when": null,
+      "picks": 13594,
+      "plays": 4518,
+      "pickPct": 1.211,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_overtime_01",
+      "when": null,
+      "picks": 13520,
+      "plays": 4513,
+      "pickPct": 1.204,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "self_night_01",
+      "when": null,
+      "picks": 13572,
+      "plays": 4510,
+      "pickPct": 1.209,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "self_checkup_02",
+      "when": null,
+      "picks": 13525,
+      "plays": 4507,
+      "pickPct": 1.205,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_gossip_01",
+      "when": null,
+      "picks": 13385,
+      "plays": 4506,
+      "pickPct": 1.192,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "self_night_03",
+      "when": null,
+      "picks": 13517,
+      "plays": 4506,
+      "pickPct": 1.204,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_tutor_01",
+      "when": null,
+      "picks": 13634,
+      "plays": 4504,
+      "pickPct": 1.215,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_tip_01",
+      "when": null,
+      "picks": 13400,
+      "plays": 4503,
+      "pickPct": 1.194,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_ref_01",
+      "when": null,
+      "picks": 13501,
+      "plays": 4503,
+      "pickPct": 1.203,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_eldermoney_01",
+      "when": null,
+      "picks": 13578,
+      "plays": 4501,
+      "pickPct": 1.21,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "soc_lend_01",
+      "when": null,
+      "picks": 13621,
+      "plays": 4494,
+      "pickPct": 1.213,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "risk_scoreboard_01",
+      "when": null,
+      "picks": 13439,
+      "plays": 4494,
+      "pickPct": 1.197,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "soc_insider_01",
+      "when": null,
+      "picks": 13589,
+      "plays": 4484,
+      "pickPct": 1.211,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_momhealth_01",
+      "when": null,
+      "picks": 13424,
+      "plays": 4484,
+      "pickPct": 1.196,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "mkt_macro_01",
+      "when": null,
+      "picks": 13460,
+      "plays": 4483,
+      "pickPct": 1.199,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "soc_oldmate_01",
+      "when": null,
+      "picks": 13363,
+      "plays": 4481,
+      "pickPct": 1.19,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "risk_leak_01",
+      "when": null,
+      "picks": 13447,
+      "plays": 4478,
+      "pickPct": 1.198,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "self_birthday_02",
+      "when": null,
+      "picks": 13435,
+      "plays": 4478,
+      "pickPct": 1.197,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "soc_reunion_01",
+      "when": null,
+      "picks": 13483,
+      "plays": 4477,
+      "pickPct": 1.201,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "soc_banquet_01",
+      "when": null,
+      "picks": 13496,
+      "plays": 4477,
+      "pickPct": 1.202,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_rent_01",
+      "when": null,
+      "picks": 13550,
+      "plays": 4472,
+      "pickPct": 1.207,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_daughter_01",
+      "when": null,
+      "picks": 13492,
+      "plays": 4471,
+      "pickPct": 1.202,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_laopo_02",
+      "when": null,
+      "picks": 13431,
+      "plays": 4471,
+      "pickPct": 1.197,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "mkt_policy_01",
+      "when": null,
+      "picks": 13426,
+      "plays": 4469,
+      "pickPct": 1.196,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_inlaws_03",
+      "when": null,
+      "picks": 13597,
+      "plays": 4467,
+      "pickPct": 1.211,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "inc_salary_03",
+      "when": null,
+      "picks": 13443,
+      "plays": 4463,
+      "pickPct": 1.198,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "self_mirror_01",
+      "when": null,
+      "picks": 13509,
+      "plays": 4461,
+      "pickPct": 1.203,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "acc_cat_01",
+      "when": null,
+      "picks": 13571,
+      "plays": 4461,
+      "pickPct": 1.209,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "inc_sidejob_01",
+      "when": null,
+      "picks": 13370,
+      "plays": 4459,
+      "pickPct": 1.191,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "work_raise_01",
+      "when": null,
+      "picks": 13462,
+      "plays": 4454,
+      "pickPct": 1.199,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "inc_salary_02",
+      "when": null,
+      "picks": 13495,
+      "plays": 4453,
+      "pickPct": 1.202,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "risk_loanad_01",
+      "when": null,
+      "picks": 13541,
+      "plays": 4450,
+      "pickPct": 1.206,
+      "playsPerGame": 0.45
+    },
+    {
+      "id": "fam_parentmeet_01",
+      "when": null,
+      "picks": 13431,
+      "plays": 4447,
+      "pickPct": 1.197,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "work_follower_01",
+      "when": null,
+      "picks": 13546,
+      "plays": 4447,
+      "pickPct": 1.207,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "fam_reportcard_01",
+      "when": null,
+      "picks": 13462,
+      "plays": 4432,
+      "pickPct": 1.199,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "risk_margin_01",
+      "when": null,
+      "picks": 13576,
+      "plays": 4431,
+      "pickPct": 1.209,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "self_night_02",
+      "when": null,
+      "picks": 13495,
+      "plays": 4420,
+      "pickPct": 1.202,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "self_weekend_01",
+      "when": null,
+      "picks": 13366,
+      "plays": 4417,
+      "pickPct": 1.191,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "self_checkup_01",
+      "when": null,
+      "picks": 13378,
+      "plays": 4414,
+      "pickPct": 1.192,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "mkt_headline_01",
+      "when": null,
+      "picks": 13477,
+      "plays": 4408,
+      "pickPct": 1.201,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "inc_sidejob_02",
+      "when": null,
+      "picks": 13283,
+      "plays": 4402,
+      "pickPct": 1.183,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "fam_dinner_01",
+      "when": null,
+      "picks": 13400,
+      "plays": 4397,
+      "pickPct": 1.194,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "fam_momcall_01",
+      "when": null,
+      "picks": 13520,
+      "plays": 4370,
+      "pickPct": 1.204,
+      "playsPerGame": 0.44
+    },
+    {
+      "id": "fam_pregnant_01",
+      "when": "no:baby",
+      "picks": 12838,
+      "plays": 4292,
+      "pickPct": 1.144,
+      "playsPerGame": 0.43
+    },
+    {
+      "id": "work_fired_01",
+      "when": "no:fired",
+      "picks": 12461,
+      "plays": 4137,
+      "pickPct": 1.11,
+      "playsPerGame": 0.41
+    },
+    {
+      "id": "mkt_bubble_01",
+      "when": "no:bubble; day>7",
+      "picks": 12307,
+      "plays": 4090,
+      "pickPct": 1.096,
+      "playsPerGame": 0.41
+    },
+    {
+      "id": "mkt_halt_01",
+      "when": "no:halt; equity>500",
+      "picks": 11407,
+      "plays": 3846,
+      "pickPct": 1.016,
+      "playsPerGame": 0.38
+    },
+    {
+      "id": "mkt_insidersell_01",
+      "when": "equity>500",
+      "picks": 11315,
+      "plays": 3833,
+      "pickPct": 1.008,
+      "playsPerGame": 0.38
+    },
+    {
+      "id": "dec_limitup_01",
+      "when": "equity>600",
+      "picks": 11362,
+      "plays": 3766,
+      "pickPct": 1.012,
+      "playsPerGame": 0.38
+    },
+    {
+      "id": "mkt_earnings_01",
+      "when": "equity>500",
+      "picks": 11393,
+      "plays": 3741,
+      "pickPct": 1.015,
+      "playsPerGame": 0.37
+    },
+    {
+      "id": "inc_salary_01",
+      "when": "no:fired",
+      "picks": 10977,
+      "plays": 3740,
+      "pickPct": 0.978,
+      "playsPerGame": 0.37
+    },
+    {
+      "id": "mkt_crisis_01",
+      "when": "no:crisis; day>11",
+      "picks": 11176,
+      "plays": 3712,
+      "pickPct": 0.996,
+      "playsPerGame": 0.37
+    },
+    {
+      "id": "soc_whisper_01",
+      "when": "no:insider; social>45",
+      "picks": 9847,
+      "plays": 3264,
+      "pickPct": 0.877,
+      "playsPerGame": 0.33
+    },
+    {
+      "id": "soc_scam_01",
+      "when": "social>48",
+      "picks": 9326,
+      "plays": 3079,
+      "pickPct": 0.831,
+      "playsPerGame": 0.31
+    },
+    {
+      "id": "dec_takeprofit_01",
+      "when": "equity>800; equity>cost",
+      "picks": 7567,
+      "plays": 2549,
+      "pickPct": 0.674,
+      "playsPerGame": 0.25
+    },
+    {
+      "id": "self_mirror_02",
+      "when": "mind<45",
+      "picks": 6749,
+      "plays": 2270,
+      "pickPct": 0.601,
+      "playsPerGame": 0.23
+    },
+    {
+      "id": "risk_repay_01",
+      "when": "debt>3000",
+      "picks": 6526,
+      "plays": 2224,
+      "pickPct": 0.581,
+      "playsPerGame": 0.22
+    },
+    {
+      "id": "inc_bonus_01",
+      "when": "no:fired; day>24",
+      "picks": 6381,
+      "plays": 2121,
+      "pickPct": 0.568,
+      "playsPerGame": 0.21
+    },
+    {
+      "id": "risk_callmargin_01",
+      "when": "risk>34 | debt>8000",
+      "picks": 6167,
+      "plays": 2062,
+      "pickPct": 0.549,
+      "playsPerGame": 0.21
+    },
+    {
+      "id": "self_birthday_01",
+      "when": "social<36",
+      "picks": 4155,
+      "plays": 1400,
+      "pickPct": 0.37,
+      "playsPerGame": 0.14
+    },
+    {
+      "id": "fam_divorce_01",
+      "when": "mind<30",
+      "picks": 4174,
+      "plays": 1382,
+      "pickPct": 0.372,
+      "playsPerGame": 0.14
+    },
+    {
+      "id": "work_jobhunt_01",
+      "when": "has:fired",
+      "picks": 4231,
+      "plays": 1364,
+      "pickPct": 0.377,
+      "playsPerGame": 0.14
+    },
+    {
+      "id": "dec_stoploss_01",
+      "when": "equity>800; equity<cost*0.85",
+      "picks": 3713,
+      "plays": 1253,
+      "pickPct": 0.331,
+      "playsPerGame": 0.13
+    },
+    {
+      "id": "mkt_panic_01",
+      "when": "has:crisis",
+      "picks": 2587,
+      "plays": 892,
+      "pickPct": 0.23,
+      "playsPerGame": 0.09
+    },
+    {
+      "id": "fam_fever_01",
+      "when": "has:baby",
+      "picks": 2593,
+      "plays": 864,
+      "pickPct": 0.231,
+      "playsPerGame": 0.09
+    },
+    {
+      "id": "fam_prenatal_01",
+      "when": "has:baby",
+      "picks": 2585,
+      "plays": 854,
+      "pickPct": 0.23,
+      "playsPerGame": 0.09
+    },
+    {
+      "id": "fam_babysfirst_01",
+      "when": "has:baby",
+      "picks": 2541,
+      "plays": 802,
+      "pickPct": 0.226,
+      "playsPerGame": 0.08
+    },
+    {
+      "id": "work_offer_01",
+      "when": "has:fired; social>52",
+      "picks": 1982,
+      "plays": 638,
+      "pickPct": 0.177,
+      "playsPerGame": 0.06
+    },
+    {
+      "id": "mkt_haltwait_01",
+      "when": "has:halt",
+      "picks": 1313,
+      "plays": 433,
+      "pickPct": 0.117,
+      "playsPerGame": 0.04
+    },
+    {
+      "id": "mkt_fomo_01",
+      "when": "has:bubble",
+      "picks": 916,
+      "plays": 312,
+      "pickPct": 0.082,
+      "playsPerGame": 0.03
+    },
+    {
+      "id": "mkt_paperwin_01",
+      "when": "has:bubble; equity>1000",
+      "picks": 826,
+      "plays": 284,
+      "pickPct": 0.074,
+      "playsPerGame": 0.03
+    }
+  ],
+  "neverPlayed": []
+}
