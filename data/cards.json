@@ -371,25 +371,55 @@
    "when": "no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",
    "alwaysStatus": null,
    "left": {
-    "label": "多陪陪家人",
+    "label": "主动揽活，向老板表态",
     "effects": {
-     "social": 6,
-     "mind": -3,
-     "spend": 1200
+     "mind": -6,
+     "social": 3,
+     "risk": 3
     }
    },
    "right": {
-    "label": "赌一把，加仓",
+    "label": "装没听见，继续盯盘",
     "effects": {
      "buy": 4000,
-     "mind": -6,
-     "social": -4
+     "mind": -3,
+     "social": -5
     }
    },
    "whoId": "laoban",
    "window": [
     28,
     55
+   ]
+  },
+  {
+   "id": "work_layoff_02",
+   "who": "老板",
+   "avatar": "😅",
+   "tag": "职场",
+   "text": "名单公布，上面没有你。但工区少了三个人。",
+   "when": "no:fired;did:work_layoff_01.l",
+   "alwaysStatus": null,
+   "left": {
+    "label": "请部门喝奶茶",
+    "effects": {
+     "spend": 800,
+     "social": 4,
+     "mind": 1
+    }
+   },
+   "right": {
+    "label": "只敢在心里松口气",
+    "effects": {
+     "mind": 3,
+     "social": -2,
+     "risk": 2
+    }
+   },
+   "whoId": "laoban",
+   "window": [
+    30,
+    58
    ]
   },
   {
@@ -423,7 +453,7 @@
    "avatar": "📦",
    "tag": "职场",
    "text": "HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
-   "when": "no:fired;did:work_layoff_01",
+   "when": "no:fired;did:work_layoff_01.r",
    "alwaysStatus": {
     "fired": -1
    },
