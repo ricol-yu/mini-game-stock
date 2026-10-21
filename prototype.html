@@ -46,9 +46,18 @@
   .strip{padding:3px 14px 0;display:flex;gap:5px;flex-wrap:wrap;min-height:0;flex:0 0 auto}
   .strip:empty{display:none}
   .chip{font-size:10px;color:var(--ink-2);background:#f7f8fa;border:1px solid var(--line);
-    border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5}
+    border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5;position:relative;cursor:help}
   .chip b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .chip.hot{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
+  .chip .tip{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%) translateY(-4px);
+    background:rgba(31,35,41,.94);color:#fff;font-size:10.5px;line-height:1.7;padding:8px 11px;border-radius:10px;
+    max-width:215px;width:max-content;white-space:normal;text-align:left;opacity:0;pointer-events:none;transition:.16s;z-index:18}
+  .chip .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
+  .chip:hover .tip,.chip:focus .tip{opacity:1;transform:translateX(-50%) translateY(0)}
+  .chip:first-child .tip{left:0;transform:translateX(0) translateY(-4px)}
+  .chip:first-child:hover .tip,.chip:first-child:focus .tip{transform:translateX(0) translateY(0)}
+  .chip:last-child .tip{left:auto;right:0;transform:translateX(0) translateY(-4px)}
+  .chip:last-child:hover .tip,.chip:last-child:focus .tip{transform:translateX(0) translateY(0)}
 
   .mkt{margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
     padding:6px 10px;flex:0 0 auto}
@@ -163,13 +172,13 @@ var S, MAX_DAY = 60, INIT = 18000, MONEY_CAP = 40000, CARDS = [], ST = {};
 
 /* ============ 状态（Buff / Debuff）字典 ============ */
 ST = {
-  bubble :{nm:"泡沫",  ic:"🫧", tip:"每天都在涨。所有人都觉得自己是天才。"},
-  crisis :{nm:"冬天",  ic:"❄️", tip:"行情一天比一天差，也一天比一天冷。"},
-  halt   :{nm:"停牌",  ic:"🚫", tip:"你的票卖不掉。你也拿不回来。"},
-  baby   :{nm:"添丁",  ic:"👶", tip:"每天都在花钱。奇怪的是，你并不后悔。"},
-  fired  :{nm:"失业",  ic:"📦", tip:"没有工资进来了。"},
-  insider:{nm:"内线",  ic:"🕵️", tip:"你知道别人不知道的事。这本身就是风险。"},
-  over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。"}
+  bubble :{nm:"泡沫",  ic:"🫧", tip:"每天都在涨。所有人都觉得自己是天才。｜每天大涨，但随时会破（越久越危险，第 14 天必破）；破的那天砸 30–58%，心态 −14。"},
+  crisis :{nm:"冬天",  ic:"❄️", tip:"行情一天比一天差，也一天比一天冷。｜行情持续走低、波动放大，心态每天 −1.3。"},
+  halt   :{nm:"停牌",  ic:"🚫", tip:"你的票卖不掉。你也拿不回来。｜价格冻结、不能买卖，心态每天 −0.8。"},
+  baby   :{nm:"添丁",  ic:"👶", tip:"每天都在花钱。奇怪的是，你并不后悔。｜每天现金 −180，心态 +1、社会 +0.4。"},
+  fired  :{nm:"失业",  ic:"📦", tip:"没有工资进来了。｜发薪日不再到账，心态每天 −1.1。"},
+  insider:{nm:"内线",  ic:"🕵️", tip:"你知道别人不知道的事。这本身就是风险。｜每天风险 +1.4；消息有 14% 概率是假的——被拆穿时风险 +16、心态 −10、社会 −5。"},
+  over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。｜心态 ≥88 时进入：下单自动放大 ×1.35、风险每天 +0.3；心态回落到 74 以下解除。"}
 };
 
 function reset(){
@@ -439,8 +448,9 @@ function render(){
   var strip = $("strip"), html = "";
   for(var k in S.st){
     var left = S.st[k], info = ST[k] || {nm:k, ic:"•"};
-    html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"?" hot":"") + '" title="' + (info.tip||"") + '">' +
-            info.ic + info.nm + (left > 0 ? ' <b>' + left + '</b>天' : '') + '</span>';
+    html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"?" hot":"") + '" tabindex="0">' +
+            info.ic + info.nm + (left > 0 ? ' <b>' + left + '</b>天' : '') +
+            '<span class="tip"><b>' + info.ic + " " + info.nm + '</b>' + (info.tip || "（这个状态暂时没有说明。）") + '</span></span>';
   }
   strip.innerHTML = html;
 
