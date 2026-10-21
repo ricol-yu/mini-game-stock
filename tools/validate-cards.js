@@ -20,6 +20,10 @@
  *   text-len    文案字数（卡面 ≤31、选项 ≤11）
  *   did-ref     did: 引用的卡存在
  *   window      window 字段合法
+ *
+ * 第 9 类 choice（2026-10-21 加，L1 写作规则）：
+ *   正文剧透选项 / 选项只碰 1 条数值 / 选项没有代价 / 两选项互相支配或完全相同
+ *   —— 这是「决策感」的门禁，卡池里任何一张滑哪边都一样，玩法就少一张。
  */
 'use strict';
 
@@ -180,6 +184,51 @@ function validateCards(data) {
       err('window', id, 'weight', 'weight 应在 0.1..10，当前 ' + c.weight);
     if (c.once !== undefined && typeof c.once !== 'boolean') err('window', id, 'once', 'once 应为布尔值');
     if (c.hidden !== undefined && typeof c.hidden !== 'boolean') err('window', id, 'hidden', 'hidden 应为布尔值');
+    /* 9. choice 决策质量（L1 写作规则，2026-10-21 加）
+          ① 正文不得包含选项原文（正文替玩家做选择 = 剧透，选择张力归零）
+          ② 每个选项至少触及 2 条数值（只碰心态/社会 = 金钱风险全程缺席）
+          ③ 每个选项至少 1 条下降（禁止「全赚不赔」）
+          ④ 两选项不得互相支配，也不得完全相同（滑哪边都一样 = 伪选择）
+       交易类（buy/sell/borrow/repay）与状态类（addst/unst）不参与④的自动判定，
+       因为它们的真实成本是非线性的（如 sell 0.5 同时降敞口、降风险、还债）。 */
+    var SPOILER_SKIP = ['·'];
+    ['left', 'right'].forEach(function (s) {
+      var sd = c[s];
+      if (!sd || !sd.label || !c.text) return;
+      var lb = String(sd.label).trim();
+      if (lb.length >= 2 && SPOILER_SKIP.indexOf(lb) < 0 && String(c.text).indexOf(lb) >= 0)
+        err('choice', id, s + '.label', '正文里出现了选项原文「' + lb + '」——正文在替玩家做选择，改成只给情境');
+    });
+    ['left', 'right'].forEach(function (s) {
+      var sd = c[s];
+      if (!sd || !sd.effects) return;
+      var e = sd.effects;
+      var dims = 0;
+      for (var k in e) { if (k === 'addst' || k === 'unst') continue; if (e[k]) dims++; }
+      if (dims < 2) err('choice', id, s + '.effects', s + ' 只触及 ' + dims + ' 条数值（要求 ≥2）：' + JSON.stringify(e));
+      var down = (e.spend || 0) > 0 || (e.buy || 0) > 0 || (e.borrow || 0) > 0 ||
+                 (e.repay || 0) > 0 || (e.risk || 0) > 0 || (e.mind || 0) < 0 ||
+                 (e.social || 0) < 0 || (e.cash || 0) < 0 || (e.equity || 0) < 0;
+      if (!down) err('choice', id, s + '.effects', s + ' 是一个「全赚不赔」选项，必须至少付出一条代价');
+    });
+    (function () {
+      var L = c.left && c.left.effects, R = c.right && c.right.effects;
+      if (!L || !R) return;
+      var txn = ['buy', 'sell', 'borrow', 'repay'].some(function (k) { return L[k] !== undefined || R[k] !== undefined; });
+      if (txn || L.addst || R.addst || L.unst || R.unst) return;
+      var vec = function (e) {
+        return { money: (e.cash || 0) - (e.spend || 0), mind: e.mind || 0, risk: -(e.risk || 0), social: e.social || 0 };
+      };
+      var a = vec(L), b = vec(R), ge = true, le = true, same = true;
+      ['money', 'mind', 'risk', 'social'].forEach(function (k) {
+        if (a[k] > b[k]) { le = false; same = false; }
+        if (a[k] < b[k]) { ge = false; same = false; }
+      });
+      if (same) err('choice', id, 'left/right', '两个选项效果完全相同，滑哪边都一样');
+      else if (ge) err('choice', id, 'right', '左选项全面支配右选项（每个维度都不差），右选项是摆设');
+      else if (le) err('choice', id, 'left', '右选项全面支配左选项（每个维度都不差），左选项是摆设');
+    })();
+
   });
 
   // id 判重（第二轮，避免第一轮里的 ids 集合被自身覆盖逻辑干扰）
@@ -220,7 +269,7 @@ function main() {
   if (selftest) { selfTest(validateCards, data); return; }
 
   if (errors.length === 0 && warns.length === 0) {
-    console.log('✓ 校验通过：' + data.cards.length + ' 张卡，8 类检查全绿');
+    console.log('✓ 校验通过：' + data.cards.length + ' 张卡，9 类检查全绿');
     return;
   }
   issues.forEach(function (i) {
@@ -232,7 +281,7 @@ function main() {
 
 /* --selftest：注入 8 个坏样例，8 类检查必须全部命中，否则判失败 */
 function selfTest(validateCards, goodData) {
-  var RULES = ['id', 'required', 'when', 'effect-key', 'effect-range', 'text-len', 'did-ref', 'window'];
+  var RULES = ['id', 'required', 'when', 'effect-key', 'effect-range', 'text-len', 'did-ref', 'window', 'choice'];
   function clone(d) { return JSON.parse(JSON.stringify(d)); }
   function make(mutate) {
     var d = clone(goodData);
@@ -249,6 +298,13 @@ function selfTest(validateCards, goodData) {
     { rule: 'text-len', file: make(function (d) { d.cards[0].text = '这是一段远远超过三十一个字上限的卡面文案，用来验证字数检查是否真的会拦截超长文案不说别的。'; }) },
     { rule: 'did-ref', file: make(function (d) { d.cards[0].when = 'did:no_such_card_99.r'; }) },// 引用
     { rule: 'window', file: make(function (d) { d.cards[0].window = [45, 7]; }) },               // window
+    { rule: 'choice', file: make(function (d) {                                                  // 全赚不赔 + 支配
+        d.cards[0].left.effects = { mind: 3, social: 2 };
+        d.cards[0].right.effects = { mind: 5, social: 4 };
+      }) },
+    { rule: 'choice', file: make(function (d) {                                                  // 正文剧透
+        d.cards[0].text = '这个月房贷 6,800。先拖两天还是出 5,500？';
+      }) },
   ];
 
   var missed = [];
@@ -264,7 +320,7 @@ function selfTest(validateCards, goodData) {
   if (clean.length) missed.push('误报');
 
   if (missed.length) { console.error('✗ 自检失败：' + missed.join(', ')); process.exit(1); }
-  console.log('✓ 自检通过：9 个坏样例全部拦截，真实数据无误报');
+  console.log('✓ 自检通过：' + bad.length + ' 个坏样例全部拦截，真实数据无误报');
 }
 
 if (require.main === module) main();

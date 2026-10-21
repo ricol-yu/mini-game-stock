@@ -167,6 +167,9 @@ function deepEq(a, b){
 
 /* ---------- 生成页面 ---------- */
 const tagList = [...new Set(rows.map(r => r.tag))].sort();
+// 内容指纹代替生成时间：同样数据必定同样字节，跨机器也一样，
+// 这样「收工前跑一次应无 diff」这条判据才成立（时间戳会让每次构建都产生噪音 diff）
+const digest = require('crypto').createHash('sha1').update(JSON.stringify(rows)).digest('hex').slice(0, 8);
 const TAG_PREFIX = JSON.stringify({ '家庭':'fam','职场':'work','收入':'inc','人情':'soc','自己':'self','市场':'mkt','决策':'dec','风险':'risk','意外':'acc' });
 
 const html = `<!DOCTYPE html>
@@ -227,7 +230,7 @@ const html = `<!DOCTYPE html>
 <body>
 <header>
   <h1>韭菜之王 · 卡牌数值管理表</h1>
-  <div class="sub">共 ${rows.length} 张卡 · 数据源 <code>data/cards.json</code> · 生成于 ${new Date().toLocaleString('zh-CN')}
+  <div class="sub">共 ${rows.length} 张卡 · 数据源 <code>data/cards.json</code> · 内容指纹 ${digest}
     —— 改完点「导出 JSON」，覆盖回 data/cards.json，再跑 <code>node tools/sync-json-to-prototype.js</code></div>
 </header>
 

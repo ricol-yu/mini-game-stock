@@ -33,6 +33,35 @@
 不要写成「恭喜通关」「你太贪心了」这种口吻。这个游戏的张力来自
 「你明明知道，但还是这么做了」，不是来自教育。
 
+## 卡面写作规则（L1 · 每张新卡必须过，`validate-cards.js` 会拦）
+
+这套规则是 2026-10-21 用户玩后反馈倒推出来的：**「只有加没有减，没有王权那种数值互相牵制」**。
+当时的量化结果：伪选择 22.8%、全赚不赔选项 32%、41% 的卡只碰 1–2 条数值。
+
+1. **正文不得包含任何一侧选项的原文。**
+   正文只给情境，替玩家做选择的那一刻，选择张力就归零了。
+   ✅「这个月房贷 6,800。你看着办。」
+   ❌「孩子举着卷子过来。你摆摆手：「等一下。」」（左滑选项就叫「等一下」）
+
+2. **每个选项至少触及 2 条数值。**
+   只动心态和社会 = 金钱与风险全程缺席，玩家会觉得「这不用想」。
+
+3. **每个选项至少要付出一条代价。** 没有「全赚不赔」的那一侧。
+
+4. **两个选项互不支配，也不能相同。**
+   一边在每个维度都不比另一边差 = 伪选择。
+
+5. **凡是「占用时间」的选择，代价必须落到金钱或风险上。**
+   隐性时间成本不是成本——这是用户原话戳穿的那件事。
+   占掉今晚 → `risk` 上升（仓位没人盯）；省下今晚 → `cash` 进账（替人值了个夜班）。
+
+6. **「拒绝入局」也要付账。** 不入这个圈子，代价是 `social` 下降（被排除在外），
+   而不是白赚一个心态。这条让「清醒的旁观者」不再是免费姿势。
+
+> 改完卡池必须跑：`node tools/validate-cards.js`（硬门禁）
+> → `node tools/check-dominance.js`（单卡还有没有得想）
+> → `node tools/check-policy.js policy --runs 3000`（决策值不值钱）
+
 ## 文档索引
 
 | 文件 | 内容 |
@@ -42,14 +71,15 @@
 | `docs/plan/development-plan.md` | **执行清单（按节点推进）**：每完成一项打勾写日期，开工先看这里 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
 | `docs/tech/testing.md` | 四层测试环境、真机验证流程、PC 端边界、广告变现硬约束 |
-| `data/cards.json` | **63 张卡的唯一真源**（schema v2：语义 id + whoId）。改卡面文案或数值一律改它 |
+| `data/cards.json` | **97 张卡的唯一真源**（schema v2：语义 id + whoId）。改卡面文案或数值一律改它 |
 | `docs/plan/baseline.md` | **仿真基线**：结局分布/重复率/卡覆盖。改卡后跑仿真与它对比 |
 | `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
-| `tools/validate-cards.js` | **校验器**：`node tools/validate-cards.js`，8 类检查，退出码非 0 = 不许提交 |
+| `tools/validate-cards.js` | **校验器**：`node tools/validate-cards.js`，9 类检查（含决策质量），退出码非 0 = 不许提交 |
+| `tools/check-dominance.js` | 单卡「还需不需要想」：伪选择 / 全赚不赔 / 只碰 1–2 条数值 |
+| `tools/check-policy.js` | 玩法体检：`policy` 五种玩法对照，`scan` 扫 512 种站队玩法 |
 | `tools/simulate.js` | **无头仿真器**：`node tools/simulate.js --runs 10000`，跑的是 prototype.html 的真实代码 |
 | `prototype.html` | 可玩原型，单文件自包含。**由 `cards.json` 生成，不要手改** |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。结论回写到 `testing.md` |
-| `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
 | `tools/cards-manager.html` | 网页管理表，双击即用，改完导出 JSON 覆盖 `cards.json` |
 | `tools/extract-cards.js` | 反向（prototype → json），**仅救急核对**，不是正常流程 |
 

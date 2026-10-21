@@ -61,15 +61,17 @@
    "left": {
     "label": "报喜不报忧",
     "effects": {
-     "mind": -3,
-     "social": -5
+     "mind": -5,
+     "social": -6,
+     "risk": 3
     }
    },
    "right": {
     "label": "说实话",
     "effects": {
-     "mind": -3,
-     "social": 3
+     "mind": 4,
+     "social": 5,
+     "spend": 3000
     }
    },
    "whoId": "laopo"
@@ -154,7 +156,7 @@
    "whoId": "laopo"
   },
   {
-   "id": "fam_daughter_01",
+   "id": "fam_child_01",
    "who": "孩子",
    "avatar": "👧",
    "tag": "家庭",
@@ -165,14 +167,16 @@
     "label": "陪她玩一会儿",
     "effects": {
      "mind": 9,
-     "social": 5
+     "social": 5,
+     "risk": 5
     }
    },
    "right": {
     "label": "爸爸在工作",
     "effects": {
      "mind": -4,
-     "social": -4
+     "social": -4,
+     "risk": -3
     }
    },
    "whoId": "haizi"
@@ -188,15 +192,17 @@
    "left": {
     "label": "让妈妈去吧",
     "effects": {
+     "social": -7,
      "mind": -3,
-     "social": -7
+     "cash": 900
     }
    },
    "right": {
     "label": "我去",
     "effects": {
+     "social": 8,
      "mind": 4,
-     "social": 8
+     "risk": 6
     }
    },
    "whoId": "laoshi"
@@ -238,7 +244,8 @@
     "label": "妈，这个不能要",
     "effects": {
      "mind": 6,
-     "social": 5
+     "social": 5,
+     "spend": 1500
     }
    },
    "right": {
@@ -263,7 +270,8 @@
     "label": "您留着养老",
     "effects": {
      "mind": 5,
-     "social": 5
+     "social": 5,
+     "spend": 1200
     }
    },
    "right": {
@@ -313,14 +321,16 @@
     "label": "把他抱起来",
     "effects": {
      "mind": 10,
-     "social": 7
+     "social": 7,
+     "risk": 5
     }
    },
    "right": {
     "label": "再看一会儿",
     "effects": {
      "mind": -4,
-     "social": -5
+     "social": -5,
+     "risk": -4
     }
    },
    "whoId": "haizi"
@@ -337,7 +347,8 @@
     "label": "搬家",
     "effects": {
      "spend": 2100,
-     "mind": -4,
+     "cash": 1200,
+     "mind": -3,
      "social": -4
     }
    },
@@ -345,6 +356,7 @@
     "label": "认了",
     "effects": {
      "spend": 1000,
+     "mind": -2,
      "social": 2
     }
    },
@@ -362,14 +374,16 @@
     "label": "多陪陪家人",
     "effects": {
      "social": 6,
-     "mind": -3
+     "mind": -3,
+     "spend": 1200
     }
    },
    "right": {
     "label": "赌一把，加仓",
     "effects": {
      "buy": 4000,
-     "mind": -6
+     "mind": -6,
+     "social": -4
     }
    },
    "whoId": "laoban"
@@ -379,21 +393,22 @@
    "who": "老板",
    "avatar": "😰",
    "tag": "职场",
-   "text": "今年年终奖取消，改成期权，大家理解一下。",
+   "text": "今年年终奖取消，改成期权。大家体谅一下。",
    "when": null,
    "alwaysStatus": null,
    "left": {
     "label": "我不理解",
     "effects": {
-     "mind": -5,
-     "social": -6
+     "mind": -2,
+     "social": -7
     }
    },
    "right": {
     "label": "理解",
     "effects": {
-     "mind": -4,
-     "social": 3
+     "mind": -5,
+     "social": 3,
+     "spend": 2500
     }
    },
    "whoId": "laoban"
@@ -411,15 +426,16 @@
    "left": {
     "label": "我早就不想干了",
     "effects": {
-     "cash": 8000,
-     "mind": -3,
-     "social": -2
+     "cash": 5000,
+     "mind": 2,
+     "social": -3
     }
    },
    "right": {
     "label": "再给我一次机会",
     "effects": {
-     "mind": -9,
+     "cash": 9000,
+     "mind": -6,
      "social": -5
     }
    },
@@ -438,14 +454,16 @@
     "effects": {
      "cash": 2500,
      "mind": -2,
-     "social": 2
+     "social": -1,
+     "risk": 5
     }
    },
    "right": {
     "label": "再降低点期望",
     "effects": {
-     "mind": -4,
-     "social": -3
+     "mind": -3,
+     "social": -3,
+     "sell": 0.3
     }
    },
    "whoId": "zhaopin"
@@ -455,24 +473,27 @@
    "who": "老同事",
    "avatar": "🤝",
    "tag": "职场",
-   "text": "我们组缺人，就是降薪三成。来不来？",
+   "text": "我们组缺人，就是降薪三成。你考虑一下。",
    "when": "has:fired; social>52",
    "alwaysStatus": null,
    "left": {
     "label": "再等等",
     "effects": {
-     "mind": -5
+     "mind": -5,
+     "social": -2,
+     "risk": -5
     }
    },
    "right": {
     "label": "来",
     "effects": {
      "cash": 3000,
-     "mind": 6,
-     "social": 6,
+     "mind": 5,
+     "social": 5,
      "unst": [
       "fired"
-     ]
+     ],
+     "risk": 6
     }
    },
    "whoId": "laotongshi"
@@ -488,14 +509,16 @@
    "left": {
     "label": "不接最后一棒",
     "effects": {
-     "mind": 4
+     "mind": 4,
+     "social": -5
     }
    },
    "right": {
     "label": "上车 3,000",
     "effects": {
      "buy": 3000,
-     "mind": -3
+     "mind": -3,
+     "social": 3
     }
    },
    "whoId": "tongshi"
@@ -511,7 +534,8 @@
    "left": {
     "label": "不信小道消息",
     "effects": {
-     "mind": 3
+     "mind": 3,
+     "social": -4
     }
    },
    "right": {
@@ -519,7 +543,8 @@
     "effects": {
      "buy": 3000,
      "risk": 4,
-     "mind": -2
+     "mind": -2,
+     "social": 3
     }
    },
    "whoId": "tongshi_xiaowang"
@@ -536,14 +561,16 @@
     "label": "准时走",
     "effects": {
      "mind": 5,
-     "social": -4
+     "social": -4,
+     "risk": -3
     }
    },
    "right": {
     "label": "留下来",
     "effects": {
      "mind": -6,
-     "social": 6
+     "social": 6,
+     "risk": 6
     }
    },
    "whoId": "xiangmu"
@@ -560,14 +587,16 @@
     "label": "留着过日子",
     "effects": {
      "cash": 6500,
-     "mind": 5
+     "mind": 3,
+     "social": -2
     }
    },
    "right": {
     "label": "投进去 5,000",
     "effects": {
      "buy": 5000,
-     "mind": -2
+     "mind": -2,
+     "social": 3
     }
    },
    "whoId": "gongzi"
@@ -707,7 +736,8 @@
    "left": {
     "label": "装不在家",
     "effects": {
-     "social": -6
+     "social": -6,
+     "mind": -2
     }
    },
    "right": {
@@ -756,7 +786,8 @@
    "left": {
     "label": "当没听见",
     "effects": {
-     "mind": 4
+     "mind": 4,
+     "social": -5
     }
    },
    "right": {
@@ -766,7 +797,8 @@
      "risk": 8,
      "addst": {
       "insider": 6
-     }
+     },
+     "social": 3
     }
    },
    "whoId": "fanju"
@@ -782,13 +814,17 @@
    "left": {
     "label": "今晚不看了",
     "effects": {
-     "mind": 10
+     "mind": 9,
+     "social": 3,
+     "spend": 600
     }
    },
    "right": {
     "label": "没事，我扛得住",
     "effects": {
-     "mind": -6
+     "mind": -6,
+     "social": -3,
+     "cash": 900
     }
    },
    "whoId": "tijian"
@@ -804,14 +840,16 @@
    "left": {
     "label": "睡了",
     "effects": {
-     "mind": 8
+     "mind": 8,
+     "risk": 4
     }
    },
    "right": {
     "label": "再看五分钟",
     "effects": {
      "mind": -5,
-     "risk": 1
+     "risk": 2,
+     "cash": 700
     }
    },
    "whoId": "lingsan"
@@ -827,13 +865,15 @@
    "left": {
     "label": "……不知道",
     "effects": {
-     "mind": -5
+     "mind": -4,
+     "risk": 5
     }
    },
    "right": {
     "label": "为了自由",
     "effects": {
-     "mind": 6
+     "mind": 6,
+     "social": -4
     }
    },
    "whoId": "jingzi"
@@ -849,15 +889,17 @@
    "left": {
     "label": "带家人出去走走",
     "effects": {
-     "spend": 1000,
-     "mind": 9,
-     "social": 7
+     "spend": 1200,
+     "mind": 8,
+     "social": 7,
+     "risk": 3
     }
    },
    "right": {
     "label": "研究一下行情",
     "effects": {
-     "mind": -3
+     "mind": -2,
+     "risk": -3
     }
    },
    "whoId": "zhoumo"
@@ -874,13 +916,15 @@
     "label": "去挂个号",
     "effects": {
      "spend": 1600,
-     "mind": 6
+     "mind": 6,
+     "risk": 3
     }
    },
    "right": {
     "label": "没事",
     "effects": {
-     "mind": -3
+     "mind": -3,
+     "social": -2
     }
    },
    "whoId": "dilou"
@@ -896,14 +940,16 @@
    "left": {
     "label": "照常过",
     "effects": {
-     "mind": -7
+     "mind": -6,
+     "risk": -3
     }
    },
    "right": {
     "label": "给自己买点东西",
     "effects": {
-     "spend": 1000,
-     "mind": 5
+     "spend": 1200,
+     "mind": 5,
+     "risk": 3
     }
    },
    "whoId": "shengri"
@@ -919,14 +965,16 @@
    "left": {
     "label": "听过太多次了",
     "effects": {
-     "mind": 3
+     "mind": 3,
+     "social": -4
     }
    },
    "right": {
     "label": "加仓 3,000",
     "effects": {
      "buy": 3000,
-     "mind": -2
+     "mind": -2,
+     "social": 3
     }
    },
    "whoId": "yinhang"
@@ -942,15 +990,17 @@
    "left": {
     "label": "先看看",
     "effects": {
-     "sell": 0.3,
-     "mind": 3
+     "sell": 0.35,
+     "mind": 2,
+     "social": -3
     }
    },
    "right": {
     "label": "抄底 2,000",
     "effects": {
      "buy": 2000,
-     "mind": -3
+     "mind": -3,
+     "social": 3
     }
    },
    "whoId": "xinwen"
@@ -966,14 +1016,16 @@
    "left": {
     "label": "政策底不是市场底",
     "effects": {
-     "mind": 4
+     "mind": 4,
+     "social": -3
     }
    },
    "right": {
     "label": "加仓 4,000",
     "effects": {
      "buy": 4000,
-     "mind": -3
+     "mind": -3,
+     "social": 4
     }
    },
    "whoId": "xinwen"
@@ -1014,13 +1066,16 @@
     "label": "跟着卖一半",
     "effects": {
      "sell": 0.5,
-     "mind": 2
+     "mind": 2,
+     "social": -3
     }
    },
    "right": {
     "label": "相信公司",
     "effects": {
-     "mind": -3
+     "mind": -4,
+     "risk": 5,
+     "social": 3
     }
    },
    "whoId": "gongsi_gonggao"
@@ -1037,13 +1092,15 @@
     "label": "落袋为安",
     "effects": {
      "sell": 0.5,
-     "mind": 6
+     "mind": 4,
+     "spend": 800
     }
    },
    "right": {
     "label": "还能涨，再等等",
     "effects": {
-     "mind": -2
+     "mind": -3,
+     "risk": 5
     }
    },
    "whoId": "nidepiao"
@@ -1060,13 +1117,15 @@
     "label": "割了",
     "effects": {
      "sell": 1,
-     "mind": -4
+     "mind": -3,
+     "social": -5
     }
    },
    "right": {
     "label": "扛着，会回来的",
     "effects": {
-     "mind": -6
+     "mind": -6,
+     "risk": 6
     }
    },
    "whoId": "nidepiao"
@@ -1083,13 +1142,16 @@
     "label": "见好就收",
     "effects": {
      "sell": 0.6,
-     "mind": 5
+     "mind": 4,
+     "social": -3
     }
    },
    "right": {
     "label": "拿着，明天还有",
     "effects": {
-     "mind": -3
+     "mind": -3,
+     "risk": 5,
+     "social": 3
     }
    },
    "whoId": "nidepiao"
@@ -1108,14 +1170,16 @@
     "label": "我怕了",
     "effects": {
      "sell": 0.5,
-     "mind": 3
+     "mind": 2,
+     "social": -4
     }
    },
    "right": {
     "label": "我也加点",
     "effects": {
      "buy": 4000,
-     "mind": -2
+     "mind": -3,
+     "social": 4
     }
    },
    "whoId": "suoyouren"
@@ -1132,13 +1196,15 @@
     "label": "全部清掉",
     "effects": {
      "sell": 1,
-     "mind": 4
+     "mind": 3,
+     "social": -5
     }
    },
    "right": {
     "label": "再拿一天",
     "effects": {
-     "mind": -3
+     "mind": -3,
+     "risk": 6
     }
    },
    "whoId": "suoyouren"
@@ -1155,13 +1221,15 @@
     "label": "够了，走人",
     "effects": {
      "sell": 1,
-     "mind": 6
+     "mind": 5,
+     "spend": 2500
     }
    },
    "right": {
     "label": "还能更多",
     "effects": {
-     "mind": -4
+     "mind": -4,
+     "risk": 5
     }
    },
    "whoId": "nidepiao"
@@ -1180,14 +1248,16 @@
     "label": "先躲一躲",
     "effects": {
      "sell": 0.5,
-     "mind": 3
+     "mind": 2,
+     "social": -3
     }
    },
    "right": {
     "label": "这是抄底的机会",
     "effects": {
      "buy": 2500,
-     "mind": -3
+     "mind": -3,
+     "social": 3
     }
    },
    "whoId": "xinwen"
@@ -1204,13 +1274,15 @@
     "label": "认了，先跑",
     "effects": {
      "sell": 1,
-     "mind": -3
+     "mind": -3,
+     "social": -3
     }
    },
    "right": {
     "label": "再扛一天",
     "effects": {
-     "mind": -5
+     "mind": -5,
+     "risk": 5
     }
    },
    "whoId": "xinwen"
@@ -1228,14 +1300,16 @@
    "left": {
     "label": "拿着等消息",
     "effects": {
-     "mind": -2
+     "mind": -2,
+     "risk": 5
     }
    },
    "right": {
     "label": "赶紧先卖出来",
     "effects": {
      "sell": 1,
-     "mind": -3
+     "mind": -3,
+     "risk": 2
     }
    },
    "whoId": "jiaoyisuo"
@@ -1251,13 +1325,15 @@
    "left": {
     "label": "不看就不难受",
     "effects": {
-     "mind": 2
+     "mind": 3,
+     "risk": 5
     }
    },
    "right": {
     "label": "刷公告",
     "effects": {
-     "mind": -3
+     "mind": -3,
+     "risk": -4
     }
    },
    "whoId": "jiaoyisuo"
@@ -1273,14 +1349,16 @@
    "left": {
     "label": "直接挂断",
     "effects": {
-     "mind": 5
+     "mind": 4,
+     "social": -4
     }
    },
    "right": {
     "label": "先配 12,000",
     "effects": {
      "borrow": 12000,
-     "mind": -8
+     "mind": -8,
+     "social": 3
     }
    },
    "whoId": "peizigongsi"
@@ -1296,7 +1374,8 @@
    "left": {
     "label": "关掉",
     "effects": {
-     "mind": 4
+     "mind": 4,
+     "social": -3
     }
    },
    "right": {
@@ -1313,7 +1392,7 @@
    "who": "信用卡",
    "avatar": "💳",
    "tag": "风险",
-   "text": "账单 8,000。还最低，还是还全额？",
+   "text": "账单 8,000。这个月怎么处理？",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -1343,7 +1422,8 @@
    "left": {
     "label": "这就是骗局",
     "effects": {
-     "mind": 5
+     "mind": 5,
+     "social": -4
     }
    },
    "right": {
@@ -1351,7 +1431,8 @@
     "effects": {
      "spend": 3900,
      "risk": 8,
-     "mind": -6
+     "mind": -6,
+     "social": 4
     }
    },
    "whoId": "jianguqun"
@@ -1367,7 +1448,8 @@
    "left": {
     "label": "大 V 也亏钱",
     "effects": {
-     "mind": 4
+     "mind": 4,
+     "social": -3
     }
    },
    "right": {
@@ -1375,7 +1457,8 @@
     "effects": {
      "buy": 3000,
      "risk": 5,
-     "mind": -3
+     "mind": -3,
+     "social": 3
     }
    },
    "whoId": "dawei"
@@ -1391,7 +1474,8 @@
    "left": {
     "label": "这话我听过二十遍",
     "effects": {
-     "mind": 3
+     "mind": 3,
+     "social": -4
     }
    },
    "right": {
@@ -1399,7 +1483,8 @@
     "effects": {
      "buy": 4000,
      "risk": 9,
-     "mind": -5
+     "mind": -5,
+     "social": 4
     }
    },
    "whoId": "weixinqun"
@@ -1465,14 +1550,16 @@
    "left": {
     "label": "我就是要择时",
     "effects": {
-     "mind": -3
+     "mind": -2,
+     "risk": 3
     }
    },
    "right": {
     "label": "每月投 2,000",
     "effects": {
      "buy": 2000,
-     "mind": 7
+     "mind": 5,
+     "risk": 6
     }
    },
    "whoId": "wangyou"
@@ -1488,14 +1575,17 @@
    "left": {
     "label": "删掉 App",
     "effects": {
-     "mind": -2,
-     "risk": -3
+     "mind": -3,
+     "risk": -4,
+     "social": -5
     }
    },
    "right": {
     "label": "再来一年",
     "effects": {
-     "mind": -5
+     "mind": -5,
+     "risk": 4,
+     "social": 3
     }
    },
    "whoId": "nianduzhangdan"
@@ -1511,7 +1601,8 @@
    "left": {
     "label": "赶紧撤单",
     "effects": {
-     "mind": -3
+     "mind": -2,
+     "spend": 400
     }
    },
    "right": {
@@ -1529,14 +1620,15 @@
    "whoId": "haizi",
    "avatar": "🧒",
    "tag": "家庭",
-   "text": "孩子举着卷子过来。你摆摆手：「等一下。」",
+   "text": "孩子举着卷子过来，站在你旁边，没说话。",
    "when": null,
    "alwaysStatus": null,
    "left": {
     "label": "等一下",
     "effects": {
      "mind": 1,
-     "social": -8
+     "social": -8,
+     "risk": 3
     }
    },
    "right": {
@@ -1554,21 +1646,23 @@
    "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
-   "text": "「今晚吃什么？」你盯着 K 线，回了句「随便」。",
+   "text": "「今晚吃什么？」她站在门口。你盯着 K 线。",
    "when": null,
    "alwaysStatus": null,
    "left": {
     "label": "随便",
     "effects": {
      "mind": 1,
-     "social": -6
+     "social": -6,
+     "risk": 3
     }
    },
    "right": {
     "label": "放下手机问她",
     "effects": {
      "mind": -2,
-     "social": 7
+     "social": 7,
+     "risk": -2
     }
    }
   },
@@ -1774,21 +1868,23 @@
    "whoId": "laoma",
    "avatar": "📞",
    "tag": "家庭",
-   "text": "老妈来电话，问吃了没。你嗯嗯两声，眼睛没离开盘面。",
+   "text": "老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
    "when": null,
    "alwaysStatus": null,
    "left": {
     "label": "嗯嗯两声",
     "effects": {
      "social": -5,
-     "mind": 1
+     "mind": 1,
+     "risk": 3
     }
    },
    "right": {
     "label": "回厨房看她",
     "effects": {
      "social": 7,
-     "mind": -2
+     "mind": -2,
+     "risk": -3
     }
    }
   },
@@ -1823,7 +1919,7 @@
    "whoId": "fangdong",
    "avatar": "🔧",
    "tag": "家庭",
-   "text": "热水器坏了三天。房东说：找人，要等下周。",
+   "text": "热水器坏了三天。房东说要排期。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -1896,7 +1992,7 @@
    "whoId": "haizi",
    "avatar": "🧒",
    "tag": "家庭",
-   "text": "兴趣班要续费 6,800。他说，其实不想去了。",
+   "text": "兴趣班该交钱了，6,800。他说，其实不想去了。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -1976,14 +2072,16 @@
     "label": "承认走神",
     "effects": {
      "social": -4,
-     "mind": 1
+     "mind": 1,
+     "risk": 2
     }
    },
    "right": {
     "label": "找理由圆",
     "effects": {
      "social": 2,
-     "mind": -4
+     "mind": -4,
+     "risk": -2
     }
    }
   },
@@ -1999,8 +2097,9 @@
    "left": {
     "label": "忍了",
     "effects": {
-     "mind": -6,
-     "social": -2
+     "mind": -5,
+     "social": -2,
+     "cash": 1200
     }
    },
    "right": {
@@ -2024,7 +2123,8 @@
    "left": {
     "label": "回绝了",
     "effects": {
-     "mind": -2
+     "mind": -2,
+     "social": 3
     }
    },
    "right": {
@@ -2048,7 +2148,8 @@
     "label": "投了简历",
     "effects": {
      "mind": 4,
-     "social": -3
+     "social": -3,
+     "risk": 3
     }
    },
    "right": {
@@ -2154,7 +2255,8 @@
     "label": "手机扔客厅",
     "effects": {
      "mind": 4,
-     "risk": -3
+     "risk": -3,
+     "social": -3
     }
    }
   },
@@ -2196,7 +2298,8 @@
     "label": "关掉账户页",
     "effects": {
      "mind": 3,
-     "risk": -2
+     "risk": -2,
+     "spend": 300
     }
    },
    "right": {
@@ -2209,7 +2312,7 @@
    }
   },
   {
-   "id": "self_dilou_02",
+   "id": "self_hairloss_02",
    "who": "地漏",
    "whoId": "dilou",
    "avatar": "🚿",
@@ -2302,7 +2405,7 @@
     "label": "推了",
     "effects": {
      "mind": 2,
-     "social": 1
+     "social": -2
     }
    }
   },
