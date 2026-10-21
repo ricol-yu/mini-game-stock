@@ -5,7 +5,7 @@
    "who": "老婆",
    "avatar": "💍",
    "tag": "家庭",
-   "text": "这个月房贷 6,800。你看着办。",
+   "text": "这个月房贷 5,500。你看着办。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -30,7 +30,7 @@
    "who": "老婆",
    "avatar": "💍",
    "tag": "家庭",
-   "text": "孩子要上补习班，一年两万八。",
+   "text": "孩子要上补习班，一年两万八。先交这学期 3,900。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -212,7 +212,7 @@
    "who": "老妈",
    "avatar": "👵",
    "tag": "家庭",
-   "text": "你爸住院了，要先垫三万。",
+   "text": "你爸住院了，要先垫 6,500。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -277,7 +277,7 @@
    "right": {
     "label": "拿 20,000",
     "effects": {
-     "borrow": 15000,
+     "borrow": 20000,
      "mind": -8,
      "social": -5
     }
@@ -340,7 +340,7 @@
    "who": "房东",
    "avatar": "🏠",
    "tag": "家庭",
-   "text": "下个月房租要涨 800。",
+   "text": "下个月房租要涨 800。房东在等你回复。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -348,14 +348,14 @@
     "effects": {
      "spend": 2100,
      "cash": 1200,
-     "mind": -3,
+     "mind": 2,
      "social": -4
     }
    },
    "right": {
     "label": "认了",
     "effects": {
-     "spend": 1000,
+     "spend": 800,
      "mind": -2,
      "social": 2
     }
@@ -368,7 +368,7 @@
    "avatar": "😰",
    "tag": "职场",
    "text": "公司要优化，名单下周公布，你心里有个数。",
-   "when": null,
+   "when": "no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",
    "alwaysStatus": null,
    "left": {
     "label": "多陪陪家人",
@@ -386,7 +386,11 @@
      "social": -4
     }
    },
-   "whoId": "laoban"
+   "whoId": "laoban",
+   "window": [
+    28,
+    55
+   ]
   },
   {
    "id": "work_options_01",
@@ -419,7 +423,7 @@
    "avatar": "📦",
    "tag": "职场",
    "text": "HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
-   "when": "no:fired",
+   "when": "no:fired;did:work_layoff_01",
    "alwaysStatus": {
     "fired": -1
    },
@@ -439,7 +443,11 @@
      "social": -5
     }
    },
-   "whoId": "hr"
+   "whoId": "hr",
+   "window": [
+    30,
+    58
+   ]
   },
   {
    "id": "work_jobhunt_01",
@@ -555,7 +563,7 @@
    "avatar": "🌃",
    "tag": "职场",
    "text": "今晚上线，全组通宵。你走吗？",
-   "when": null,
+   "when": "no:fired",
    "alwaysStatus": null,
    "left": {
     "label": "准时走",
@@ -573,14 +581,18 @@
      "risk": 6
     }
    },
-   "whoId": "xiangmu"
+   "whoId": "xiangmu",
+   "window": [
+    5,
+    42
+   ]
   },
   {
    "id": "inc_salary_01",
-   "who": "工资",
+   "who": "绩效",
    "avatar": "💵",
    "tag": "收入",
-   "text": "这个月工资到账了。",
+   "text": "季度绩效下来了，6,500。",
    "when": "no:fired",
    "alwaysStatus": null,
    "left": {
@@ -594,12 +606,13 @@
    "right": {
     "label": "投进去 5,000",
     "effects": {
+     "cash": 6500,
      "buy": 5000,
      "mind": -2,
      "social": 3
     }
    },
-   "whoId": "gongzi"
+   "whoId": "jixiao"
   },
   {
    "id": "inc_sidejob_01",
@@ -636,6 +649,7 @@
    "left": {
     "label": "给家里买点东西",
     "effects": {
+     "cash": 15000,
      "spend": 5200,
      "mind": 6,
      "social": 9
@@ -644,11 +658,16 @@
    "right": {
     "label": "全部加仓",
     "effects": {
-     "buy": 8000,
+     "cash": 15000,
+     "buy": 15000,
      "mind": -4
     }
    },
-   "whoId": "nianzhongjiang"
+   "whoId": "nianzhongjiang",
+   "window": [
+    42,
+    60
+   ]
   },
   {
    "id": "soc_wedding_01",
@@ -691,9 +710,9 @@
     }
    },
    "right": {
-    "label": "借他 3,900",
+    "label": "先借 4,000",
     "effects": {
-     "spend": 3900,
+     "spend": 4000,
      "social": 5,
      "mind": -2
     }
@@ -718,7 +737,7 @@
    "right": {
     "label": "去，AA 也行",
     "effects": {
-     "spend": 1600,
+     "spend": 600,
      "social": 8,
      "mind": 4
     }
@@ -743,7 +762,7 @@
    "right": {
     "label": "随 800",
     "effects": {
-     "spend": 1000,
+     "spend": 800,
      "social": 6
     }
    },
@@ -1379,7 +1398,7 @@
     }
    },
    "right": {
-    "label": "借来抄底",
+    "label": "借 12,000 抄底",
     "effects": {
      "borrow": 12000,
      "mind": -9
@@ -1398,7 +1417,7 @@
    "left": {
     "label": "咬牙全额还",
     "effects": {
-     "spend": 10400,
+     "spend": 8000,
      "mind": 5
     }
    },
@@ -1429,7 +1448,7 @@
    "right": {
     "label": "交钱",
     "effects": {
-     "spend": 3900,
+     "spend": 8888,
      "risk": 8,
      "mind": -6,
      "social": 4
@@ -1721,7 +1740,7 @@
    "avatar": "🗂",
    "tag": "职场",
    "text": "HR 笑着说：「聊聊你下半年的规划吧。」",
-   "when": null,
+   "when": "no:fired;did:work_raise_01.l",
    "alwaysStatus": null,
    "left": {
     "label": "表了个态",
@@ -1736,7 +1755,11 @@
      "social": -5,
      "mind": 3
     }
-   }
+   },
+   "window": [
+    22,
+    54
+   ]
   },
   {
    "id": "self_night_02",
@@ -2055,7 +2078,8 @@
     "label": "包 1,600",
     "effects": {
      "social": -6,
-     "mind": -2
+     "mind": -2,
+     "spend": 1600
     }
    }
   },
@@ -2066,7 +2090,7 @@
    "avatar": "📋",
    "tag": "职场",
    "text": "例会上你走神了。老板停顿两秒，点了你的名。",
-   "when": null,
+   "when": "no:fired",
    "alwaysStatus": null,
    "left": {
     "label": "承认走神",
@@ -2083,7 +2107,11 @@
      "mind": -4,
      "risk": -2
     }
-   }
+   },
+   "window": [
+    6,
+    42
+   ]
   },
   {
    "id": "work_raise_01",
@@ -2092,7 +2120,7 @@
    "avatar": "📋",
    "tag": "职场",
    "text": "调薪名单出了。你从头看到尾，没有你。",
-   "when": null,
+   "when": "no:fired;did:work_screen_01.l|no:fired;did:work_bossmeet_01.l|no:fired;did:work_overtime_01.l|no:fired;did:work_tuanjian_01.l",
    "alwaysStatus": null,
    "left": {
     "label": "忍了",
@@ -2109,7 +2137,11 @@
      "mind": -3,
      "risk": 3
     }
-   }
+   },
+   "window": [
+    18,
+    50
+   ]
   },
   {
    "id": "work_headhunt_01",
@@ -2192,7 +2224,7 @@
    "avatar": "📊",
    "tag": "职场",
    "text": "项目明早上线。今晚，你在改自己的止损位。",
-   "when": null,
+   "when": "no:fired",
    "alwaysStatus": null,
    "left": {
     "label": "改完再说",
@@ -2208,7 +2240,11 @@
      "social": 5,
      "risk": 3
     }
-   }
+   },
+   "window": [
+    4,
+    40
+   ]
   },
   {
    "id": "self_checkup_02",
@@ -2337,16 +2373,17 @@
   },
   {
    "id": "inc_salary_02",
-   "who": "工资",
-   "whoId": "gongzi",
+   "who": "奖金",
+   "whoId": "jiangjin",
    "avatar": "💰",
    "tag": "收入",
-   "text": "工资到账 9,600。你先算了算，这个月要还的。",
+   "text": "项目奖金到账 9,600。你先算了算，这个月要还的。",
    "when": null,
    "alwaysStatus": null,
    "left": {
     "label": "转一半补仓",
     "effects": {
+     "cash": 9600,
      "buy": 4800,
      "mind": 3,
      "risk": 4
@@ -2355,6 +2392,7 @@
    "right": {
     "label": "留着过活",
     "effects": {
+     "cash": 9600,
      "mind": -2,
      "risk": -3
     }
@@ -2456,6 +2494,35 @@
     "effects": {
      "social": -8,
      "mind": -2
+    }
+   }
+  },
+  {
+   "id": "work_tuanjian_01",
+   "who": "团建",
+   "avatar": "🍺",
+   "tag": "职场",
+   "text": "部门团建，火锅局。你知道他们想聊年终评。",
+   "whoId": "tuangjian",
+   "when": "no:fired",
+   "window": [
+    8,
+    40
+   ],
+   "left": {
+    "label": "不去",
+    "effects": {
+     "mind": 3,
+     "social": -6
+    }
+   },
+   "right": {
+    "label": "去",
+    "effects": {
+     "spend": 400,
+     "social": 6,
+     "mind": -3,
+     "risk": 3
     }
    }
   }

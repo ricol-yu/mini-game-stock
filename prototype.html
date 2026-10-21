@@ -172,7 +172,7 @@ ST = {
 function reset(){
   S = { cash:INIT, equity:0, cost:0, debt:0,
         mind:58, risk:0, social:56, day:1,
-        st:{}, flags:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
+        st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
   _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0;   // 新的一局：袋子、冷却、同类记忆都重来
@@ -220,12 +220,12 @@ function setST(key, d){ S.st[key] = d; }
 function clearST(key){ delete S.st[key]; }
 
 function apply(e){
+  if(e.cash)  S.cash = S.cash + e.cash;              // 钱先到账，再谈怎么花（发薪/报销类选项依赖此序）
   if(e.buy)   buy(e.buy);
   if(e.sell)  sell(e.sell);
   if(e.spend) spend(e.spend);
   if(e.borrow)borrow(e.borrow);
   if(e.repay) repay(e.repay);
-  S.cash   = S.cash   + (e.cash   || 0);
   S.equity = clamp(S.equity + (e.equity || 0), 0, 999999);
   S.cost   = clamp(S.cost   + (e.cost   || 0), 0, 999999);
   S.mind   = clamp(S.mind   + (e.mind   || 0), 0, 100);
@@ -237,6 +237,8 @@ function apply(e){
 /* ============ 声明式 when 条件解析器 ============
    语法：; 或 & = 且    | = 或
    状态：has:xxx（有此状态）  /  no:xxx（无此状态）
+   关联：did:cardid.l（这张卡的左选你选过）/ did:cardid.r / did:cardid（选过，不分左右）
+        seen:cardid（这张卡出现过——哪怕你当时没选它，伏笔用）
    比较：属性 符号 值
          如 mind<30 / social>48 / equity>800
             equity>cost（浮盈）/ equity<cost*0.85（跌超 15%）
@@ -261,7 +263,13 @@ function andOK(group){
   return true;
 }
 function oneCond(t){
-  var m = t.match(/^(has|no):(\w+)$/);       // 状态判断
+  var m = t.match(/^did:([\w]+?)\.(l|r)$/i); // 关联判断：那件事你那么选过
+  if(m) return !!(S.did && S.did[m[1]] === m[2].toLowerCase());
+  m = t.match(/^did:([\w]+)$/i);             // 选过，不分左右
+  if(m) return !!(S.did && S.did[m[1]]);
+  m = t.match(/^seen:([\w]+)$/i);            // 见过这张卡（伏笔）
+  if(m) return !!(S.seen && S.seen[m[1]]);
+  m = t.match(/^(has|no):(\w+)$/);       // 状态判断
   if(m){
     var on = !!(S.st && S.st[m[2]]);
     return m[1] === "has" ? on : !on;
@@ -286,6 +294,7 @@ function exprVal(x){
   return isNaN(v) ? undefined : v;
 }
 function resolve(c, dir){                            // 打出一张卡
+  S.did[c._id] = dir === "R" ? "r" : "l";            // 记下这笔账：这件事你那么选了（关联卡以后会来清算）
   var sel = dir === "R" ? c.R : c.L;
   apply(sel.e);
   if(c.st) for(var k in c.st) setST(k, c.st[k]);     // 事件自带的状态，与选择无关
@@ -490,11 +499,32 @@ function bagFind(skip, strict, avoidTag){
   var hit = 0;
   for(var i = 0; i < _bag.length; i++){
     var k = _bag[i], c = CARDS[k];
-    if((c._used|0) >= 2) continue;
+    var cap = isChain(c) ? 1 : 2;                    // 关联卡是叙事大事件，一局只出一次
+    if((c._used|0) >= cap) continue;
     if(!whenOK(c.when)) continue;
+    if(c.win && (S.day < c.win[0] || S.day > c.win[1])) continue;   // window:[起,止]——时机没到就不出场
     if(strict && _recent.indexOf(k) >= 0) continue;
     if(avoidTag && c.tag === avoidTag) continue;      // 不和上一张同类
     if(hit++ < skip) continue;
+    return i;
+  }
+  return -1;
+}
+
+/* 关联卡：when 里带 did:/seen: 的叙事卡——账已经记下的事，要尽快回响 */
+function isChain(c){
+  return !!c.when && c.when.indexOf("did:") >= 0 || !!c.when && c.when.indexOf("seen:") >= 0;
+}
+
+/* 插队通道：条件已满足的关联卡优先于普通抽卡出场 */
+function bagFindChain(){
+  for(var i = 0; i < _bag.length; i++){
+    var k = _bag[i], c = CARDS[k];
+    if(!isChain(c)) continue;
+    if((c._used|0) >= 1) continue;
+    if(c.win && (S.day < c.win[0] || S.day > c.win[1])) continue;
+    if(!whenOK(c.when)) continue;
+    if(_recent.indexOf(k) >= 0) continue;             // 刚打过的不算回响
     return i;
   }
   return -1;
@@ -509,7 +539,9 @@ function bagPick(avoidTag){
 }
 
 function pick(){
-  var i = bagPick(_lastTag);
+  var i = bagFindChain();                             // ① 账记下了，事要来——关联卡插队
+  if(i < 0) i = bagPick(_lastTag);
+  if(i < 0){ bagShuffle(); i = bagFindChain(); }
   if(i < 0){ bagShuffle(); i = bagPick(_lastTag); }   // 袋里没有能出的 → 重洗一轮
   if(i < 0){                                          // 全池都到 2 次上限 → 清零重开
     CARDS.forEach(function(c){ c._used = 0; });
@@ -521,6 +553,7 @@ function pick(){
   c._used = (c._used|0) + 1;
   _lastTag = c.tag;
   _recent.unshift(k); if(_recent.length > COOL) _recent.pop();
+  S.seen[c._id] = 1;                                  // 见过就是见过，伏笔从这记起
   return c;
 }
 
@@ -528,7 +561,10 @@ function pick(){
 function pickPeek(skip, top){
   var i = bagFind(skip, true, top.tag);
   if(i < 0) i = bagFind(skip, false);
-  return i < 0 ? top : CARDS[_bag[i]];
+  if(i < 0) return top;
+  var c = CARDS[_bag[i]];
+  S.seen[c._id] = 1;                                  // 压在下面的也算见过——玩家看到了它
+  return c;
 }
 function build(c){
   var d = document.createElement("div"); d.className = "card";
@@ -651,9 +687,9 @@ $("o-b").onclick = function(){ $("over").classList.remove("on"); reset(); };
    卡牌级 st：无论怎么选都会发生的事（时代、公告、命运）
 ========================================= */
 CARDS = [
- {who:"老婆",av:"💍",tag:"家庭",txt:"这个月房贷 6,800。你看着办。",
+ {who:"老婆",av:"💍",tag:"家庭",txt:"这个月房贷 5,500。你看着办。",
   R:{s:"出 5,500",e:{spend:5500,social:6,mind:2}},L:{s:"先拖两天",e:{mind:-5,social:-5}}},
- {who:"老婆",av:"💍",tag:"家庭",txt:"孩子要上补习班，一年两万八。",
+ {who:"老婆",av:"💍",tag:"家庭",txt:"孩子要上补习班，一年两万八。先交这学期 3,900。",
   R:{s:"出 3,900 报名",e:{spend:3900,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6}}},
  {who:"老婆",av:"💍",tag:"家庭",txt:"你到底亏了多少？我要听实话。",
   R:{s:"说实话",e:{mind:4,social:5,spend:3000}},L:{s:"报喜不报忧",e:{mind:-5,social:-6,risk:3}}},
@@ -667,23 +703,23 @@ CARDS = [
   R:{s:"爸爸在工作",e:{mind:-4,social:-4,risk:-3}},L:{s:"陪她玩一会儿",e:{mind:9,social:5,risk:5}}},
  {who:"老师",av:"🏫",tag:"家庭",txt:"今晚家长会，你来不来？",
   R:{s:"我去",e:{social:8,mind:4,risk:6}},L:{s:"让妈妈去吧",e:{social:-7,mind:-3,cash:900}}},
- {who:"老妈",av:"👵",tag:"家庭",txt:"你爸住院了，要先垫三万。",
+ {who:"老妈",av:"👵",tag:"家庭",txt:"你爸住院了，要先垫 6,500。",
   R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
  {who:"老妈",av:"👵",tag:"家庭",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
   R:{s:"收下，投进去",e:{borrow:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5,spend:1500}}},
  {who:"丈母娘",av:"🧓",tag:"家庭",txt:"听说你最近在做投资？妈这里有点闲钱。",
-  R:{s:"拿 20,000",e:{borrow:15000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5,spend:1200}}},
+  R:{s:"拿 20,000",e:{borrow:20000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5,spend:1200}}},
  {who:"孩子",av:"🤒",tag:"家庭",when:"has:baby",txt:"半夜发烧 39 度。",
   R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6}},L:{s:"先观察一晚",e:{mind:-7,social:-8}}},
  {who:"孩子",av:"👶",tag:"家庭",when:"has:baby",txt:"他第一次叫爸爸。你正在看盘。",
   R:{s:"再看一会儿",e:{mind:-4,social:-5,risk:-4}},L:{s:"把他抱起来",e:{mind:10,social:7,risk:5}}},
- {who:"房东",av:"🏠",tag:"家庭",txt:"下个月房租要涨 800。",
-  R:{s:"认了",e:{spend:1000,mind:-2,social:2}},L:{s:"搬家",e:{spend:2100,cash:1200,mind:-3,social:-4}}},
- {who:"老板",av:"😰",tag:"职场",txt:"公司要优化，名单下周公布，你心里有个数。",
+ {who:"房东",av:"🏠",tag:"家庭",txt:"下个月房租要涨 800。房东在等你回复。",
+  R:{s:"认了",e:{spend:800,mind:-2,social:2}},L:{s:"搬家",e:{spend:2100,cash:1200,mind:2,social:-4}}},
+ {who:"老板",av:"😰",tag:"职场",when:"no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",win:[28,55],txt:"公司要优化，名单下周公布，你心里有个数。",
   R:{s:"赌一把，加仓",e:{buy:4000,mind:-6,social:-4}},L:{s:"多陪陪家人",e:{social:6,mind:-3,spend:1200}}},
  {who:"老板",av:"😰",tag:"职场",txt:"今年年终奖取消，改成期权。大家体谅一下。",
   R:{s:"理解",e:{mind:-5,social:3,spend:2500}},L:{s:"我不理解",e:{mind:-2,social:-7}}},
- {who:"HR",av:"📦",tag:"职场",when:"no:fired",txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
+ {who:"HR",av:"📦",tag:"职场",when:"no:fired;did:work_layoff_01",win:[30,58],txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
   st:{fired:-1},
   R:{s:"再给我一次机会",e:{cash:9000,mind:-6,social:-5}},L:{s:"我早就不想干了",e:{cash:5000,mind:2,social:-3}}},
  {who:"招聘软件",av:"📱",tag:"职场",when:"has:fired",txt:"对方已读，没有回。",
@@ -694,22 +730,22 @@ CARDS = [
   R:{s:"上车 3,000",e:{buy:3000,mind:-3,social:3}},L:{s:"不接最后一棒",e:{mind:4,social:-5}}},
  {who:"同事小王",av:"👨‍💼",tag:"职场",txt:"我表哥在券商，说最近有个大动作。跟不跟？",
   R:{s:"跟 3,000",e:{buy:3000,risk:4,mind:-2,social:3}},L:{s:"不信小道消息",e:{mind:3,social:-4}}},
- {who:"项目",av:"🌃",tag:"职场",txt:"今晚上线，全组通宵。你走吗？",
+ {who:"项目",av:"🌃",tag:"职场",when:"no:fired",win:[5,42],txt:"今晚上线，全组通宵。你走吗？",
   R:{s:"留下来",e:{mind:-6,social:6,risk:6}},L:{s:"准时走",e:{mind:5,social:-4,risk:-3}}},
- {who:"工资",av:"💵",tag:"收入",when:"no:fired",txt:"这个月工资到账了。",
-  R:{s:"投进去 5,000",e:{buy:5000,mind:-2,social:3}},L:{s:"留着过日子",e:{cash:6500,mind:3,social:-2}}},
+ {who:"绩效",av:"💵",tag:"收入",when:"no:fired",txt:"季度绩效下来了，6,500。",
+  R:{s:"投进去 5,000",e:{cash:6500,buy:5000,mind:-2,social:3}},L:{s:"留着过日子",e:{cash:6500,mind:3,social:-2}}},
  {who:"私活",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 4,000，要占掉两个周末。",
   R:{s:"接了",e:{cash:4000,mind:-5}},L:{s:"算了",e:{mind:3,social:-2}}},
- {who:"年终奖",av:"🧧",tag:"收入",when:"no:fired; day>24",txt:"年终奖发了 15,000。",
-  R:{s:"全部加仓",e:{buy:8000,mind:-4}},L:{s:"给家里买点东西",e:{spend:5200,mind:6,social:9}}},
+ {who:"年终奖",av:"🧧",tag:"收入",when:"no:fired; day>24",win:[42,60],txt:"年终奖发了 15,000。",
+  R:{s:"全部加仓",e:{cash:15000,buy:15000,mind:-4}},L:{s:"给家里买点东西",e:{cash:15000,spend:5200,mind:6,social:9}}},
  {who:"朋友",av:"💌",tag:"人情",txt:"我下个月结婚，你知道的。",
   R:{s:"随 1,600",e:{spend:1600,social:5,mind:-1}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
  {who:"朋友",av:"💌",tag:"人情",txt:"借我两万周转一下，下个月一定还。",
-  R:{s:"借他 3,900",e:{spend:3900,social:5,mind:-2}},L:{s:"说自己也紧",e:{social:-5,mind:-3}}},
+  R:{s:"先借 4,000",e:{spend:4000,social:5,mind:-2}},L:{s:"说自己也紧",e:{social:-5,mind:-3}}},
  {who:"同学",av:"🍻",tag:"人情",txt:"老同学聚会，人均 600。听说你最近在做投资？",
-  R:{s:"去，AA 也行",e:{spend:1600,social:8,mind:4}},L:{s:"不去",e:{social:-5,mind:-3}}},
+  R:{s:"去，AA 也行",e:{spend:600,social:8,mind:4}},L:{s:"不去",e:{social:-5,mind:-3}}},
  {who:"张阿姨",av:"🏘",tag:"人情",txt:"楼下办寿宴，整栋楼都去了。",
-  R:{s:"随 800",e:{spend:1000,social:6}},L:{s:"装不在家",e:{social:-6,mind:-2}}},
+  R:{s:"随 800",e:{spend:800,social:6}},L:{s:"装不在家",e:{social:-6,mind:-2}}},
  {who:"老同学",av:"🤳",tag:"人情",when:"social>48",txt:"有个项目，稳赚，就是得先投点钱。",
   R:{s:"投 6,500",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
  {who:"饭局",av:"🥢",tag:"人情",when:"no:insider; social>45",txt:"有人凑到你耳边说了几句，就几句。",
@@ -762,11 +798,11 @@ CARDS = [
  {who:"配资公司",av:"📞",tag:"风险",txt:"您好，十倍杠杆，资金秒到账，日息只要万分之八。",
   R:{s:"先配 12,000",e:{borrow:12000,mind:-8,social:3}},L:{s:"直接挂断",e:{mind:4,social:-4}}},
  {who:"网贷广告",av:"📱",tag:"风险",txt:"额度 50,000，日息万三，三分钟到账。",
-  R:{s:"借来抄底",e:{borrow:12000,mind:-9}},L:{s:"关掉",e:{mind:4,social:-3}}},
+  R:{s:"借 12,000 抄底",e:{borrow:12000,mind:-9}},L:{s:"关掉",e:{mind:4,social:-3}}},
  {who:"信用卡",av:"💳",tag:"风险",txt:"账单 8,000。这个月怎么处理？",
-  R:{s:"还最低",e:{borrow:8000,mind:-4}},L:{s:"咬牙全额还",e:{spend:10400,mind:5}}},
+  R:{s:"还最低",e:{borrow:8000,mind:-4}},L:{s:"咬牙全额还",e:{spend:8000,mind:5}}},
  {who:"荐股群",av:"🎯",tag:"风险",txt:"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
-  R:{s:"交钱",e:{spend:3900,risk:8,mind:-6,social:4}},L:{s:"这就是骗局",e:{mind:5,social:-4}}},
+  R:{s:"交钱",e:{spend:8888,risk:8,mind:-6,social:4}},L:{s:"这就是骗局",e:{mind:5,social:-4}}},
  {who:"大 V",av:"⭐",tag:"风险",txt:"十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。",
   R:{s:"跟 3,000",e:{buy:3000,risk:5,mind:-3,social:3}},L:{s:"大 V 也亏钱",e:{mind:4,social:-3}}},
  {who:"微信群",av:"👥",tag:"风险",txt:"群里有人说，这只票下周要有大动作，内部消息。",
@@ -789,7 +825,7 @@ CARDS = [
   R:{s:"说了实话",e:{social:-7,mind:-5}},L:{s:"还行，还行",e:{social:5,spend:3000}}},
  {who:"同事小王",av:"👔",tag:"职场",txt:"小王压低声音：「哥，你买啥，我跟着买。」",
   R:{s:"把持仓给他看",e:{social:7,risk:8}},L:{s:"别跟着我",e:{social:-6,mind:2}}},
- {who:"HR",av:"🗂",tag:"职场",txt:"HR 笑着说：「聊聊你下半年的规划吧。」",
+ {who:"HR",av:"🗂",tag:"职场",when:"no:fired;did:work_raise_01.l",win:[22,54],txt:"HR 笑着说：「聊聊你下半年的规划吧。」",
   R:{s:"问补偿方案",e:{social:-5,mind:3}},L:{s:"表了个态",e:{social:4,mind:-8}}},
  {who:"凌晨三点",av:"🌙",tag:"自己",txt:"凌晨三点。美股开盘了，你算了算明天的账。",
   R:{s:"扣下手机",e:{mind:5,risk:6}},L:{s:"接着算",e:{mind:-6,risk:-4}}},
@@ -816,10 +852,10 @@ CARDS = [
  {who:"老婆",av:"💍",tag:"家庭",when:"has:baby",txt:"产检约在周四上午。她说：你来吧。",
   R:{s:"让她妈陪",e:{social:-8,mind:1}},L:{s:"陪她去",e:{spend:1200,social:7,mind:-2}}},
  {who:"丈母娘",av:"👵",tag:"家庭",txt:"丈母娘生日。红包行情，你研究了一晚上。",
-  R:{s:"包 1,600",e:{social:-6,mind:-2}},L:{s:"包 6,600",e:{spend:6600,social:8}}},
- {who:"老板",av:"📋",tag:"职场",txt:"例会上你走神了。老板停顿两秒，点了你的名。",
+  R:{s:"包 1,600",e:{social:-6,mind:-2,spend:1600}},L:{s:"包 6,600",e:{spend:6600,social:8}}},
+ {who:"老板",av:"📋",tag:"职场",when:"no:fired",win:[6,42],txt:"例会上你走神了。老板停顿两秒，点了你的名。",
   R:{s:"找理由圆",e:{social:2,mind:-4,risk:-2}},L:{s:"承认走神",e:{social:-4,mind:1,risk:2}}},
- {who:"老板",av:"📋",tag:"职场",txt:"调薪名单出了。你从头看到尾，没有你。",
+ {who:"老板",av:"📋",tag:"职场",when:"no:fired;did:work_screen_01.l|no:fired;did:work_bossmeet_01.l|no:fired;did:work_overtime_01.l|no:fired;did:work_tuanjian_01.l",win:[18,50],txt:"调薪名单出了。你从头看到尾，没有你。",
   R:{s:"去找他谈",e:{social:3,mind:-3,risk:3}},L:{s:"忍了",e:{mind:-5,social:-2,cash:1200}}},
  {who:"招聘软件",av:"📱",tag:"职场",txt:"猎头：薪资涨三成。背景调查会联系现公司。",
   R:{s:"聊聊看",e:{mind:4,risk:6}},L:{s:"回绝了",e:{mind:-2,social:3}}},
@@ -827,7 +863,7 @@ CARDS = [
   R:{s:"没投",e:{mind:-3,social:2}},L:{s:"投了简历",e:{mind:4,social:-3,risk:3}}},
  {who:"同事小王",av:"👔",tag:"职场",txt:"小王开口：借 5,000 补仓，下个月一定还。",
   R:{s:"拒绝了",e:{social:-6,mind:-1}},L:{s:"借了",e:{spend:5000,social:5,risk:4}}},
- {who:"项目",av:"📊",tag:"职场",txt:"项目明早上线。今晚，你在改自己的止损位。",
+ {who:"项目",av:"📊",tag:"职场",when:"no:fired",win:[4,40],txt:"项目明早上线。今晚，你在改自己的止损位。",
   R:{s:"专心上线",e:{mind:-4,social:5,risk:3}},L:{s:"改完再说",e:{social:-7,mind:3}}},
  {who:"体检报告",av:"🩺",tag:"自己",txt:"复查单出来了。血压，还是高。",
   R:{s:"先放放",e:{mind:-3,risk:4}},L:{s:"吃药，早睡",e:{spend:300,mind:2,risk:-4}}},
@@ -839,8 +875,8 @@ CARDS = [
   R:{s:"截图发群里",e:{social:3,mind:-5,risk:4}},L:{s:"关掉账户页",e:{mind:3,risk:-2,spend:300}}},
  {who:"地漏",av:"🚿",tag:"自己",txt:"地漏又堵了。水漫过来，像某种预兆。",
   R:{s:"明天再说",e:{mind:-3,social:-2}},L:{s:"叫师傅",e:{spend:200,mind:2}}},
- {who:"工资",av:"💰",tag:"收入",txt:"工资到账 9,600。你先算了算，这个月要还的。",
-  R:{s:"留着过活",e:{mind:-2,risk:-3}},L:{s:"转一半补仓",e:{buy:4800,mind:3,risk:4}}},
+ {who:"奖金",av:"💰",tag:"收入",txt:"项目奖金到账 9,600。你先算了算，这个月要还的。",
+  R:{s:"留着过活",e:{cash:9600,mind:-2,risk:-3}},L:{s:"转一半补仓",e:{cash:9600,buy:4800,mind:3,risk:4}}},
  {who:"工资",av:"💰",tag:"收入",txt:"老板放话：下季度，可能调薪，也可能裁员。",
   R:{s:"偷偷更新简历",e:{mind:2,risk:5}},L:{s:"加把劲",e:{mind:-4,social:3}}},
  {who:"私活",av:"💻",tag:"收入",txt:"老客户来单：6,000。deadline 正好在财报周。",
@@ -849,6 +885,8 @@ CARDS = [
   R:{s:"没去",e:{social:-5,mind:1}},L:{s:"去了",e:{spend:500,social:7,mind:-2}}},
  {who:"朋友",av:"🤝",tag:"人情",txt:"朋友开口：借两万。他说，这次一定还。",
   R:{s:"婉拒了",e:{social:-8,mind:-2}},L:{s:"借一半",e:{spend:10000,social:2,risk:3}}},
+ {who:"团建",av:"🍺",tag:"职场",when:"no:fired",win:[8,40],txt:"部门团建，火锅局。你知道他们想聊年终评。",
+  R:{s:"去",e:{spend:400,social:6,mind:-3,risk:3}},L:{s:"不去",e:{mind:3,social:-6}}},
 ];
 reset();
 </script>

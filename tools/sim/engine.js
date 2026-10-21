@@ -92,7 +92,13 @@ function load() {
 
 /* ---------- 快版 when 过滤器（语义逐字对齐 oneCond/exprVal） ---------- */
 function parseCond(t) {
-  let m = t.match(/^(has|no):(\w+)$/);
+  let m = t.match(/^did:([\w]+?)\.(l|r)$/i);
+  if (m) { const id = m[1], d = m[2].toLowerCase(); return S => !!(S.did && S.did[id] === d); }
+  m = t.match(/^did:([\w]+)$/i);
+  if (m) { const id = m[1]; return S => !!(S.did && S.did[id]); }
+  m = t.match(/^seen:([\w]+)$/i);
+  if (m) { const id = m[1]; return S => !!(S.seen && S.seen[id]); }
+  m = t.match(/^(has|no):(\w+)$/);
   if (m) { const want = m[1] === 'has', k = m[2]; return S => !!(S.st && S.st[k]) === want; }
   m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);
   if (m) {
@@ -136,10 +142,17 @@ function verifyWhenEquivalence(sandbox, CARDS) {
     const st = {};
     STATUS.forEach(s => { if (rnd() < 0.25) st[s] = -1; });
     const cost = Math.round(rnd() * 60000);
+    const did = {}, seen = {};                       // 随机填 did/seen，让关联谓词也参与对拍
+    for (let k = 0; k < 6; k++) {
+      const c = CARDS[(rnd() * CARDS.length) | 0];
+      if (!c) continue;
+      if (rnd() < 0.5) did[c.id] = rnd() < 0.5 ? 'l' : 'r';
+      else seen[c.id] = 1;
+    }
     return {
       mind: Math.round(rnd() * 100), social: Math.round(rnd() * 100), risk: Math.round(rnd() * 100),
       day: 1 + Math.floor(rnd() * 70), cash: Math.round(rnd() * 50000),
-      equity: Math.round(rnd() * 60000), cost, debt: Math.round(rnd() * 30000), st,
+      equity: Math.round(rnd() * 60000), cost, debt: Math.round(rnd() * 30000), st, did, seen,
     };
   }
   const states = [];

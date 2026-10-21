@@ -59,6 +59,8 @@ function validateCards(data) {
         }
         m = t.match(/^(did):([\w]+)\.(l|r)$/i);
         if (m) { if (!ids[m[2]]) problems.push('did: 引用的卡「' + m[2] + '」不存在'); return; }
+        m = t.match(/^(did):([\w]+)$/);
+        if (m) { if (!ids[m[2]]) problems.push('did: 引用的卡「' + m[2] + '」不存在'); return; }
         m = t.match(/^(seen):([\w]+)$/);
         if (m) { if (!ids[m[2]]) problems.push('seen: 引用的卡「' + m[2] + '」不存在'); return; }
         m = t.match(/^(pick):([a-z]+)\s*(<=|>=|<|>)\s*(\d+)$/);

@@ -131,8 +131,15 @@
 - 渲染函数之间不互相调用，统一由一个 `render()` 入口按固定顺序调度（防止递归死循环）
 - 卡牌的触发条件用声明式描述，**不要用 `function`** —— 函数无法序列化，
   会导致卡池不能数据驱动、不能热更。
-  语法：`;` 且、`|` 或；`has:xxx` / `no:xxx` 判状态；`mind<30`、`equity>cost`、`equity<cost*0.85` 比属性。
+  语法：`;` 且、`|` 或（**没有括号**，`A 且(B 或 C)` 展开成 `A;B|A;C`）；
+  `has:xxx` / `no:xxx` 判状态；`mind<30`、`equity>cost`、`equity<cost*0.85` 比属性；
+  `did:cardid.l` / `did:cardid.r` / `did:cardid` 判「那张卡你那么选过」（最后选择生效）；
+  `seen:cardid` 判「那张卡出现过（含垫层）」。
   可用属性：`mind social risk day equity cash debt cost`。解析见 `prototype.html` 的 `whenOK()`
+- 关联卡（when 带 `did:`/`seen:`）= 叙事大事件：出场走 `bagFindChain()` 插队通道，
+  且**一局只出一次**（`_used` 上限 1）。不要给普通氛围卡加 did:/seen:，会抢占出场优先级
+- 时机卡用 `"window": [起, 止]`（第几天到第几天），校验器查 1..60 且起≤止
+- 事件线总图见 `docs/design/event-lines.md`——**改触发层卡的选项前必读**（L/R 是别的卡的记账来源）
 - 新增模块时先看现有文件的组织方式，不要另起一套风格
 
 ## 待补充（项目推进中逐步填）

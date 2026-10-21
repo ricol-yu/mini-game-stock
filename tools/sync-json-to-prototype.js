@@ -35,6 +35,7 @@ function sideStr(sd) {
 const lines = data.cards.map(c => {
   let head = ' {who:' + j(c.who) + ',av:' + j(c.avatar) + ',tag:' + j(c.tag);
   if (c.when) head += ',when:' + j(c.when);
+  if (c.window) head += ',win:' + j(c.window);   // [起,止]：关联卡/时机卡的出场窗口
   head += ',txt:' + j(c.text) + ',';
   let body = '';
   if (c.alwaysStatus) body += '\n  st:' + effStr(c.alwaysStatus) + ',';
