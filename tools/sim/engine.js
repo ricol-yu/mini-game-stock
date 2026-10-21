@@ -178,4 +178,21 @@ function setRNG(sandbox, fn) {
   vm.runInContext('Math.random = function(){ return __rng(); };', sandbox);
 }
 
-module.exports = { load, compileWhen, parseCond, verifyWhenEquivalence, mulberry32, setRNG };
+/* 把 whenOK 换成「编译一次、按字符串缓存」的版本。
+ * 原型每次抽卡都重新解析 when 字符串（浏览器里无所谓，百万次抽卡是灾难）。
+ * 这里只加缓存、不换语义；调用前必须已经跑过 verifyWhenEquivalence，
+ * 否则就是在拿自己跟自己比对拍。
+ *
+ * 有了它，驱动程序可以直接调 sandbox.pick() —— 抽卡算法只有原型那一份，
+ * 不会像以前那样在 Node 侧再抄一遍（两份必然漂移）。 */
+function installFastWhen(sandbox) {
+  const cache = new Map();
+  sandbox.whenOK = function (w) {
+    if (!w) return true;
+    let f = cache.get(w);
+    if (!f) { f = compileWhen(w); cache.set(w, f); }
+    return f(sandbox.S);
+  };
+}
+
+module.exports = { load, compileWhen, parseCond, verifyWhenEquivalence, installFastWhen, mulberry32, setRNG };

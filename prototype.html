@@ -175,6 +175,7 @@ function reset(){
         st:{}, flags:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
+  _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0;   // 新的一局：袋子、冷却、同类记忆都重来
   render(); nextCard();
 }
 function net(){ return S.cash + S.equity - S.debt; }
@@ -447,11 +448,87 @@ function toast(t){
 
 /* ============ 卡牌交互 ============ */
 var stage = $("stage"), cur = null, busy = false;
+
+/* ---------- 抽卡：洗牌袋 + 同类摊开 + 近期冷却 ----------
+   原来是「每天从全池独立等概率抽 3 张」。独立等概率（iid）的数学性质是：
+   一局 76 次抽卡里，「刚打完又抽到同一张」必然发生 2~3 次，同类连着来占 16%。
+   这不是 bug，是随机本来的样子 —— 但玩家读作「卡不够 / 老是这一张」。
+   人感知的「随机」应该是「均匀铺开」，所以这里不用 iid，用袋子：
+     · 一轮把全池每张卡各放一次，抽完才重洗 → 一轮之内绝不重复；
+     · 重洗时按类型分层交错（家庭 25 张约每 4 张一次、决策 3 张约每 32 张一次），
+       相邻两张几乎不会同类；
+     · 最近 COOL 张进冷却，跨轮也不会立刻回头；
+     · 垫在下面两张是「预览」：只读不取，不消耗袋子也不计使用次数 ——
+       否则每天 3 抽会把分层间距打乱成 1/3，前面的摊开全白做。
+   成本：一次抽卡最多扫一遍袋（97 个数），浏览器里无感。
+*/
+var _bag = [], _recent = [], _lastTag = "", COOL = 10, _pickResets = 0, _bagRefills = 0;
+
+function bagShuffle(){
+  var buckets = {}, tags = [], i, t;
+  for(i = 0; i < CARDS.length; i++){
+    t = CARDS[i].tag || "-";
+    if(!buckets[t]){ buckets[t] = []; tags.push(t); }
+    buckets[t].push(i);
+  }
+  var keyed = [];
+  for(var b = 0; b < tags.length; b++){
+    var a = buckets[tags[b]], n = a.length, j, x;
+    for(i = n - 1; i > 0; i--){                      // 桶内先打乱
+      j = Math.floor(Math.random() * (i + 1)); x = a[i]; a[i] = a[j]; a[j] = x;
+    }
+    // 归一化位置 = (桶内序号 + 抖动) / 桶大小 → 桶越大铺得越密，交错后同类不相邻
+    for(i = 0; i < n; i++) keyed.push({ k: (i + Math.random() * 0.85) / n, i: a[i] });
+  }
+  keyed.sort(function(p, q){ return p.k - q.k; });
+  _bag = keyed.map(function(o){ return o.i; });
+  _bagRefills++;
+}
+
+/* 在袋里找第 skip 张「能出」的卡，返回它在袋中的下标；不取走 */
+function bagFind(skip, strict, avoidTag){
+  var hit = 0;
+  for(var i = 0; i < _bag.length; i++){
+    var k = _bag[i], c = CARDS[k];
+    if((c._used|0) >= 2) continue;
+    if(!whenOK(c.when)) continue;
+    if(strict && _recent.indexOf(k) >= 0) continue;
+    if(avoidTag && c.tag === avoidTag) continue;      // 不和上一张同类
+    if(hit++ < skip) continue;
+    return i;
+  }
+  return -1;
+}
+
+/* 三级让步：同类间隔 → 冷却 → 都不管 */
+function bagPick(avoidTag){
+  var i = bagFind(0, true, avoidTag);
+  if(i < 0) i = bagFind(0, true);
+  if(i < 0) i = bagFind(0, false);
+  return i;
+}
+
 function pick(){
-  var pool = CARDS.filter(function(c){ return (c._used|0) < 2 && whenOK(c.when); });
-  if(!pool.length){ CARDS.forEach(function(c){ c._used = 0; }); pool = CARDS.filter(function(c){ return whenOK(c.when); }); }
-  var c = pool[Math.floor(Math.random() * pool.length)];
-  c._used = (c._used|0) + 1; return c;
+  var i = bagPick(_lastTag);
+  if(i < 0){ bagShuffle(); i = bagPick(_lastTag); }   // 袋里没有能出的 → 重洗一轮
+  if(i < 0){                                          // 全池都到 2 次上限 → 清零重开
+    CARDS.forEach(function(c){ c._used = 0; });
+    _pickResets++;
+    bagShuffle(); i = bagPick(_lastTag);
+  }
+  if(i < 0) return CARDS[0];                          // 理论不可达
+  var k = _bag.splice(i, 1)[0], c = CARDS[k];
+  c._used = (c._used|0) + 1;
+  _lastTag = c.tag;
+  _recent.unshift(k); if(_recent.length > COOL) _recent.pop();
+  return c;
+}
+
+/* 垫层预览：读袋子里的第 skip 张，不取走、不计数。找不到就复用顶上那张（压在下面看不见） */
+function pickPeek(skip, top){
+  var i = bagFind(skip, true, top.tag);
+  if(i < 0) i = bagFind(skip, false);
+  return i < 0 ? top : CARDS[_bag[i]];
 }
 function build(c){
   var d = document.createElement("div"); d.className = "card";
@@ -465,7 +542,7 @@ function nextCard(){
   if(busy) return;
   var old = stage.querySelectorAll(".card");
   for(var i = 0; i < old.length; i++) old[i].remove();
-  var a = build(pick()), b = build(pick()), c = build(pick());
+  var a = build(pick()), b = build(pickPeek(1, a._c)), c = build(pickPeek(2, a._c));
   c.className = "card under2"; b.className = "card under";
   stage.appendChild(c); stage.appendChild(b); stage.appendChild(a);
   cur = a; bind(a);

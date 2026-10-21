@@ -77,6 +77,7 @@
 | `tools/validate-cards.js` | **校验器**：`node tools/validate-cards.js`，9 类检查（含决策质量），退出码非 0 = 不许提交 |
 | `tools/check-dominance.js` | 单卡「还需不需要想」：伪选择 / 全赚不赔 / 只碰 1–2 条数值 |
 | `tools/check-policy.js` | 玩法体检：`policy` 五种玩法对照，`scan` 扫 512 种站队玩法 |
+| `tools/check-repeat.js` | **抽卡体检**：同卡重复 / 同类扎堆 / 借贷卡成串。`--compare` 可跑旧算法对照 |
 | `tools/simulate.js` | **无头仿真器**：`node tools/simulate.js --runs 10000`，跑的是 prototype.html 的真实代码 |
 | `prototype.html` | 可玩原型，单文件自包含。**由 `cards.json` 生成，不要手改** |
 | `spike/wxs-swipe/` | **WXS 滑卡验证工程**（独立小程序项目，验证完可删）。结论回写到 `testing.md` |
@@ -117,6 +118,10 @@
   `docs/plan/baseline.md` 对比——任一结局占比偏移 > 2 个百分点要停下来说明原因
 - **卡片 id 一旦定下永不改**（`fam_mortgage_01` 这种语义 id）——关联卡、素材 manifest 都引用它；
   新卡 id 用 `{类别拼音}_{场景}_{两位序号}`，查重交给校验器
+- **抽卡算法只有一份，住在 `prototype.html` 的 `pick()` 里** ——
+  仿真器/体检脚本一律调 `sandbox.pick()`，**不许在 Node 侧再抄一遍**。
+  以前抄过，结果任何一次抽卡改动都会让「仿真结论」和「玩家体验」悄悄分叉。
+  需要加速就换 `whenOK` 的实现（`installFastWhen`），不要换抽卡逻辑
 - 一次改动涉及 3 个以上文件时，先说明打算改哪些、为什么
 
 ## 代码约定

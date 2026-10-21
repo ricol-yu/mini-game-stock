@@ -25,7 +25,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { load, compileWhen, verifyWhenEquivalence, mulberry32, setRNG } = require('./sim/engine');
+const { load, verifyWhenEquivalence, installFastWhen, mulberry32, setRNG } = require('./sim/engine');
 
 const args = process.argv.slice(2);
 function argVal(name, dft) {
@@ -43,10 +43,10 @@ const { sandbox, getEl, CARDS } = load();
 const pairs = verifyWhenEquivalence(sandbox, CARDS);
 console.log(`✓ when 过滤器对拍：${pairs} 组 状态×卡 全部一致（快版 = 原版 whenOK）`);
 
-/* 预编译快版条件；无条件的卡不进过滤器 */
-const fast = CARDS.map(c => (c.when ? compileWhen(c.when) : null));
-const NO_WHEN = [], HAS_WHEN = [];
-CARDS.forEach((c, i) => (c.when ? HAS_WHEN : NO_WHEN).push(i));
+/* 对拍通过后，把 whenOK 换成编译缓存版，让原型自己的 pick() 跑得动。
+   抽卡算法（洗牌袋 / 冷却 / 同类摊开）从此只存在于 prototype.html 一份，
+   这里不再抄第二遍 —— 抄一遍就等于埋一个必然漂移的分叉。 */
+installFastWhen(sandbox);
 
 /* 同一个种子流贯穿整轮：行情（沙箱内 Math.random）与选卡/选择（Node 侧）交替消耗，
    顺序固定，因此同 seed 整轮可复现 */
@@ -61,31 +61,15 @@ let poolResets = 0, overBefore = 0;
 
 for (let g = 0; g < RUNS; g++) {
   sandbox.reset();                          // 真实 reset（render 已置空、nextCard 已摘除）
-  let played = 0, resetThisGame = false, uniqN = 0;
+  let played = 0, uniqN = 0;
   const uniq = {};
 
   for (let turn = 0; turn < 60 && !sandbox.S.over; turn++) {
-    const S = sandbox.S;                    // 状态在回合内 3 次抽卡之间不变 → 条件过滤只算一次
-    const elig = NO_WHEN.slice();
-    for (let h = 0; h < HAS_WHEN.length; h++) {
-      const i = HAS_WHEN[h];
-      if (fast[i](S)) elig.push(i);
-    }
-    let first = null;
-    for (let k = 0; k < 3; k++) {           // 复刻 nextCard：抽三张、只打第一张
-      let pool = [];
-      for (let e = 0; e < elig.length; e++) if ((CARDS[elig[e]]._used | 0) < 2) pool.push(elig[e]);
-      if (!pool.length) {                   // 与真版 pick 的空池行为一致：清零后按条件重筛
-        CARDS.forEach(c => { c._used = 0; });
-        pool = elig.slice();
-        resetThisGame = true;
-      }
-      const idx = pool[(rng() * pool.length) | 0];
-      CARDS[idx]._used = (CARDS[idx]._used | 0) + 1;
-      const card = CARDS[idx];
-      picks[card._id] = (picks[card._id] || 0) + 1;
-      if (k === 0) first = card;
-    }
+    // 真实抽卡：抽三张（后两张是垫层，不计数）、只打第一张
+    const first = sandbox.pick();
+    sandbox.pickPeek(1, first);      // 垫层只预览不消耗
+    sandbox.pickPeek(2, first);
+    picks[first._id] = (picks[first._id] || 0) + 1;
 
     const dir = rng() < 0.5 ? 'L' : 'R';    // 玩家随机乱滑（与原型图例 600 局口径一致）
     const id = first._id;
@@ -97,11 +81,11 @@ for (let g = 0; g < RUNS; g++) {
     sandbox.tick();                         // 真实日结算（day++ 在这里）
     sandbox.check();                        // 真实结局判定（写结局 DOM，桩会记录）
   }
+  if ((sandbox._pickResets | 0) > 0) poolResets++;
 
   days.push(played);
   uniquePerGame.push(uniqN);
   if (played === 60) fullUnique.push(uniqN); // 活满 60 天的局单独记：N2 重复率目标约束的就是这批
-  if (resetThisGame) poolResets++;
   if (played < 60) overBefore++;
 
   if (sandbox.S.over) {

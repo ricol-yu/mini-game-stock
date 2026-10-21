@@ -62,7 +62,8 @@ const oldLen = (end + endMark.length) - start;
 let next = html.slice(0, start) + newBlock + html.slice(end + endMark.length);
 
 /* 防御：替换后必须仍能看到这些关键函数，否则说明切错了范围，绝不落盘 */
-const MUST_HAVE = ['function whenOK', 'function tick', 'function resolve', 'function apply', 'function reset'];
+const MUST_HAVE = ['function whenOK', 'function tick', 'function resolve', 'function apply', 'function reset',
+                   'function bagShuffle', 'function pick', 'function pickPeek'];
 const lost = MUST_HAVE.filter(f => next.indexOf(f) < 0);
 if (lost.length) {
   console.error('✗ 安全检查失败：替换后丢失了关键函数 ' + lost.join(', '));

@@ -17,7 +17,7 @@
 'use strict';
 const path = require('path');
 const __d = __dirname;
-const { load, compileWhen, verifyWhenEquivalence, mulberry32, setRNG } =
+const { load, verifyWhenEquivalence, installFastWhen, mulberry32, setRNG } =
   require(path.join(__d, 'sim', 'engine'));
 
 function argVal(n, d) { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; }
@@ -27,23 +27,14 @@ const SEED = parseInt(argVal('--seed', '20261021'), 10);
 
 const { sandbox, getEl, CARDS } = load();
 verifyWhenEquivalence(sandbox, CARDS);
-const fast = CARDS.map(function (c) { return c.when ? compileWhen(c.when) : null; });
-const NO_WHEN = [], HAS_WHEN = [];
-CARDS.forEach(function (c, i) { (c.when ? HAS_WHEN : NO_WHEN).push(i); });
+installFastWhen(sandbox);   // 对拍通过后加速 whenOK，让原型自己的 pick() 可直接跑
 
-/* 与 prototype.html 的 nextCard 保持一致：抽三张只打第一张，同一张一局最多出 2 次 */
+/* 抽卡走原型自己的 pick()：洗牌袋 / 冷却 / 同类摊开只有那一份实现。
+   以前这里抄过一遍，任何一次抽卡算法改动都会让「仿真结论」与「玩家体验」分叉。 */
 function nextCard(rng, S) {
-  const elig = NO_WHEN.slice();
-  HAS_WHEN.forEach(function (i) { if (fast[i](S)) elig.push(i); });
-  let first = null;
-  for (let k = 0; k < 3; k++) {
-    let pool = [];
-    elig.forEach(function (i) { if ((CARDS[i]._used | 0) < 2) pool.push(i); });
-    if (!pool.length) { CARDS.forEach(function (c) { c._used = 0; }); pool = elig.slice(); }
-    const idx = pool[(rng() * pool.length) | 0];
-    CARDS[idx]._used = (CARDS[idx]._used | 0) + 1;
-    if (k === 0) first = CARDS[idx];
-  }
+  const first = sandbox.pick();
+  sandbox.pickPeek(1, first);   // 垫层只预览，不消耗袋子
+  sandbox.pickPeek(2, first);
   return first;
 }
 
