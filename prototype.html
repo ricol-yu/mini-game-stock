@@ -49,15 +49,12 @@
     border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5;position:relative;cursor:help}
   .chip b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .chip.hot{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
-  .chip .tip{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%) translateY(-4px);
+  .chip .tip{position:absolute;top:calc(100% + 7px);left:0;transform:translateY(-4px);
     background:rgba(31,35,41,.94);color:#fff;font-size:10.5px;line-height:1.7;padding:8px 11px;border-radius:10px;
-    max-width:215px;width:max-content;white-space:normal;text-align:left;opacity:0;pointer-events:none;transition:.16s;z-index:18}
+    max-width:230px;width:max-content;white-space:normal;text-align:left;opacity:0;pointer-events:none;
+    transition:opacity .16s,transform .16s;z-index:18}
   .chip .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
-  .chip:hover .tip,.chip:focus .tip{opacity:1;transform:translateX(-50%) translateY(0)}
-  .chip:first-child .tip{left:0;transform:translateX(0) translateY(-4px)}
-  .chip:first-child:hover .tip,.chip:first-child:focus .tip{transform:translateX(0) translateY(0)}
-  .chip:last-child .tip{left:auto;right:0;transform:translateX(0) translateY(-4px)}
-  .chip:last-child:hover .tip,.chip:last-child:focus .tip{transform:translateX(0) translateY(0)}
+  .chip:hover .tip,.chip:focus .tip{opacity:1;transform:translateY(0)}
 
   .mkt{margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
     padding:6px 10px;flex:0 0 auto}
@@ -168,7 +165,7 @@
 </div>
 
 <script>
-var S, MAX_DAY = 60, INIT = 18000, MONEY_CAP = 40000, CARDS = [], ST = {};
+var S, MAX_DAY = 60, INIT = 18000, SEED_EQ = 6000, MONEY_CAP = 40000, CARDS = [], ST = {};
 
 /* ============ 状态（Buff / Debuff）字典 ============ */
 ST = {
@@ -184,7 +181,8 @@ ST = {
 };
 
 function reset(){
-  S = { cash:INIT, equity:0, cost:0, debt:0,
+  // 开局自带底仓 ¥6,000（现金 12,000）——不抽到买入卡也始终在场内，有真实盈亏
+  S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
         mind:58, risk:0, social:56, day:1,
         st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
@@ -473,6 +471,22 @@ function render(){
             '<span class="tip"><b>' + info.ic + " " + info.nm + '</b>' + (info.tip || "（这个状态暂时没有说明。）") + '</span></span>';
   }
   strip.innerHTML = html;
+  // 提示卡逐个定位：夹在手机框内（overflow:hidden 会裁掉居中伸出去的部分）。
+  // 沙箱桩 DOM 缺少 children/querySelector，整体保护：浏览器正常执行，仿真静默跳过。
+  try{
+    var chips = strip.children;
+    if(chips && chips.length){
+      var pw = (strip.offsetParent && strip.offsetParent.clientWidth) || 344;
+      for(var i = 0; i < chips.length; i++){
+        var c0 = chips[i], tip = c0.querySelector && c0.querySelector(".tip");
+        if(!tip) continue;
+        var w = tip.offsetWidth;
+        var want = c0.offsetLeft + c0.offsetWidth / 2 - w / 2;               // 理想：居中
+        var left = Math.max(8, Math.min(want, pw - w - 8));                  // 夹紧：左右各留 8px
+        tip.style.left = (left - c0.offsetLeft) + "px";
+      }
+    }
+  }catch(_e){}
 
   $("v-net").textContent = money(n);
   var rate = (n - INIT) / INIT * 100, p = $("v-pnl");
@@ -719,9 +733,9 @@ function check(){
     why = "净值达到 ¥80,000 —— 落袋为安。";
   }
   else if(d > MAX_DAY && S.neverBought){
-    e = ["👁","一次都没买","活满 60 天 · 你站在场外",
-         "你一次都没下场。你管这叫清醒。"];
-    why = "60 天里你一次都没有点过「买入」。";
+    e = ["👁","一次都没动","活满 60 天 · 底仓之外毫无动作",
+         "除了开局跟着大流买的那笔底仓，你再没碰过它。你管这叫清醒。"];
+    why = "60 天里你一次都没有主动交易——只有开局那笔 ¥6,000 底仓在场内跟着涨跌。";
   }
   else if(d > MAX_DAY && rate >= 60){
     e = ["🏆","六十天","活满 60 天 · 你还站着",
