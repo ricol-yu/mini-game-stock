@@ -41,9 +41,13 @@ function nextCard(rng, S) {
 function effects(c) { return { L: vec(c.L && c.L.e), R: vec(c.R && c.R.e) }; }
 function vec(eff) {
   if (!eff) eff = {};
+  // borrow 的隐性代价进规则：borrow() 会加风险 min(16, 5+x/1300)，策略有权知道游戏规则
+  const hiddenRisk = eff.borrow ? Math.min(16, 5 + eff.borrow / 1300) : 0;
   return {
-    net: (eff.cash || 0) - (eff.spend || 0) + (eff.borrow || 0) - (eff.repay || 0),
-    mind: eff.mind || 0, risk: eff.risk || 0, social: eff.social || 0,
+    // borrow 不计入即时净值：真实结算=负债+x 且持仓+x（带满杠杆成本），净值变化为 0；
+    // 借钱的代价走的是风险(+5~16)与后续利息，策略能看到的显式 risk 才是它的表面成本
+    net: (eff.cash || 0) - (eff.spend || 0) - (eff.repay || 0),
+    mind: eff.mind || 0, risk: (eff.risk || 0) + hiddenRisk, social: eff.social || 0,
   };
 }
 

@@ -63,6 +63,10 @@ function validateCards(data) {
         if (m) { if (!ids[m[2]]) problems.push('did: 引用的卡「' + m[2] + '」不存在'); return; }
         m = t.match(/^(seen):([\w]+)$/);
         if (m) { if (!ids[m[2]]) problems.push('seen: 引用的卡「' + m[2] + '」不存在'); return; }
+        m = t.match(/^no:did:([\w]+)$/);
+        if (m) { if (!ids[m[1]]) problems.push('no:did: 引用的卡「' + m[1] + '」不存在'); return; }
+        m = t.match(/^no:seen:([\w]+)$/);
+        if (m) { if (!ids[m[1]]) problems.push('no:seen: 引用的卡「' + m[1] + '」不存在'); return; }
         m = t.match(/^(pick):([a-z]+)\s*(<=|>=|<|>)\s*(\d+)$/);
         if (m) { if (TAGS.indexOf(m[2]) < 0) problems.push('pick: 的 tag「' + m[2] + '」不在分类表里'); return; }
         m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);
@@ -114,7 +118,8 @@ function validateCards(data) {
         if (Math.abs(v) > 30) err('effect-range', ruleId, side + '.' + k, k + ' 单卡变动 |' + v + '| 超过 30');
       } else if (['spend', 'buy', 'borrow', 'repay'].indexOf(k) >= 0) {
         if (v <= 0) err('effect-range', ruleId, side + '.' + k, k + ' 应为正数，当前 ' + v);
-        if (v > 30000) err('effect-range', ruleId, side + '.' + k, k + ' 数额 ' + v + ' 超过 30000，确认是否手滑');
+        // borrow 上限 65000：彩礼（60000）/首付（40000）级叙事债务是设计本意，高于 65000 才算手滑
+        if (v > 65000) err('effect-range', ruleId, side + '.' + k, k + ' 数额 ' + v + ' 超过 65000，确认是否手滑');
       } else { // cash / equity / cost
         if (Math.abs(v) > 100000) err('effect-range', ruleId, side + '.' + k, k + ' 变动 ' + v + ' 超过 100000');
       }

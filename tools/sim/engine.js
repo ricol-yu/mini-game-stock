@@ -98,6 +98,10 @@ function parseCond(t) {
   if (m) { const id = m[1]; return S => !!(S.did && S.did[id]); }
   m = t.match(/^seen:([\w]+)$/i);
   if (m) { const id = m[1]; return S => !!(S.seen && S.seen[id]); }
+  m = t.match(/^no:did:([\w]+)$/i);
+  if (m) { const id = m[1]; return S => !(S.did && S.did[id]); }
+  m = t.match(/^no:seen:([\w]+)$/i);
+  if (m) { const id = m[1]; return S => !(S.seen && S.seen[id]); }
   m = t.match(/^(has|no):(\w+)$/);
   if (m) { const want = m[1] === 'has', k = m[2]; return S => !!(S.st && S.st[k]) === want; }
   m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);

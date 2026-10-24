@@ -281,6 +281,10 @@ function oneCond(t){
   if(m) return !!(S.did && S.did[m[1]]);
   m = t.match(/^seen:([\w]+)$/i);            // 见过这张卡（伏笔）
   if(m) return !!(S.seen && S.seen[m[1]]);
+  m = t.match(/^no:did:([\w]+)$/i);          // 没做过那件事（反向记账：阶段隔离用）
+  if(m) return !(S.did && S.did[m[1]]);
+  m = t.match(/^no:seen:([\w]+)$/i);
+  if(m) return !(S.seen && S.seen[m[1]]);
   m = t.match(/^(has|no):(\w+)$/);       // 状态判断
   if(m){
     var on = !!(S.st && S.st[m[2]]);
@@ -737,6 +741,12 @@ function check(){
          "除了开局跟着大流买的那笔底仓，你再没碰过它。你管这叫清醒。"];
     why = "60 天里你一次都没有主动交易——只有开局那笔 ¥6,000 底仓在场内跟着涨跌。";
   }
+  else if(d > MAX_DAY && S.did && S.did.fam_wed_day_01 && S.social >= 70){
+    e = ["🏠","两个人","活满 60 天 · 钱没大赚，但照片挂在客厅",
+         "你们没赢市场。可这局你真正想赢的，本来就不是市场。"];
+    why = "活满 60 天，收益率 " + rate.toFixed(1) + "%；结婚了，且社会 " + Math.round(S.social) +
+          "/100——她还在，朋友们也还在。婚礼的照片挂在客厅。";
+  }
   else if(d > MAX_DAY && rate >= 60){
     e = ["🏆","六十天","活满 60 天 · 你还站着",
          "你活着，而且赢了。至于哪一步靠的是运气，你自己清楚。"];
@@ -777,13 +787,13 @@ CARDS = [
   R:{s:"出 5,500",e:{spend:5500,social:6,mind:2}},L:{s:"先拖两天",e:{mind:-5,social:-5}}},
  {who:"老婆",av:"💍",tag:"家庭",txt:"孩子要上补习班，一年七千八。先交这学期 3,900。",
   R:{s:"出 3,900 报名",e:{spend:3900,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6}}},
- {who:"老婆",av:"💍",tag:"家庭",txt:"你到底亏了多少？我要听实话。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"你到底亏了多少？我要听实话。",
   R:{s:"说实话",e:{mind:4,social:5,spend:3000}},L:{s:"报喜不报忧",e:{mind:-5,social:-6,risk:3}}},
  {who:"老婆",av:"💍",tag:"家庭",txt:"我们多久没一起吃饭了？",
   R:{s:"出去吃，我请",e:{spend:1200,mind:7,social:8}},L:{s:"最近有点忙",e:{mind:-3,social:-7}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"no:baby",txt:"我怀孕了。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; no:baby",txt:"我怀孕了。",
   R:{s:"留着吧",e:{spend:5200,mind:15,social:12,addst:{"baby":-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"mind<30",txt:"这日子没法过了。离婚吧。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35",txt:"这日子没法过了。离婚吧。",
   R:{s:"挽留，转 5,800",e:{spend:5800,mind:12,social:8}},L:{s:"……好",e:{mind:-14,social:-20,cash:-3000}}},
  {who:"孩子",av:"👧",tag:"家庭",txt:"爸爸，你为什么总在看手机？",
   R:{s:"爸爸在工作",e:{mind:-4,social:-4,risk:-3}},L:{s:"陪她玩一会儿",e:{mind:9,social:5,risk:5}}},
@@ -793,7 +803,7 @@ CARDS = [
   R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
  {who:"老妈",av:"👵",tag:"家庭",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
   R:{s:"收下，投进去",e:{borrow:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5,spend:1500}}},
- {who:"丈母娘",av:"🧓",tag:"家庭",txt:"听说你最近在做投资？妈这里有点闲钱。",
+ {who:"丈母娘",av:"🧓",tag:"家庭",when:"did:fam_hunli_01",txt:"听说你最近在做投资？妈这里有点闲钱。",
   R:{s:"拿 20,000",e:{borrow:20000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5,spend:1200}}},
  {who:"孩子",av:"🤒",tag:"家庭",when:"has:baby",txt:"半夜发烧 39 度。",
   R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6}},L:{s:"先观察一晚",e:{mind:-7,social:-8}}},
@@ -917,9 +927,9 @@ CARDS = [
   R:{s:"留在户里当底仓",e:{mind:3,risk:3}},L:{s:"转出来直接满上",e:{equity:1800,mind:5,risk:5}}},
  {who:"孩子",av:"🧒",tag:"家庭",txt:"孩子举着卷子过来，站在你旁边，没说话。",
   R:{s:"现在就签",e:{mind:-2,social:6,spend:200}},L:{s:"等一下",e:{mind:1,social:-8,risk:3}}},
- {who:"老婆",av:"💍",tag:"家庭",txt:"「今晚吃什么？」她站在门口。你盯着 K 线。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"「今晚吃什么？」她站在门口。你盯着 K 线。",
   R:{s:"放下手机问她",e:{mind:-2,social:7,risk:-2}},L:{s:"随便",e:{mind:1,social:-6,risk:3}}},
- {who:"丈母娘",av:"👵",tag:"家庭",txt:"饭桌上，丈母娘随口问：「今年，攒下了吧？」",
+ {who:"丈母娘",av:"👵",tag:"家庭",when:"did:fam_hunli_01",txt:"饭桌上，丈母娘随口问：「今年，攒下了吧？」",
   R:{s:"说了实话",e:{social:-7,mind:-5}},L:{s:"还行，还行",e:{social:5,spend:3000}}},
  {who:"同事小王",av:"👔",tag:"职场",txt:"小王压低声音：「哥，你买啥，我跟着买。」",
   R:{s:"把持仓给他看",e:{social:7,risk:8}},L:{s:"别跟着我",e:{social:-6,mind:2}}},
@@ -969,19 +979,19 @@ CARDS = [
   R:{s:"等下周",e:{mind:-5,social:-3}},L:{s:"自己找人修",e:{spend:600,mind:2}}},
  {who:"老师",av:"🎓",tag:"家庭",txt:"班主任来电话：孩子最近上课，总是走神。",
   R:{s:"当晚陪作业",e:{mind:-4,social:6}},L:{s:"说最近忙",e:{social:-5,mind:-2}}},
- {who:"老婆",av:"💍",tag:"家庭",txt:"日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
   R:{s:"说明年补",e:{social:-10,mind:2}},L:{s:"订了餐厅",e:{spend:900,social:8,mind:-3}}},
  {who:"孩子",av:"🧒",tag:"家庭",txt:"兴趣班该交钱了，6,800。他说，其实不想去了。",
   R:{s:"退班，陪他玩",e:{social:5,mind:-2}},L:{s:"续费",e:{spend:6800,mind:3}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"has:baby",txt:"产检约在周四上午。她说：你来吧。",
   R:{s:"让她妈陪",e:{social:-8,mind:1}},L:{s:"陪她去",e:{spend:1200,social:7,mind:-2}}},
- {who:"丈母娘",av:"👵",tag:"家庭",txt:"丈母娘生日。红包行情，你研究了一晚上。",
+ {who:"丈母娘",av:"👵",tag:"家庭",when:"did:fam_hunli_01",txt:"丈母娘生日。红包行情，你研究了一晚上。",
   R:{s:"包 1,600",e:{social:-6,mind:-2,spend:1600}},L:{s:"包 6,600",e:{spend:6600,social:8}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_anniv_01.l",win:[6,40],txt:"那家店她说还想再去一次。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_anniv_01.l",win:[36,60],txt:"那家店她说还想再去一次。",
   R:{s:"等下月发薪",e:{social:-7,mind:-4}},L:{s:"再订一次",e:{spend:900,social:8,mind:4}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_dinner_01.l|did:fam_laopo_02.l",win:[15,55],txt:"我们多久没一起好好吃顿饭了？",
   R:{s:"忙完这波再说",e:{social:-9,mind:-5}},L:{s:"关电脑，现在做",e:{mind:6,social:8,risk:4}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_confess_01.r; risk>40",win:[20,58],txt:"亏成这样也不告诉我？以后我的钱自己管。",
+ {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; did:fam_confess_01.r; risk>40",win:[20,58],txt:"亏成这样也不告诉我？以后我的钱自己管。",
   R:{s:"我下次一定说",e:{social:-8,mind:-3}},L:{s:"交出一半仓位",e:{sell:0.5,social:8,mind:-3,risk:-6}}},
  {who:"老妈",av:"📞",tag:"家庭",when:"did:fam_momcall_01.l",win:[10,55],txt:"邻居说在菜市场听见你妈叹气。",
   R:{s:"下次再打吧",e:{social:-7,mind:-4}},L:{s:"寄箱水果回去",e:{spend:300,social:6,mind:2}}},
@@ -997,6 +1007,36 @@ CARDS = [
   R:{s:"做投资也是为了他",e:{social:-12,mind:-8}},L:{s:"当场保证，买亲子票",e:{spend:800,mind:-3,social:7}}},
  {who:"孩子",av:"🧒",tag:"家庭",when:"did:fam_teacher_01.r; did:fam_child_01.l",win:[25,58],txt:"奖状背面：谢谢爸爸陪我写作业。",
   R:{s:"拍照发朋友圈",e:{mind:6,social:4,risk:3}},L:{s:"全家下馆子庆祝",e:{spend:1500,social:8,mind:8}}},
+ {who:"女友",av:"💐",tag:"家庭",win:[1,58],txt:"周末有空吗？想去江边走走。",
+  R:{s:"这周行情要紧",e:{social:-5,mind:-2}},L:{s:"陪她走一走",e:{spend:300,social:6,mind:4}}},
+ {who:"女友",av:"🎬",tag:"家庭",win:[1,45],txt:"她发来消息：新上的电影，一起？",
+  R:{s:"推说加班",e:{social:-5,mind:-2}},L:{s:"陪她看",e:{spend:400,social:6,mind:4}}},
+ {who:"女友",av:"🥟",tag:"家庭",win:[2,50],txt:"她说家里包了饺子，喊你回去吃。",
+  R:{s:"在公司盯盘",e:{social:-6,mind:-3}},L:{s:"回去吃饭",e:{spend:200,social:7,mind:3}}},
+ {who:"女友",av:"🎂",tag:"家庭",when:"did:fam_yuehui_01.l",win:[3,58],txt:"她生日。想要一顿像样的晚饭。",
+  R:{s:"转个红包打发",e:{spend:500,social:-4,mind:-2}},L:{s:"认真安排",e:{spend:800,social:7,mind:3}}},
+ {who:"女友",av:"💭",tag:"家庭",when:"did:fam_yuehui_01.r|did:fam_shengri_01.r|did:fam_zhaohu_01.r|did:fam_zhoumo_01.r",win:[6,56],txt:"她问：你是不是更喜欢那根线？",
+  R:{s:"赚钱都是为了家",e:{social:-6,mind:-2}},L:{s:"关软件道歉",e:{mind:-3,social:6}}},
+ {who:"女友",av:"🤝",tag:"家庭",when:"did:fam_yuehui_01.l|did:fam_zhaohu_01.l|did:fam_zhoumo_01.l",win:[6,58],txt:"要不要……就这样走下去？",
+  R:{s:"再等等看",e:{social:-8,mind:-4}},L:{s:"正式在一起",e:{spend:600,social:8,mind:8}}},
+ {who:"女友",av:"🥀",tag:"家庭",when:"did:fam_yuehui_01.l; no:did:fam_queding_01|did:fam_zhaohu_01.l; no:did:fam_queding_01|did:fam_zhoumo_01.l; no:did:fam_queding_01",win:[40,58],txt:"她不再问你周末有没有空了。",
+  R:{s:"让它过去",e:{social:-10,mind:-5}},L:{s:"补救一下",e:{spend:1000,mind:-4,social:3}}},
+ {who:"女友",av:"🎁",tag:"家庭",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[8,56],txt:"见她爸妈。烟酒礼盒摆一桌。",
+  R:{s:"空手上门",e:{social:-9,mind:2}},L:{s:"备足礼数",e:{spend:3000,social:10,mind:-2}}},
+ {who:"女友",av:"👀",tag:"家庭",when:"did:fam_jiazhang_01.l; no:did:fam_hunli_01",win:[12,56],txt:"丈母娘笑眯眯：有房吗？存款呢？",
+  R:{s:"吹了个牛",e:{social:4,risk:6}},L:{s:"实话实说",e:{social:-3,mind:2}}},
+ {who:"女友",av:"🏡",tag:"家庭",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[12,56],txt:"她说：我们什么时候有自己的家？",
+  R:{s:"炒一波就有了",e:{risk:8,social:-5,mind:2}},L:{s:"一起攒，我改",e:{spend:2000,social:8,mind:2}}},
+ {who:"女友",av:"📵",tag:"家庭",when:"did:fam_queding_01.l; did:fam_jiazhang_01.r",win:[12,56],txt:"她三天没回你消息了。",
+  R:{s:"等她消气",e:{social:-8,mind:-3}},L:{s:"上门道歉",e:{spend:600,social:7,mind:-2}}},
+ {who:"女友",av:"💍",tag:"家庭",when:"did:fam_jiazhang_01.l; social>35|did:fam_zanqian_01.l; social>35",win:[12,58],txt:"她家开口：彩礼八万八。",
+  R:{s:"谈一谈，少些",e:{spend:10000,social:-7,mind:-3}},L:{s:"借，也要给",e:{borrow:60000,spend:28000,social:12,mind:4}}},
+ {who:"女友",av:"👰",tag:"家庭",when:"did:fam_caili_01",win:[16,58],txt:"婚礼这天。她哭着笑了。",
+  R:{s:"一切从简",e:{spend:3000,social:-4,mind:3}},L:{s:"风风光光办",e:{spend:15000,social:12,mind:8}}},
+ {who:"老婆",av:"🏠",tag:"家庭",when:"did:fam_hunli_01",win:[22,58],txt:"首付还差四万。借，还是等？",
+  R:{s:"再等等",e:{social:-5,mind:-3}},L:{s:"借",e:{borrow:40000,social:6,risk:5,mind:-2}}},
+ {who:"老婆",av:"🫂",tag:"家庭",when:"did:fam_hunli_01.l; did:fam_jiazhang_01.l",win:[36,60],txt:"她说：钱没了可以再赚，你在就好。",
+  R:{s:"红着眼说谢谢",e:{mind:6,social:3,risk:2}},L:{s:"抱抱她，请天假",e:{mind:9,social:6,risk:5}}},
  {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[8,55],txt:"猫粮见底了。它蹲在碗前看你。",
   R:{s:"先吃白米饭吧",e:{mind:-5,social:-2}},L:{s:"下单进口的",e:{spend:300,mind:4}}},
  {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[10,50],txt:"宠物医院提醒：疫苗该打了，1,200。",
