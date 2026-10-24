@@ -253,6 +253,7 @@
     "label": "收下，投进去",
     "effects": {
      "borrow": 12000,
+     "buy": 12000,
      "mind": -9,
      "social": -6
     }
@@ -1458,6 +1459,7 @@
     "label": "先配 12,000",
     "effects": {
      "borrow": 12000,
+     "buy": 12000,
      "mind": -8,
      "social": 3
     }
@@ -1483,6 +1485,7 @@
     "label": "借 12,000 抄底",
     "effects": {
      "borrow": 12000,
+     "buy": 12000,
      "mind": -9
     }
    }
@@ -1506,7 +1509,7 @@
    "right": {
     "label": "还最低",
     "effects": {
-     "borrow": 8000,
+     "repay": 3000,
      "mind": -4
     }
    }
@@ -1610,6 +1613,7 @@
     "label": "再借 5,000 补上",
     "effects": {
      "borrow": 5000,
+     "buy": 5000,
      "mind": -6
     }
    }

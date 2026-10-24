@@ -36,7 +36,7 @@
   .row .vl{font-size:11px;width:62px;text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto}
   .s-cash{background:linear-gradient(90deg,#ffc07a,#f79c1e);left:0}
   .s-eq{background:linear-gradient(90deg,#ff8a8a,#e02020)}
-  .s-debt{background:repeating-linear-gradient(-45deg,#8f959e 0 3px,#c9ced6 3px 6px);right:0;opacity:.85}
+  .s-debt{background:repeating-linear-gradient(-45deg,#d93025 0 3px,#ffb3ab 3px 6px);right:0;opacity:.95}
   .f-mind i{background:linear-gradient(90deg,#9fc0ff,#1a6dff);left:0}
   .f-risk i{background:linear-gradient(90deg,#ffd666,#d4380d);left:0}
   .f-soc i{background:linear-gradient(90deg,#95de64,#237804);left:0}
@@ -219,7 +219,8 @@ function spend(x){
   if(need > 0){ S.debt += need; S.social -= 3; }
 }
 function borrow(x){
-  S.debt += x; S.equity += x; S.cost += x; S.trades++; S.neverBought = false;
+  // 借来的钱先进现金、欠账记进负债（进度条上看得见），花不花、买不买由玩家自己定
+  S.debt += x; S.cash += x;
   S.risk = clamp(S.risk + Math.min(16, 5 + x / 1300), 0, 100);
 }
 function repay(x){
@@ -233,10 +234,10 @@ function clearST(key){ delete S.st[key]; }
 
 function apply(e){
   if(e.cash)  S.cash = S.cash + e.cash;              // 钱先到账，再谈怎么花（发薪/报销类选项依赖此序）
+  if(e.borrow)borrow(e.borrow);                      // 借的钱先到账：后面同卡的 spend 才能直接从现金扣
   if(e.buy)   buy(e.buy);
   if(e.sell)  sell(e.sell);
   if(e.spend) spend(e.spend);
-  if(e.borrow)borrow(e.borrow);
   if(e.repay) repay(e.repay);
   S.equity = clamp(S.equity + (e.equity || 0), 0, 999999);
   S.cost   = clamp(S.cost   + (e.cost   || 0), 0, 999999);
@@ -672,7 +673,9 @@ function fly(dir){
   cur.style.transform = "translate(" + (dir === "R" ? 460 : -460) + "px,10px) rotate(" + (dir === "R" ? 26 : -26) + "deg)";
   cur.style.opacity = 0;
 
+  var debt0 = S.debt;
   resolve(c, dir);
+  var borrowed = S.debt - debt0;                     // 这一选择借了多少钱（给 toast 提示用）
   // 卡牌自带状态：给玩家一个提示
   if(c.st) for(var k in c.st){
     var info = ST[k]; if(info) toast(info.ic + " " + info.nm + "：" + info.tip);
@@ -681,7 +684,10 @@ function fly(dir){
   var m = tick();
   S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
-  setTimeout(function(){ if(m) toast(m); }, c.st ? 1800 : 260);
+  setTimeout(function(){
+    if(borrowed > 0) m = "💳 借到 " + money(borrowed) + "，已记进负债" + (m ? "　·　" + m : "");
+    if(m) toast(m);
+  }, c.st ? 1800 : 260);
   setTimeout(function(){ busy = false; check(); if(!S.over) nextCard(); }, 340);
 }
 
@@ -802,7 +808,7 @@ CARDS = [
  {who:"老妈",av:"👵",tag:"家庭",txt:"你爸住院了，要先垫 6,500。",
   R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
  {who:"老妈",av:"👵",tag:"家庭",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
-  R:{s:"收下，投进去",e:{borrow:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5,spend:1500}}},
+  R:{s:"收下，投进去",e:{borrow:12000,buy:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5,spend:1500}}},
  {who:"丈母娘",av:"🧓",tag:"家庭",when:"did:fam_hunli_01",txt:"听说你最近在做投资？妈这里有点闲钱。",
   R:{s:"拿 20,000",e:{borrow:20000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5,spend:1200}}},
  {who:"孩子",av:"🤒",tag:"家庭",when:"has:baby",txt:"半夜发烧 39 度。",
@@ -898,11 +904,11 @@ CARDS = [
  {who:"交易所",av:"🚫",tag:"市场",when:"has:halt",txt:"还是没有复牌的消息。",
   R:{s:"刷公告",e:{mind:-3,risk:-4}},L:{s:"不看就不难受",e:{mind:3,risk:5}}},
  {who:"配资公司",av:"📞",tag:"风险",txt:"您好，十倍杠杆，资金秒到账，日息只要万分之八。",
-  R:{s:"先配 12,000",e:{borrow:12000,mind:-8,social:3}},L:{s:"直接挂断",e:{mind:4,social:-4}}},
+  R:{s:"先配 12,000",e:{borrow:12000,buy:12000,mind:-8,social:3}},L:{s:"直接挂断",e:{mind:4,social:-4}}},
  {who:"网贷广告",av:"📱",tag:"风险",txt:"额度 20,000，日息万三，三分钟到账。",
-  R:{s:"借 12,000 抄底",e:{borrow:12000,mind:-9}},L:{s:"关掉",e:{mind:4,social:-3}}},
+  R:{s:"借 12,000 抄底",e:{borrow:12000,buy:12000,mind:-9}},L:{s:"关掉",e:{mind:4,social:-3}}},
  {who:"信用卡",av:"💳",tag:"风险",txt:"账单 8,000。这个月怎么处理？",
-  R:{s:"还最低",e:{borrow:8000,mind:-4}},L:{s:"咬牙全额还",e:{spend:8000,mind:5}}},
+  R:{s:"还最低",e:{repay:3000,mind:-4}},L:{s:"咬牙全额还",e:{spend:8000,mind:5}}},
  {who:"荐股群",av:"🎯",tag:"风险",txt:"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
   R:{s:"交钱",e:{spend:8888,risk:8,mind:-6,social:4}},L:{s:"这就是骗局",e:{mind:5,social:-4}}},
  {who:"大 V",av:"⭐",tag:"风险",txt:"十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。",
@@ -910,7 +916,7 @@ CARDS = [
  {who:"微信群",av:"👥",tag:"风险",txt:"群里有人说，这只票下周要有大动作，内部消息。",
   R:{s:"满仓埋伏",e:{buy:4000,risk:9,mind:-5,social:4}},L:{s:"这话我听过二十遍",e:{mind:3,social:-4}}},
  {who:"券商短信",av:"📲",tag:"风险",when:"risk>34 | debt>8000",txt:"你借的钱快不够抵押了，请追加保证金。",
-  R:{s:"再借 5,000 补上",e:{borrow:5000,mind:-6}},L:{s:"认了，让他们卖",e:{sell:0.6,mind:-8,risk:-5}}},
+  R:{s:"再借 5,000 补上",e:{borrow:5000,buy:5000,mind:-6}},L:{s:"认了，让他们卖",e:{sell:0.6,mind:-8,risk:-5}}},
  {who:"你的债",av:"🧮",tag:"风险",when:"debt>3000",txt:"要不要先把欠的钱还掉一部分？",
   R:{s:"还 6,000",e:{repay:6000,mind:4,risk:-7}},L:{s:"留着翻身",e:{mind:-3,risk:2}}},
  {who:"网友",av:"💬",tag:"风险",txt:"别天天看了，每月固定买一点就行，长期拿着。",
