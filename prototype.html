@@ -187,7 +187,7 @@ function reset(){
   // 开局自带底仓 ¥9,000（现金 9,000）——一半身家在场内，从第一天起行情就攥着你的心跳；
   // 现金比旧版少 3000：生活是要烧钱的，手里那点活钱撑不了几件家事
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
-        mind:58, risk:0, social:56, energy:100, day:1,
+        mind:58, risk:0, social:56, energy:50, day:1,
         st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
@@ -249,9 +249,8 @@ function apply(e){
   S.risk   = clamp(S.risk   + (e.risk   || 0), 0, 100);
   S.social = clamp(S.social + (e.social || 0), 0, 100);
   if(e.energy){                                       // 花时间的选项当场扣精力：陪人、私活、加班都吃这一项
-    if(e.energy < 0 && S.energy <= 0){ S.mind -= 10; S._eEmpty = true; }   // 见底还硬撑：心态重扣，tick 里提示
+    if(e.energy < 0 && S.energy <= 0){ S.mind -= 6; S._eEmpty = true; }   // 见底还硬撑：心态重扣，tick 里提示
     S.energy = clamp(S.energy + e.energy, 0, 100);
-    if(e.energy < 0) S._eSpent = true;                // 今天花过精力：今晚恢复打折（见 tick）
   }
   if(e.addst) for(var k in e.addst) setST(k, e.addst[k]);
   if(e.unst)  e.unst.forEach(clearST);
@@ -412,11 +411,10 @@ function tick(){
   if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; }
   if(st.over){ S.mind -= 0.5; S.risk = clamp(S.risk + 0.3, 0, 100); }
 
-  // 精力：睡觉恢复 +6；今天已经花过精力（陪人/干活）今晚只回 +3；见底每天都磨心态
-  // （3000 局对拍结论：+9/+4 宽到全投入玩家也永不见底，精力条沦为装饰——收紧到 +6/+3）
-  if(S.energy <= 0.5){ S.mind -= 2; }
-  if(S._eEmpty){ msg.push("😵 精力见底还硬撑，心态 −10"); S._eEmpty = false; }
-  S.energy = clamp(S.energy + (S._eSpent ? 2 : 4), 0, 100); S._eSpent = false;
+  // 精力：没有任何自然恢复——50 点开局存量，只能靠卡片回血（睡觉/早睡/不看盘）。
+  // 精力是一笔会花光的预算：花在哪、什么时候歇，全是你自己的取舍。见底每天都磨心态。
+  if(S.energy <= 0.5){ S.mind -= 1; }
+  if(S._eEmpty){ msg.push("😵 精力见底还硬撑，心态 −6"); S._eEmpty = false; }
 
   // 上头状态：心态高位自动进入，回落值以下自动解除（100 不再是死刑，但上头会替你下单）
   if(S.mind >= 88 && !st.over) setST("over", -1);
