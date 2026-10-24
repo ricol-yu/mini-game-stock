@@ -136,7 +136,7 @@ function compileWhen(w) {
 /* ---------- 等价性对拍：快版 vs 原版，逐卡随机状态，必须 100% 一致 ---------- */
 function verifyWhenEquivalence(sandbox, CARDS) {
   const RSTATES = 400;
-  const STATUS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over'];
+  const STATUS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear'];
   let rnd = mulberry32(20261020);
   function randState() {
     const st = {};

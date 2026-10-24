@@ -1866,6 +1866,266 @@
    }
   },
   {
+   "id": "mkt_bull_open_01",
+   "who": "新闻",
+   "avatar": "📺",
+   "tag": "市场",
+   "text": "重磅政策连发：降准降息，长钱获准入市。",
+   "when": "no:bull; no:bear; no:bubble; no:crisis; day>8",
+   "alwaysStatus": {
+    "bull": 15
+   },
+   "left": {
+    "label": "换半仓进去",
+    "effects": {
+     "buy": 6000,
+     "mind": 3,
+     "risk": 5
+    }
+   },
+   "right": {
+    "label": "先看两天再说",
+    "effects": {
+     "mind": -4,
+     "social": -4
+    }
+   },
+   "whoId": "xinwen"
+  },
+  {
+   "id": "mkt_bear_open_01",
+   "who": "新闻",
+   "avatar": "📉",
+   "tag": "市场",
+   "text": "指数连跌一个月，新闻说这是「健康调整」。",
+   "when": "no:bear; no:bull; no:crisis; no:bubble; day>8",
+   "alwaysStatus": {
+    "bear": 15
+   },
+   "left": {
+    "label": "清仓躲一躲",
+    "effects": {
+     "sell": 1,
+     "mind": 2,
+     "social": -5
+    }
+   },
+   "right": {
+    "label": "装死，不看账户",
+    "effects": {
+     "mind": -5,
+     "risk": 4
+    }
+   },
+   "whoId": "xinwen"
+  },
+  {
+   "id": "mkt_bull_taxi_01",
+   "who": "所有人",
+   "avatar": "🚕",
+   "tag": "市场",
+   "text": "出租车司机在跟你聊 K 线，说他上月辞职了。",
+   "when": "has:bull",
+   "alwaysStatus": null,
+   "left": {
+    "label": "劝他见好就收",
+    "effects": {
+     "social": -5,
+     "mind": 3
+    }
+   },
+   "right": {
+    "label": "互相交换代码",
+    "effects": {
+     "buy": 3000,
+     "mind": 2,
+     "risk": 9
+    }
+   },
+   "whoId": "suoyouren"
+  },
+  {
+   "id": "mkt_bull_lever_01",
+   "who": "配资公司",
+   "avatar": "📞",
+   "tag": "市场",
+   "text": "广告弹出来：十倍杠杆，牛市造富就等你。",
+   "when": "has:bull",
+   "alwaysStatus": null,
+   "left": {
+    "label": "关掉，心有余悸",
+    "effects": {
+     "mind": 3,
+     "risk": -4,
+     "social": -4
+    }
+   },
+   "right": {
+    "label": "小仓位试一手",
+    "effects": {
+     "buy": 3000,
+     "mind": 2,
+     "risk": 12
+    }
+   },
+   "whoId": "peizigongsi"
+  },
+  {
+   "id": "mkt_bull_family_01",
+   "who": "老婆",
+   "avatar": "💍",
+   "tag": "市场",
+   "text": "我爸把养老钱全转进股市了，你帮我劝劝。",
+   "when": "has:bull",
+   "alwaysStatus": null,
+   "left": {
+    "label": "我去劝他",
+    "effects": {
+     "spend": 600,
+     "social": 5,
+     "mind": 2
+    }
+   },
+   "right": {
+    "label": "说这是时代红利",
+    "effects": {
+     "mind": -4,
+     "social": 3,
+     "risk": 4
+    }
+   },
+   "whoId": "laopo"
+  },
+  {
+   "id": "mkt_bear_group_01",
+   "who": "微信群",
+   "avatar": "💬",
+   "tag": "市场",
+   "text": "五百人的股票群三天没人说话，有人悄悄退群。",
+   "when": "has:bear",
+   "alwaysStatus": null,
+   "left": {
+    "label": "发个红包暖场",
+    "effects": {
+     "spend": 200,
+     "social": 6,
+     "mind": 2
+    }
+   },
+   "right": {
+    "label": "顺手也退了群",
+    "effects": {
+     "social": -6,
+     "mind": 3
+    }
+   },
+   "whoId": "weixinqun"
+  },
+  {
+   "id": "mkt_bear_cut_01",
+   "who": "所有人",
+   "avatar": "🩸",
+   "tag": "市场",
+   "text": "持仓亏了三成。割肉认赔，还是装死等回本？",
+   "when": "has:bear; equity>0",
+   "alwaysStatus": null,
+   "left": {
+    "label": "割肉，重新来过",
+    "effects": {
+     "sell": 1,
+     "mind": -4,
+     "risk": -8
+    }
+   },
+   "right": {
+    "label": "装死，眼不见为净",
+    "effects": {
+     "risk": 6,
+     "mind": -3
+    }
+   },
+   "whoId": "suoyouren"
+  },
+  {
+   "id": "mkt_bear_loan_01",
+   "who": "银行",
+   "avatar": "🏦",
+   "tag": "市场",
+   "text": "行情不好，催消费贷的短信倒是很准时。",
+   "when": "has:bear",
+   "alwaysStatus": null,
+   "left": {
+    "label": "砸锅卖铁先还上",
+    "effects": {
+     "spend": 3000,
+     "mind": -2,
+     "risk": -5
+    }
+   },
+   "right": {
+    "label": "先拖着，利息认了",
+    "effects": {
+     "risk": 6,
+     "mind": -3,
+     "social": -2
+    }
+   },
+   "whoId": "yinhang"
+  },
+  {
+   "id": "mkt_policy_whim_01",
+   "who": "新闻",
+   "avatar": "🔄",
+   "tag": "市场",
+   "text": "政策一夜转向：昨天还在降温，今天改口呵护。",
+   "when": "has:bull|has:bear",
+   "alwaysStatus": null,
+   "left": {
+    "label": "跟着风向调仓",
+    "effects": {
+     "buy": 3000,
+     "risk": 5,
+     "mind": -2
+    }
+   },
+   "right": {
+    "label": "不再猜政策了",
+    "effects": {
+     "mind": 3,
+     "risk": -3,
+     "social": -2
+    }
+   },
+   "whoId": "xinwen"
+  },
+  {
+   "id": "mkt_bear_fund_01",
+   "who": "券商短信",
+   "avatar": "📄",
+   "tag": "市场",
+   "text": "你买的基金清盘了，道歉信写得很诚恳。",
+   "when": "has:bear",
+   "alwaysStatus": null,
+   "left": {
+    "label": "全部赎回，落袋",
+    "effects": {
+     "sell": 1,
+     "mind": 2,
+     "risk": -5,
+     "social": -3
+    }
+   },
+   "right": {
+    "label": "补一笔摊低成本",
+    "effects": {
+     "buy": 4000,
+     "mind": -3,
+     "risk": 6
+    }
+   },
+   "whoId": "quanshang"
+  },
+  {
    "id": "soc_insider_01",
    "who": "张阿姨",
    "whoId": "zhangayi",

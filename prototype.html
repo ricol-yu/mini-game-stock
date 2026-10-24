@@ -178,6 +178,8 @@ ST = {
   baby   :{nm:"添丁",  ic:"👶", tip:"每天都在花钱。奇怪的是，你并不后悔。｜每天现金 −180，心态 +1、社会 +0.4。"},
   fired  :{nm:"失业",  ic:"📦", tip:"没有工资进来了。｜发薪日不再到账，心态每天 −1.1。"},
   insider:{nm:"内线",  ic:"🕵️", tip:"你知道别人不知道的事。这本身就是风险。｜每天风险 +1.4；消息有 14% 概率是假的——被拆穿时风险 +16、心态 −10、社会 −5。"},
+  bull   :{nm:"牛市",  ic:"🐂", tip:"卖菜的都在谈股票。｜趋势 +1.2pp、波动 ×2.1：暴涨暴跌随时切换，涨停概率升到 ~4%/天，持续 15 天。"},
+  bear   :{nm:"熊市",  ic:"🐻", tip:"群里的红包没人抢了。｜趋势 −1.8pp、波动 ×1.8：跌多涨少，跌停概率升到 ~4%/天，持续 15 天。"},
   over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。｜心态 ≥88 时进入：下单自动放大 ×1.35、风险每天 +0.3；心态回落到 74 以下解除。"}
 };
 
@@ -322,31 +324,47 @@ function trend5(){                                  // 近 5 日涨跌幅：给�
 function tick(){
   cyc++;
   var st = S.st, msg = [];
-  // 长期微微向上（时间站在耐心的人一边）+ 明显的牛熊周期（让人读得出趋势）
-  var drift = 0.003 + Math.sin(cyc / 14) * 0.024;
+  // 期望略为负（大多数人赚不到钱——这就是市场）+ 小幅牛熊摆动；大事件状态再叠加
+  var drift = -0.004 + Math.sin(cyc / 14) * 0.012;
   if(st.bubble) drift += 0.028;
+  if(st.bull)   drift += 0.012;
   if(st.crisis) drift -= 0.024;
+  if(st.bear)   drift -= 0.018;
 
   if(st.halt){
     // 停牌：价格冻结，什么都做不了
     msg.push("停牌中，价格冻结");
   }else{
-    var vol = 0.030 * (st.crisis ? 1.7 : 1) * (st.bubble ? 1.4 : 1);
+    var vol = 0.042;
+    if(st.bull)   vol *= 2.1;
+    if(st.bear)   vol *= 1.8;
+    if(st.bubble) vol *= 1.4;
+    if(st.crisis) vol *= 1.7;
     var r = drift + (Math.random() - 0.5) * vol;
     if(st.insider) r += 0.014;                      // 提前知道消息，确实是赚得快
+    // 涨跌停：大行情日。牛市/泡沫易涨停，熊市/冬天易跌停；命中的直接打到 ±10%
+    var pUp = 0.012 + (st.bull ? 0.030 : 0) + (st.bubble ? 0.022 : 0);
+    var pDn = 0.012 + (st.bear ? 0.030 : 0) + (st.crisis ? 0.022 : 0);
+    var ul = Math.random();
+    if(ul < pUp){ r = 0.0995; msg.push("🔥 涨停 +10%，封单排到明天"); }
+    else if(ul < pUp + pDn){ r = -0.0995; msg.push("🧊 跌停 −10%，卖单砸不出门"); }
+    r = Math.max(-0.0995, Math.min(0.0995, r));
     S.index = (S.index || 3000) * (1 + r);
     S.hist.push(S.index); if(S.hist.length > 40) S.hist.shift();
 
     var m = 1 + S.risk / 42;                        // 风险放大波动：1x ~ 3.4x
-    var sr = r * 1.3 * m + (Math.random() - 0.5) * 0.018;
+    var sr = r * 1.3 * m + (Math.random() - 0.5) * 0.024;
+    sr = Math.max(-0.0995, Math.min(0.0995, sr));
     var before = S.equity;
     if(S.equity > 0) S.equity = Math.max(0, S.equity * (1 + sr));
 
     if(before > 0){
       var pct = (S.equity - before) / before;
-      if(pct < -0.06)      S.mind -= 3.5;
-      else if(pct < -0.02) S.mind -= 1.2;
-      else if(pct > 0.03)  S.mind += 1.6;
+      if(pct <= -0.095)      S.mind -= 4.5;         // 吃到跌停：额外打击（比改前温和）
+      else if(pct < -0.06)   S.mind -= 2.5;
+      else if(pct < -0.02)   S.mind -= 0.8;
+      else if(pct >= 0.095)  S.mind += 4;           // 吃到涨停
+      else if(pct > 0.03)    S.mind += 1.6;
       var d = S.equity - before;
       msg.push("这只票" + (d >= 0 ? "涨" : "跌") + Math.abs(pct * 100).toFixed(1) + "%");
     } else msg.push("空仓，与你无关");
@@ -375,6 +393,8 @@ function tick(){
     }
   }
   if(st.crisis){ st.crisis = st.crisis > 0 ? st.crisis - 1 : -1; S.mind -= 1.3; }
+  if(st.bull){ st.bull = st.bull > 0 ? st.bull - 1 : -1; }
+  if(st.bear){ st.bear = st.bear > 0 ? st.bear - 1 : -1; S.mind -= 0.4; }   // 熊市磨人
   if(st.halt){ st.halt = st.halt > 0 ? st.halt - 1 : -1; S.mind -= 0.8; }
   if(st.fired){ S.mind -= 1.1; }
   if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; }
@@ -404,10 +424,10 @@ function tick(){
   var interest = S.debt * 0.0015 * (1 + S.risk / 70);   // 风险越高，钱越贵
   S.cash -= interest;
   S.risk = clamp(S.risk - 0.15, 0, 100);                      // 风险消退得很慢
-  S.social = clamp(S.social - 0.22, 0, 100);                  // 人情是会淡的
+  S.social = clamp(S.social - 0.17, 0, 100);                  // 人情是会淡的（行情更磨人，淡得稍慢一点）
   if(S.equity > 0 && S.equity >= (S.cash + S.equity) * 0.75)
     S.risk = clamp(S.risk + 0.45, 0, 100);                    // 重仓本身就是风险
-  S.mind = clamp(S.mind + 0.55 + (S.social >= 70 ? 0.35 : 0), 0, 100);
+  S.mind = clamp(S.mind + 0.75 + (S.social >= 70 ? 0.35 : 0), 0, 100);
 
   // 悬崖预警（每局一次）：别让结局看起来像凭空掉下来的
   if(S.mind < 12 && !S.flags.wMind){ S.flags.wMind = true; msg.push("🧊 心态只剩 " + Math.round(S.mind) + "：再坏下去，人就「不动了」"); }
@@ -448,7 +468,7 @@ function render(){
   var strip = $("strip"), html = "";
   for(var k in S.st){
     var left = S.st[k], info = ST[k] || {nm:k, ic:"•"};
-    html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"?" hot":"") + '" tabindex="0">' +
+    html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"||k==="bull"||k==="bear"?" hot":"") + '" tabindex="0">' +
             info.ic + info.nm + (left > 0 ? ' <b>' + left + '</b>天' : '') +
             '<span class="tip"><b>' + info.ic + " " + info.nm + '</b>' + (info.tip || "（这个状态暂时没有说明。）") + '</span></span>';
   }
@@ -887,6 +907,28 @@ CARDS = [
   R:{s:"卖点票周转",e:{sell:0.3,mind:-5,risk:-6}},L:{s:"再借一笔",e:{borrow:4000,mind:-2,risk:4}}},
  {who:"新闻",av:"📰",tag:"市场",txt:"头条推送：「重磅利好，明天开盘见分晓。」",
   R:{s:"关掉推送",e:{mind:-2,risk:-6}},L:{s:"激动转发",e:{mind:4,risk:8}}},
+ {who:"新闻",av:"📺",tag:"市场",when:"no:bull; no:bear; no:bubble; no:crisis; day>8",txt:"重磅政策连发：降准降息，长钱获准入市。",
+  st:{bull:15},
+  R:{s:"先看两天再说",e:{mind:-4,social:-4}},L:{s:"换半仓进去",e:{buy:6000,mind:3,risk:5}}},
+ {who:"新闻",av:"📉",tag:"市场",when:"no:bear; no:bull; no:crisis; no:bubble; day>8",txt:"指数连跌一个月，新闻说这是「健康调整」。",
+  st:{bear:15},
+  R:{s:"装死，不看账户",e:{mind:-5,risk:4}},L:{s:"清仓躲一躲",e:{sell:1,mind:2,social:-5}}},
+ {who:"所有人",av:"🚕",tag:"市场",when:"has:bull",txt:"出租车司机在跟你聊 K 线，说他上月辞职了。",
+  R:{s:"互相交换代码",e:{buy:3000,mind:2,risk:9}},L:{s:"劝他见好就收",e:{social:-5,mind:3}}},
+ {who:"配资公司",av:"📞",tag:"市场",when:"has:bull",txt:"广告弹出来：十倍杠杆，牛市造富就等你。",
+  R:{s:"小仓位试一手",e:{buy:3000,mind:2,risk:12}},L:{s:"关掉，心有余悸",e:{mind:3,risk:-4,social:-4}}},
+ {who:"老婆",av:"💍",tag:"市场",when:"has:bull",txt:"我爸把养老钱全转进股市了，你帮我劝劝。",
+  R:{s:"说这是时代红利",e:{mind:-4,social:3,risk:4}},L:{s:"我去劝他",e:{spend:600,social:5,mind:2}}},
+ {who:"微信群",av:"💬",tag:"市场",when:"has:bear",txt:"五百人的股票群三天没人说话，有人悄悄退群。",
+  R:{s:"顺手也退了群",e:{social:-6,mind:3}},L:{s:"发个红包暖场",e:{spend:200,social:6,mind:2}}},
+ {who:"所有人",av:"🩸",tag:"市场",when:"has:bear; equity>0",txt:"持仓亏了三成。割肉认赔，还是装死等回本？",
+  R:{s:"装死，眼不见为净",e:{risk:6,mind:-3}},L:{s:"割肉，重新来过",e:{sell:1,mind:-4,risk:-8}}},
+ {who:"银行",av:"🏦",tag:"市场",when:"has:bear",txt:"行情不好，催消费贷的短信倒是很准时。",
+  R:{s:"先拖着，利息认了",e:{risk:6,mind:-3,social:-2}},L:{s:"砸锅卖铁先还上",e:{spend:3000,mind:-2,risk:-5}}},
+ {who:"新闻",av:"🔄",tag:"市场",when:"has:bull|has:bear",txt:"政策一夜转向：昨天还在降温，今天改口呵护。",
+  R:{s:"不再猜政策了",e:{mind:3,risk:-3,social:-2}},L:{s:"跟着风向调仓",e:{buy:3000,risk:5,mind:-2}}},
+ {who:"券商短信",av:"📄",tag:"市场",when:"has:bear",txt:"你买的基金清盘了，道歉信写得很诚恳。",
+  R:{s:"补一笔摊低成本",e:{buy:4000,mind:-3,risk:6}},L:{s:"全部赎回，落袋",e:{sell:1,mind:2,risk:-5,social:-3}}},
  {who:"张阿姨",av:"🧶",tag:"人情",txt:"张阿姨拉住你：「有个内部渠道，稳得很。」",
   R:{s:"投五千试试",e:{spend:5000,risk:10,social:4}},L:{s:"婉拒了",e:{social:-4,risk:-2,mind:1}}},
  {who:"镜子",av:"🪞",tag:"自己",when:"mind<45",txt:"镜子里的人眼下乌青，像在问：还来吗？",

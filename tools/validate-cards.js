@@ -34,7 +34,7 @@ function validateCards(data) {
   function warn(rule, id, field, msg) { ISSUES.push({ rule: rule, id: id, field: field, msg: msg, level: 'warn' }); }
 
   var TAGS = ['家庭', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
-  var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over'];
+  var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear'];
   var STAT_KEYS = ['cash', 'equity', 'cost', 'mind', 'risk', 'social', 'day'];
   var WHEN_VARS = ['mind', 'social', 'risk', 'day', 'equity', 'cash', 'debt', 'cost'];
   var MONEY_KEYS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'equity', 'cost'];
