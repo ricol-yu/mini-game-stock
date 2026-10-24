@@ -37,6 +37,7 @@
   .s-cash{background:linear-gradient(90deg,#ffc07a,#f79c1e);left:0}
   .s-eq{background:linear-gradient(90deg,#ff8a8a,#e02020)}
   .s-debt{background:repeating-linear-gradient(-45deg,#d93025 0 3px,#ffb3ab 3px 6px);right:0;opacity:.95}
+  .f-energy i{background:linear-gradient(90deg,#7ce7d8,#0d9488);left:0}
   .f-mind i{background:linear-gradient(90deg,#9fc0ff,#1a6dff);left:0}
   .f-risk i{background:linear-gradient(90deg,#ffd666,#d4380d);left:0}
   .f-soc i{background:linear-gradient(90deg,#95de64,#237804);left:0}
@@ -61,6 +62,8 @@
   .mkt .t{display:flex;align-items:baseline;justify-content:space-between}
   .mkt .t b{font-size:15px;font-variant-numeric:tabular-nums}
   .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+  .mbar{position:relative;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:5px}
+  .mbar i{position:absolute;top:0;height:100%;transition:width .45s cubic-bezier(.4,1.2,.4,1),left .45s cubic-bezier(.4,1.2,.4,1)}
   .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-2)}
   small{font-size:10.5px}
 
@@ -121,9 +124,8 @@
       <div class="capsule"><i></i><span class="dot"></span></div></div>
 
     <div class="hud">
-      <div class="row f-money" id="r-money"><span class="nm">金钱</span>
-        <span class="bar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></span>
-        <span class="vl" id="v-money"></span></div>
+      <div class="row f-energy" id="r-energy"><span class="nm">精力</span>
+        <span class="bar"><i id="b-energy"></i></span><span class="vl" id="v-energy"></span></div>
       <div class="row f-mind" id="r-mind"><span class="nm">心态</span>
         <span class="bar"><i id="b-mind"></i></span><span class="vl" id="v-mind"></span></div>
       <div class="row f-risk" id="r-risk"><span class="nm">风险</span>
@@ -136,6 +138,7 @@
 
     <div class="mkt">
       <div class="t"><b id="v-net">¥18,000</b> <small id="v-pnl" class="flat">0.0%</small></div>
+      <div class="mbar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></div>
       <div class="d"><span>第 <b id="v-day">1</b> 天 <b id="v-det"></b></span><span id="v-tr5">近五日 —</span></div>
     </div>
 
@@ -159,7 +162,7 @@
 
   <div class="legend">
     虚构作品。所有行情、人物与公司均为虚构，不构成任何投资建议。<br>
-    v3：定名《韭菜之王》· 四属性（金钱/心态/风险/社会）· 状态系统（泡沫、冬天、停牌、添丁、失业、内线、上头）· 每 15 天自动发薪。<br>
+    v3：定名《韭菜之王》· 四属性（精力/心态/风险/社会）· 状态系统（泡沫、冬天、停牌、添丁、失业、内线、上头）· 每 15 天自动发薪。<br>
     平衡：600 局模拟 — 随机乱滑平均活 36 天、通关 16%；按趋势操作可到 32%。
   </div>
 </div>
@@ -183,7 +186,7 @@ ST = {
 function reset(){
   // 开局自带底仓 ¥6,000（现金 12,000）——不抽到买入卡也始终在场内，有真实盈亏
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
-        mind:58, risk:0, social:56, day:1,
+        mind:58, risk:0, social:56, energy:100, day:1,
         st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
@@ -244,6 +247,11 @@ function apply(e){
   S.mind   = clamp(S.mind   + (e.mind   || 0), 0, 100);
   S.risk   = clamp(S.risk   + (e.risk   || 0), 0, 100);
   S.social = clamp(S.social + (e.social || 0), 0, 100);
+  if(e.energy){                                       // 花时间的选项当场扣精力：陪人、私活、加班都吃这一项
+    if(e.energy < 0 && S.energy <= 0){ S.mind -= 10; S._eEmpty = true; }   // 见底还硬撑：心态重扣，tick 里提示
+    S.energy = clamp(S.energy + e.energy, 0, 100);
+    if(e.energy < 0) S._eSpent = true;                // 今天花过精力：今晚恢复打折（见 tick）
+  }
   if(e.addst) for(var k in e.addst) setST(k, e.addst[k]);
   if(e.unst)  e.unst.forEach(clearST);
 }
@@ -255,7 +263,7 @@ function apply(e){
    比较：属性 符号 值
          如 mind<30 / social>48 / equity>800
             equity>cost（浮盈）/ equity<cost*0.85（跌超 15%）
-   可用属性：mind social risk day equity cash debt cost
+   可用属性：mind social risk day equity cash debt cost energy
    说明：这么设计是为了让条件能写进配置表里手动编辑，
         不再写死成 JS 函数。功能与原先完全等价。
 */
@@ -403,6 +411,12 @@ function tick(){
   if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; }
   if(st.over){ S.mind -= 0.5; S.risk = clamp(S.risk + 0.3, 0, 100); }
 
+  // 精力：睡觉恢复 +6；今天已经花过精力（陪人/干活）今晚只回 +3；见底每天都磨心态
+  // （3000 局对拍结论：+9/+4 宽到全投入玩家也永不见底，精力条沦为装饰——收紧到 +6/+3）
+  if(S.energy <= 0.5){ S.mind -= 2; }
+  if(S._eEmpty){ msg.push("😵 精力见底还硬撑，心态 −10"); S._eEmpty = false; }
+  S.energy = clamp(S.energy + (S._eSpent ? 2 : 4), 0, 100); S._eSpent = false;
+
   // 上头状态：心态高位自动进入，回落值以下自动解除（100 不再是死刑，但上头会替你下单）
   if(S.mind >= 88 && !st.over) setST("over", -1);
   if(S.mind < 74) clearST("over");
@@ -449,6 +463,12 @@ function tick(){
 /* ============ 渲染 ============ */
 var $ = function(id){ return document.getElementById(id); };
 function render(){
+  // 精力条（HUD 四属性之一）
+  $("b-energy").style.width = S.energy + "%";
+  $("v-energy").textContent = Math.round(S.energy);
+  $("r-energy").classList.toggle("warn", S.energy < 25);
+
+  // 金钱三段条（现金/持仓/负债）住在中间行情区
   var wC = clamp(S.cash / MONEY_CAP * 100, 0, 100), wE = clamp(S.equity / MONEY_CAP * 100, 0, 100);
   if(wC + wE > 100){ var t = 100 / (wC + wE); wC *= t; wE *= t; }
   $("b-cash").style.width = wC + "%"; $("b-cash").style.left = "0";
@@ -456,8 +476,6 @@ function render(){
   $("b-debt").style.width = clamp(S.debt / MONEY_CAP * 100, 0, 100) + "%";
 
   var n = net();
-  $("v-money").textContent = money(n);
-  $("r-money").classList.toggle("warn", n < INIT * 0.35);
 
   $("b-mind").style.width = S.mind + "%";  $("v-mind").textContent = Math.round(S.mind);
   $("r-mind").classList.toggle("warn", S.mind < 22 || S.mind > 88);
@@ -794,29 +812,29 @@ CARDS = [
  {who:"老婆",av:"💍",tag:"家庭",txt:"孩子要上补习班，一年七千八。先交这学期 3,900。",
   R:{s:"出 3,900 报名",e:{spend:3900,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"你到底亏了多少？我要听实话。",
-  R:{s:"说实话",e:{mind:4,social:5,spend:3000}},L:{s:"报喜不报忧",e:{mind:-5,social:-6,risk:3}}},
+  R:{s:"说实话",e:{mind:4,social:5,spend:3000,energy:-6}},L:{s:"报喜不报忧",e:{mind:-5,social:-6,risk:3}}},
  {who:"老婆",av:"💍",tag:"家庭",txt:"我们多久没一起吃饭了？",
-  R:{s:"出去吃，我请",e:{spend:1200,mind:7,social:8}},L:{s:"最近有点忙",e:{mind:-3,social:-7}}},
+  R:{s:"出去吃，我请",e:{spend:1200,mind:7,social:8,energy:-12}},L:{s:"最近有点忙",e:{mind:-3,social:-7}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; no:baby",txt:"我怀孕了。",
   R:{s:"留着吧",e:{spend:5200,mind:15,social:12,addst:{"baby":-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35",txt:"这日子没法过了。离婚吧。",
   R:{s:"挽留，转 5,800",e:{spend:5800,mind:12,social:8}},L:{s:"……好",e:{mind:-14,social:-20,cash:-3000}}},
  {who:"孩子",av:"👧",tag:"家庭",txt:"爸爸，你为什么总在看手机？",
-  R:{s:"爸爸在工作",e:{mind:-4,social:-4,risk:-3}},L:{s:"陪她玩一会儿",e:{mind:9,social:5,risk:5}}},
+  R:{s:"爸爸在工作",e:{mind:-4,social:-4,risk:-3}},L:{s:"陪她玩一会儿",e:{mind:9,social:5,risk:5,energy:-12}}},
  {who:"老师",av:"🏫",tag:"家庭",txt:"今晚家长会，你来不来？",
-  R:{s:"我去",e:{social:8,mind:4,risk:6}},L:{s:"让妈妈去吧",e:{social:-7,mind:-3,cash:900}}},
+  R:{s:"我去",e:{social:8,mind:4,risk:6,energy:-15}},L:{s:"让妈妈去吧",e:{social:-7,mind:-3,cash:900}}},
  {who:"老妈",av:"👵",tag:"家庭",txt:"你爸住院了，要先垫 6,500。",
-  R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
+  R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8,energy:-16}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
  {who:"老妈",av:"👵",tag:"家庭",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
   R:{s:"收下，投进去",e:{borrow:12000,buy:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5,spend:1500}}},
  {who:"丈母娘",av:"🧓",tag:"家庭",when:"did:fam_hunli_01",txt:"听说你最近在做投资？妈这里有点闲钱。",
   R:{s:"拿 20,000",e:{borrow:20000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5,spend:1200}}},
  {who:"孩子",av:"🤒",tag:"家庭",when:"has:baby",txt:"半夜发烧 39 度。",
-  R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6}},L:{s:"先观察一晚",e:{mind:-7,social:-8}}},
+  R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6,energy:-24}},L:{s:"先观察一晚",e:{mind:-7,social:-8,energy:-16}}},
  {who:"孩子",av:"👶",tag:"家庭",when:"has:baby",txt:"他第一次叫爸爸。你正在看盘。",
-  R:{s:"再看一会儿",e:{mind:-4,social:-5,risk:-4}},L:{s:"把他抱起来",e:{mind:10,social:7,risk:5}}},
+  R:{s:"再看一会儿",e:{mind:-4,social:-5,risk:-4}},L:{s:"把他抱起来",e:{mind:10,social:7,risk:5,energy:-8}}},
  {who:"房东",av:"🏠",tag:"家庭",txt:"下个月房租要涨 800。房东在等你回复。",
-  R:{s:"认了",e:{spend:800,mind:-2,social:2}},L:{s:"搬家",e:{spend:2100,cash:1200,mind:2,social:-4}}},
+  R:{s:"认了",e:{spend:800,mind:-2,social:2}},L:{s:"搬家",e:{spend:2100,cash:1200,mind:2,social:-4,energy:-16}}},
  {who:"老板",av:"😰",tag:"职场",when:"no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",win:[28,55],txt:"公司要优化，名单下周公布，你心里有个数。",
   R:{s:"装没听见，继续盯盘",e:{buy:4000,mind:-3,social:-5}},L:{s:"主动揽活，向老板表态",e:{mind:-6,social:3,risk:3}}},
  {who:"老板",av:"😅",tag:"职场",when:"no:fired;did:work_layoff_01.l",win:[30,58],txt:"名单公布，上面没有你。但工区少了三个人。",
@@ -827,7 +845,7 @@ CARDS = [
   st:{fired:-1},
   R:{s:"再给我一次机会",e:{cash:9000,mind:-6,social:-5}},L:{s:"我早就不想干了",e:{cash:5000,mind:2,social:-3}}},
  {who:"招聘软件",av:"📱",tag:"职场",when:"has:fired",txt:"对方已读，没有回。",
-  R:{s:"再降低点期望",e:{mind:-3,social:-3,sell:0.3}},L:{s:"先接点零活",e:{cash:2500,mind:-2,social:-1,risk:5}}},
+  R:{s:"再降低点期望",e:{mind:-3,social:-3,sell:0.3}},L:{s:"先接点零活",e:{cash:2500,mind:-2,social:-1,risk:5,energy:-14}}},
  {who:"老同事",av:"🤝",tag:"职场",when:"has:fired; social>52",txt:"我们组缺人，就是降薪三成。你考虑一下。",
   R:{s:"来",e:{cash:3000,mind:5,social:5,unst:["fired"],risk:6}},L:{s:"再等等",e:{mind:-5,social:-2,risk:-5}}},
  {who:"同事",av:"☕",tag:"职场",txt:"茶水间都在聊这只票，已经连着涨好几天了。",
@@ -835,37 +853,37 @@ CARDS = [
  {who:"同事小王",av:"👨‍💼",tag:"职场",txt:"我表哥在券商，说最近有个大动作。跟不跟？",
   R:{s:"跟 3,000",e:{buy:3000,risk:4,mind:-2,social:3}},L:{s:"不信小道消息",e:{mind:3,social:-4}}},
  {who:"项目",av:"🌃",tag:"职场",when:"no:fired",win:[5,42],txt:"今晚上线，全组通宵。你走吗？",
-  R:{s:"留下来",e:{mind:-6,social:6,risk:6}},L:{s:"准时走",e:{mind:5,social:-4,risk:-3}}},
+  R:{s:"留下来",e:{mind:-6,social:6,risk:6,energy:-18}},L:{s:"准时走",e:{mind:5,social:-4,risk:-3,energy:10}}},
  {who:"绩效",av:"💵",tag:"收入",when:"no:fired",txt:"季度绩效下来了，6,500。",
   R:{s:"投进去 5,000",e:{cash:6500,buy:5000,mind:-2,social:3}},L:{s:"留着过日子",e:{cash:6500,mind:3,social:-2}}},
  {who:"私活",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 4,000，要占掉两个周末。",
-  R:{s:"接了",e:{cash:4000,mind:-5}},L:{s:"算了",e:{mind:3,social:-2}}},
+  R:{s:"接了",e:{cash:4000,mind:-5,energy:-26}},L:{s:"算了",e:{mind:3,social:-2}}},
  {who:"年终奖",av:"🧧",tag:"收入",when:"no:fired; day>24",win:[42,60],txt:"年终奖发了 15,000。",
   R:{s:"全部加仓",e:{cash:15000,buy:15000,mind:-4}},L:{s:"给家里买点东西",e:{cash:15000,spend:5200,mind:6,social:9}}},
  {who:"朋友",av:"💌",tag:"人情",txt:"我下个月结婚，你知道的。",
-  R:{s:"随 1,600",e:{spend:1600,social:5,mind:-1}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
+  R:{s:"随 1,600",e:{spend:1600,social:5,mind:-1,energy:-14}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
  {who:"朋友",av:"💌",tag:"人情",txt:"借我五千周转一下，下个月一定还。",
   R:{s:"全借",e:{spend:5000,social:5,mind:-2}},L:{s:"说自己也紧",e:{social:-5,mind:-3}}},
  {who:"同学",av:"🍻",tag:"人情",txt:"老同学聚会，人均 600。听说你最近在做投资？",
-  R:{s:"去，AA 也行",e:{spend:600,social:8,mind:4}},L:{s:"不去",e:{social:-5,mind:-3}}},
+  R:{s:"去，AA 也行",e:{spend:600,social:8,mind:4,energy:-14}},L:{s:"不去",e:{social:-5,mind:-3}}},
  {who:"张阿姨",av:"🏘",tag:"人情",txt:"楼下办寿宴，整栋楼都去了。",
-  R:{s:"随 800",e:{spend:800,social:6}},L:{s:"装不在家",e:{social:-6,mind:-2}}},
+  R:{s:"随 800",e:{spend:800,social:6,energy:-12}},L:{s:"装不在家",e:{social:-6,mind:-2}}},
  {who:"老同学",av:"🤳",tag:"人情",when:"social>48",txt:"有个项目，稳赚，就是得先投点钱。",
   R:{s:"投 6,500",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
  {who:"饭局",av:"🥢",tag:"人情",when:"no:insider; social>45",txt:"有人凑到你耳边说了几句，就几句。",
   R:{s:"记住这个消息",e:{mind:-3,risk:8,addst:{"insider":6},social:3}},L:{s:"当没听见",e:{mind:4,social:-5}}},
  {who:"体检报告",av:"🏥",tag:"自己",txt:"血压偏高，熬夜太多。医生让你少盯屏幕。",
-  R:{s:"没事，我扛得住",e:{mind:-6,social:-3,cash:900}},L:{s:"今晚不看了",e:{mind:9,social:3,spend:600}}},
+  R:{s:"没事，我扛得住",e:{mind:-6,social:-3,cash:900}},L:{s:"今晚不看了",e:{mind:9,social:3,spend:600,energy:18}}},
  {who:"凌晨三点",av:"🌙",tag:"自己",txt:"你还没睡。屏幕的蓝光里，那根线还在跳。",
-  R:{s:"再看五分钟",e:{mind:-5,risk:2,cash:700}},L:{s:"睡了",e:{mind:8,risk:4}}},
+  R:{s:"再看五分钟",e:{mind:-5,risk:2,cash:700}},L:{s:"睡了",e:{mind:8,risk:4,energy:20}}},
  {who:"镜子",av:"🪞",tag:"自己",txt:"你盯着屏幕，忽然问自己：我到底在干什么？",
   R:{s:"为了自由",e:{mind:6,social:-4}},L:{s:"……不知道",e:{mind:-4,risk:5}}},
  {who:"周末",av:"🌿",tag:"自己",txt:"难得一个完整的周末，没人找你，也没什么消息。",
-  R:{s:"研究一下行情",e:{mind:-2,risk:-3}},L:{s:"带家人出去走走",e:{spend:1200,mind:8,social:7,risk:3}}},
+  R:{s:"研究一下行情",e:{mind:-2,risk:-3}},L:{s:"带家人出去走走",e:{spend:1200,mind:8,social:7,risk:3,energy:-20}}},
  {who:"地漏",av:"🚿",tag:"自己",txt:"洗完头，地漏上是一层头发。",
   R:{s:"没事",e:{mind:-3,social:-2}},L:{s:"去挂个号",e:{spend:1600,mind:6,risk:3}}},
  {who:"生日",av:"🎂",tag:"自己",when:"social<36",txt:"今天你生日。没有人记得。",
-  R:{s:"给自己买点东西",e:{spend:1200,mind:5,risk:3}},L:{s:"照常过",e:{mind:-6,risk:-3}}},
+  R:{s:"给自己买点东西",e:{spend:1200,mind:5,risk:3,energy:-6}},L:{s:"照常过",e:{mind:-6,risk:-3}}},
  {who:"银行",av:"🏦",tag:"市场",txt:"新闻说银行要放水了，市面上的钱会变多。",
   R:{s:"加仓 3,000",e:{buy:3000,mind:-2,social:3}},L:{s:"听过太多次了",e:{mind:3,social:-4}}},
  {who:"新闻",av:"🌐",tag:"市场",txt:"美国那边利息涨了，据说全球的钱都在往回跑。",
@@ -934,15 +952,15 @@ CARDS = [
  {who:"孩子",av:"🧒",tag:"家庭",txt:"孩子举着卷子过来，站在你旁边，没说话。",
   R:{s:"现在就签",e:{mind:-2,social:6,spend:200}},L:{s:"等一下",e:{mind:1,social:-8,risk:3}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"「今晚吃什么？」她站在门口。你盯着 K 线。",
-  R:{s:"放下手机问她",e:{mind:-2,social:7,risk:-2}},L:{s:"随便",e:{mind:1,social:-6,risk:3}}},
+  R:{s:"放下手机问她",e:{mind:-2,social:7,risk:-2,energy:-6}},L:{s:"随便",e:{mind:1,social:-6,risk:3}}},
  {who:"丈母娘",av:"👵",tag:"家庭",when:"did:fam_hunli_01",txt:"饭桌上，丈母娘随口问：「今年，攒下了吧？」",
-  R:{s:"说了实话",e:{social:-7,mind:-5}},L:{s:"还行，还行",e:{social:5,spend:3000}}},
+  R:{s:"说了实话",e:{social:-7,mind:-5,energy:-8}},L:{s:"还行，还行",e:{social:5,spend:3000,energy:-8}}},
  {who:"同事小王",av:"👔",tag:"职场",txt:"小王压低声音：「哥，你买啥，我跟着买。」",
   R:{s:"把持仓给他看",e:{social:7,risk:8}},L:{s:"别跟着我",e:{social:-6,mind:2}}},
  {who:"HR",av:"🗂",tag:"职场",when:"no:fired;did:work_raise_01.l",win:[22,54],txt:"HR 笑着说：「聊聊你下半年的规划吧。」",
   R:{s:"问补偿方案",e:{social:-5,mind:3}},L:{s:"表了个态",e:{social:4,mind:-8}}},
  {who:"凌晨三点",av:"🌙",tag:"自己",txt:"凌晨三点。美股开盘了，你算了算明天的账。",
-  R:{s:"扣下手机",e:{mind:5,risk:6}},L:{s:"接着算",e:{mind:-6,risk:-4}}},
+  R:{s:"扣下手机",e:{mind:5,risk:6,energy:16}},L:{s:"接着算",e:{mind:-6,risk:-4}}},
  {who:"你的债",av:"🧾",tag:"风险",txt:"账单日到了。你数了数，还差四千。",
   R:{s:"卖点票周转",e:{sell:0.3,mind:-5,risk:-6}},L:{s:"再借一笔",e:{borrow:4000,mind:-2,risk:4}}},
  {who:"新闻",av:"📰",tag:"市场",txt:"头条推送：「重磅利好，明天开盘见分晓。」",
@@ -978,25 +996,25 @@ CARDS = [
  {who:"镜子",av:"🪞",tag:"自己",when:"mind<45",txt:"镜子里的人眼下乌青，像在问：还来吗？",
   R:{s:"笑了笑，没说话",e:{mind:-2,risk:-4}},L:{s:"再战一次",e:{mind:4,risk:6}}},
  {who:"老妈",av:"📞",tag:"家庭",txt:"老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
-  R:{s:"回厨房看她",e:{social:7,mind:-2,risk:-3}},L:{s:"嗯嗯两声",e:{social:-5,mind:1,risk:3}}},
+  R:{s:"回厨房看她",e:{social:7,mind:-2,risk:-3,energy:-8}},L:{s:"嗯嗯两声",e:{social:-5,mind:1,risk:3}}},
  {who:"老妈",av:"📞",tag:"家庭",txt:"老妈拍来一张体检单：她血压也高了。",
-  R:{s:"预约陪复查",e:{spend:800,social:6,mind:2}},L:{s:"让她别操心",e:{mind:-4,social:-4}}},
+  R:{s:"预约陪复查",e:{spend:800,social:6,mind:2,energy:-14}},L:{s:"让她别操心",e:{mind:-4,social:-4}}},
  {who:"房东",av:"🔧",tag:"家庭",txt:"热水器坏了三天。房东说要排期。",
-  R:{s:"等下周",e:{mind:-5,social:-3}},L:{s:"自己找人修",e:{spend:600,mind:2}}},
+  R:{s:"等下周",e:{mind:-5,social:-3}},L:{s:"自己找人修",e:{spend:600,mind:2,energy:-8}}},
  {who:"老师",av:"🎓",tag:"家庭",txt:"班主任来电话：孩子最近上课，总是走神。",
-  R:{s:"当晚陪作业",e:{mind:-4,social:6}},L:{s:"说最近忙",e:{social:-5,mind:-2}}},
+  R:{s:"当晚陪作业",e:{mind:-4,social:6,energy:-14}},L:{s:"说最近忙",e:{social:-5,mind:-2}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
-  R:{s:"说明年补",e:{social:-10,mind:2}},L:{s:"订了餐厅",e:{spend:900,social:8,mind:-3}}},
+  R:{s:"说明年补",e:{social:-10,mind:2}},L:{s:"订了餐厅",e:{spend:900,social:8,mind:-3,energy:-12}}},
  {who:"孩子",av:"🧒",tag:"家庭",txt:"兴趣班该交钱了，6,800。他说，其实不想去了。",
-  R:{s:"退班，陪他玩",e:{social:5,mind:-2}},L:{s:"续费",e:{spend:6800,mind:3}}},
+  R:{s:"退班，陪他玩",e:{social:5,mind:-2,energy:-15}},L:{s:"续费",e:{spend:6800,mind:3}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"has:baby",txt:"产检约在周四上午。她说：你来吧。",
-  R:{s:"让她妈陪",e:{social:-8,mind:1}},L:{s:"陪她去",e:{spend:1200,social:7,mind:-2}}},
+  R:{s:"让她妈陪",e:{social:-8,mind:1}},L:{s:"陪她去",e:{spend:1200,social:7,mind:-2,energy:-16}}},
  {who:"丈母娘",av:"👵",tag:"家庭",when:"did:fam_hunli_01",txt:"丈母娘生日。红包行情，你研究了一晚上。",
   R:{s:"包 1,600",e:{social:-6,mind:-2,spend:1600}},L:{s:"包 6,600",e:{spend:6600,social:8}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_anniv_01.l",win:[36,60],txt:"那家店她说还想再去一次。",
-  R:{s:"等下月发薪",e:{social:-7,mind:-4}},L:{s:"再订一次",e:{spend:900,social:8,mind:4}}},
+  R:{s:"等下月发薪",e:{social:-7,mind:-4}},L:{s:"再订一次",e:{spend:900,social:8,mind:4,energy:-12}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_dinner_01.l|did:fam_laopo_02.l",win:[15,55],txt:"我们多久没一起好好吃顿饭了？",
-  R:{s:"忙完这波再说",e:{social:-9,mind:-5}},L:{s:"关电脑，现在做",e:{mind:6,social:8,risk:4}}},
+  R:{s:"忙完这波再说",e:{social:-9,mind:-5}},L:{s:"关电脑，现在做",e:{mind:6,social:8,risk:4,energy:-14}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; did:fam_confess_01.r; risk>40",win:[20,58],txt:"亏成这样也不告诉我？以后我的钱自己管。",
   R:{s:"我下次一定说",e:{social:-8,mind:-3}},L:{s:"交出一半仓位",e:{sell:0.5,social:8,mind:-3,risk:-6}}},
  {who:"老妈",av:"📞",tag:"家庭",when:"did:fam_momcall_01.l",win:[10,55],txt:"邻居说在菜市场听见你妈叹气。",
@@ -1004,31 +1022,31 @@ CARDS = [
  {who:"老妈",av:"📞",tag:"家庭",when:"did:fam_momhealth_01.r",win:[12,55],txt:"复查稳住了。她把一罐腌笋塞进你后备箱。",
   R:{s:"转 2,000 买补品",e:{spend:2000,social:6,mind:3}},L:{s:"收下，报喜不报忧",e:{mind:6,social:3,risk:3}}},
  {who:"老爸",av:"🧑‍🦳",tag:"家庭",when:"did:fam_momcall_01.l; did:fam_momhealth_01.l",win:[30,58],txt:"爸住院了。这回，是你自己没接那个电话。",
-  R:{s:"让弟弟先顶着",e:{mind:-10,social:-13}},L:{s:"连夜回去垫 9,000",e:{spend:9000,mind:-6,social:6}}},
+  R:{s:"让弟弟先顶着",e:{mind:-10,social:-13}},L:{s:"连夜回去垫 9,000",e:{spend:9000,mind:-6,social:6,energy:-26}}},
  {who:"孩子",av:"🧒",tag:"家庭",when:"did:fam_child_01.l",win:[12,55],txt:"她画了幅画：爸爸、妈妈，和一根红 K 线。",
   R:{s:"真棒，忙完看",e:{mind:-5,social:-6}},L:{s:"装裱起来挂客厅",e:{spend:500,mind:8,social:5}}},
  {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_child_01.r",win:[15,55],txt:"孩子说，爸爸的手机长在手上。",
-  R:{s:"爸爸要赚钱养家",e:{social:-8,mind:-6}},L:{s:"周末断网半天",e:{mind:6,social:7,risk:5}}},
+  R:{s:"爸爸要赚钱养家",e:{social:-8,mind:-6}},L:{s:"周末断网半天",e:{mind:6,social:7,risk:5,energy:-18}}},
  {who:"老师",av:"🎓",tag:"家庭",when:"did:fam_child_01.r; did:fam_teacher_01.l",win:[28,58],txt:"家长会点名：作文《我的爸爸》全篇写手机。",
-  R:{s:"做投资也是为了他",e:{social:-12,mind:-8}},L:{s:"当场保证，买亲子票",e:{spend:800,mind:-3,social:7}}},
+  R:{s:"做投资也是为了他",e:{social:-12,mind:-8}},L:{s:"当场保证，买亲子票",e:{spend:800,mind:-3,social:7,energy:-10}}},
  {who:"孩子",av:"🧒",tag:"家庭",when:"did:fam_teacher_01.r; did:fam_child_01.l",win:[25,58],txt:"奖状背面：谢谢爸爸陪我写作业。",
-  R:{s:"拍照发朋友圈",e:{mind:6,social:4,risk:3}},L:{s:"全家下馆子庆祝",e:{spend:1500,social:8,mind:8}}},
+  R:{s:"拍照发朋友圈",e:{mind:6,social:4,risk:3}},L:{s:"全家下馆子庆祝",e:{spend:1500,social:8,mind:8,energy:-14}}},
  {who:"女友",av:"💐",tag:"家庭",win:[1,58],txt:"周末有空吗？想去江边走走。",
-  R:{s:"这周行情要紧",e:{social:-5,mind:-2}},L:{s:"陪她走一走",e:{spend:300,social:6,mind:4}}},
+  R:{s:"这周行情要紧",e:{social:-5,mind:-2}},L:{s:"陪她走一走",e:{spend:300,social:6,mind:4,energy:-10}}},
  {who:"女友",av:"🎬",tag:"家庭",win:[1,45],txt:"她发来消息：新上的电影，一起？",
-  R:{s:"推说加班",e:{social:-5,mind:-2}},L:{s:"陪她看",e:{spend:400,social:6,mind:4}}},
+  R:{s:"推说加班",e:{social:-5,mind:-2}},L:{s:"陪她看",e:{spend:400,social:6,mind:4,energy:-10}}},
  {who:"女友",av:"🥟",tag:"家庭",win:[2,50],txt:"她说家里包了饺子，喊你回去吃。",
-  R:{s:"在公司盯盘",e:{social:-6,mind:-3}},L:{s:"回去吃饭",e:{spend:200,social:7,mind:3}}},
+  R:{s:"在公司盯盘",e:{social:-6,mind:-3}},L:{s:"回去吃饭",e:{spend:200,social:7,mind:3,energy:-12}}},
  {who:"女友",av:"🎂",tag:"家庭",when:"did:fam_yuehui_01.l",win:[3,58],txt:"她生日。想要一顿像样的晚饭。",
-  R:{s:"转个红包打发",e:{spend:500,social:-4,mind:-2}},L:{s:"认真安排",e:{spend:800,social:7,mind:3}}},
+  R:{s:"转个红包打发",e:{spend:500,social:-4,mind:-2}},L:{s:"认真安排",e:{spend:800,social:7,mind:3,energy:-16}}},
  {who:"女友",av:"💭",tag:"家庭",when:"did:fam_yuehui_01.r|did:fam_shengri_01.r|did:fam_zhaohu_01.r|did:fam_zhoumo_01.r",win:[6,56],txt:"她问：你是不是更喜欢那根线？",
-  R:{s:"赚钱都是为了家",e:{social:-6,mind:-2}},L:{s:"关软件道歉",e:{mind:-3,social:6}}},
+  R:{s:"赚钱都是为了家",e:{social:-6,mind:-2}},L:{s:"关软件道歉",e:{mind:-3,social:6,energy:-6}}},
  {who:"女友",av:"🤝",tag:"家庭",when:"did:fam_yuehui_01.l|did:fam_zhaohu_01.l|did:fam_zhoumo_01.l",win:[6,58],txt:"要不要……就这样走下去？",
-  R:{s:"再等等看",e:{social:-8,mind:-4}},L:{s:"正式在一起",e:{spend:600,social:8,mind:8}}},
+  R:{s:"再等等看",e:{social:-8,mind:-4}},L:{s:"正式在一起",e:{spend:600,social:8,mind:8,energy:-10}}},
  {who:"女友",av:"🥀",tag:"家庭",when:"did:fam_yuehui_01.l; no:did:fam_queding_01|did:fam_zhaohu_01.l; no:did:fam_queding_01|did:fam_zhoumo_01.l; no:did:fam_queding_01",win:[40,58],txt:"她不再问你周末有没有空了。",
-  R:{s:"让它过去",e:{social:-10,mind:-5}},L:{s:"补救一下",e:{spend:1000,mind:-4,social:3}}},
+  R:{s:"让它过去",e:{social:-10,mind:-5}},L:{s:"补救一下",e:{spend:1000,mind:-4,social:3,energy:-8}}},
  {who:"女友",av:"🎁",tag:"家庭",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[8,56],txt:"见她爸妈。烟酒礼盒摆一桌。",
-  R:{s:"空手上门",e:{social:-9,mind:2}},L:{s:"备足礼数",e:{spend:3000,social:10,mind:-2}}},
+  R:{s:"空手上门",e:{social:-9,mind:2}},L:{s:"备足礼数",e:{spend:3000,social:10,mind:-2,energy:-24}}},
  {who:"女友",av:"👀",tag:"家庭",when:"did:fam_jiazhang_01.l; no:did:fam_hunli_01",win:[12,56],txt:"丈母娘笑眯眯：有房吗？存款呢？",
   R:{s:"吹了个牛",e:{social:4,risk:6}},L:{s:"实话实说",e:{social:-3,mind:2}}},
  {who:"女友",av:"🏡",tag:"家庭",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[12,56],txt:"她说：我们什么时候有自己的家？",
@@ -1036,17 +1054,17 @@ CARDS = [
  {who:"女友",av:"📵",tag:"家庭",when:"did:fam_queding_01.l; did:fam_jiazhang_01.r",win:[12,56],txt:"她三天没回你消息了。",
   R:{s:"等她消气",e:{social:-8,mind:-3}},L:{s:"上门道歉",e:{spend:600,social:7,mind:-2}}},
  {who:"女友",av:"💍",tag:"家庭",when:"did:fam_jiazhang_01.l; social>35|did:fam_zanqian_01.l; social>35",win:[12,58],txt:"她家开口：彩礼八万八。",
-  R:{s:"谈一谈，少些",e:{spend:10000,social:-7,mind:-3}},L:{s:"借，也要给",e:{borrow:60000,spend:28000,social:12,mind:4}}},
+  R:{s:"谈一谈，少些",e:{spend:10000,social:-7,mind:-3}},L:{s:"借，也要给",e:{borrow:60000,spend:28000,social:12,mind:4,energy:-20}}},
  {who:"女友",av:"👰",tag:"家庭",when:"did:fam_caili_01",win:[16,58],txt:"婚礼这天。她哭着笑了。",
-  R:{s:"一切从简",e:{spend:3000,social:-4,mind:3}},L:{s:"风风光光办",e:{spend:15000,social:12,mind:8}}},
+  R:{s:"一切从简",e:{spend:3000,social:-4,mind:3,energy:-28}},L:{s:"风风光光办",e:{spend:15000,social:12,mind:8,energy:-32}}},
  {who:"老婆",av:"🏠",tag:"家庭",when:"did:fam_hunli_01",win:[22,58],txt:"首付还差四万。借，还是等？",
   R:{s:"再等等",e:{social:-5,mind:-3}},L:{s:"借",e:{borrow:40000,social:6,risk:5,mind:-2}}},
  {who:"老婆",av:"🫂",tag:"家庭",when:"did:fam_hunli_01.l; did:fam_jiazhang_01.l",win:[36,60],txt:"她说：钱没了可以再赚，你在就好。",
-  R:{s:"红着眼说谢谢",e:{mind:6,social:3,risk:2}},L:{s:"抱抱她，请天假",e:{mind:9,social:6,risk:5}}},
+  R:{s:"红着眼说谢谢",e:{mind:6,social:3,risk:2}},L:{s:"抱抱她，请天假",e:{mind:9,social:6,risk:5,energy:-8}}},
  {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[8,55],txt:"猫粮见底了。它蹲在碗前看你。",
   R:{s:"先吃白米饭吧",e:{mind:-5,social:-2}},L:{s:"下单进口的",e:{spend:300,mind:4}}},
  {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[10,50],txt:"宠物医院提醒：疫苗该打了，1,200。",
-  R:{s:"它看着挺壮实",e:{risk:3,mind:-3}},L:{s:"打",e:{spend:1200,mind:5,social:2}}},
+  R:{s:"它看着挺壮实",e:{risk:3,mind:-3}},L:{s:"打",e:{spend:1200,mind:5,social:2,energy:-10}}},
  {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[25,58],txt:"它吐了，不吃东西。兽医说先交 4,500。",
   R:{s:"猫有九条命",e:{mind:-13,social:-7}},L:{s:"治",e:{spend:4500,mind:9,social:3}}},
  {who:"老板",av:"📋",tag:"职场",when:"no:fired",win:[6,42],txt:"例会上你走神了。老板停顿两秒，点了你的名。",
@@ -1062,11 +1080,11 @@ CARDS = [
  {who:"项目",av:"📊",tag:"职场",when:"no:fired",win:[4,40],txt:"项目明早上线。今晚，你在改自己的止损位。",
   R:{s:"专心上线",e:{mind:-4,social:5,risk:3}},L:{s:"改完再说",e:{social:-7,mind:3}}},
  {who:"体检报告",av:"🩺",tag:"自己",txt:"复查单出来了。血压，还是高。",
-  R:{s:"先放放",e:{mind:-3,risk:4}},L:{s:"吃药，早睡",e:{spend:300,mind:2,risk:-4}}},
+  R:{s:"先放放",e:{mind:-3,risk:4}},L:{s:"吃药，早睡",e:{spend:300,mind:2,risk:-4,energy:15}}},
  {who:"凌晨三点",av:"🌙",tag:"自己",txt:"睡前刷到群消息：明天，见分晓。",
-  R:{s:"手机扔客厅",e:{mind:4,risk:-3,social:-3}},L:{s:"设了 3:50 闹钟",e:{mind:-5,risk:5}}},
+  R:{s:"手机扔客厅",e:{mind:4,risk:-3,social:-3,energy:14}},L:{s:"设了 3:50 闹钟",e:{mind:-5,risk:5}}},
  {who:"周末",av:"🛋",tag:"自己",txt:"周末两天。老婆说，回趟娘家吧。",
-  R:{s:"说要看盘",e:{social:-9,mind:1}},L:{s:"陪她回",e:{spend:600,social:8,mind:-2}}},
+  R:{s:"说要看盘",e:{social:-9,mind:1}},L:{s:"陪她回",e:{spend:600,social:8,mind:-2,energy:-16}}},
  {who:"生日",av:"🎂",tag:"自己",txt:"生日这天。你打开账户，绿了。",
   R:{s:"截图发群里",e:{social:3,mind:-5,risk:4}},L:{s:"关掉账户页",e:{mind:3,risk:-2,spend:300}}},
  {who:"地漏",av:"🚿",tag:"自己",txt:"地漏又堵了。水漫过来，像某种预兆。",
@@ -1078,7 +1096,7 @@ CARDS = [
  {who:"私活",av:"💻",tag:"收入",txt:"老客户来单：6,000。deadline 正好在财报周。",
   R:{s:"推了",e:{mind:2,social:-2}},L:{s:"接了",e:{cash:6000,mind:-6,social:-3}}},
  {who:"同事",av:"☕",tag:"收入",txt:"同事问你接不接私活：一套小程序，3,000。",
-  R:{s:"最近没空",e:{social:-4,mind:2}},L:{s:"接，周末干",e:{cash:3000,mind:-5,social:2}}},
+  R:{s:"最近没空",e:{social:-4,mind:2}},L:{s:"接，周末干",e:{cash:3000,mind:-5,social:2,energy:-28}}},
  {who:"老同学",av:"🍺",tag:"人情",txt:"老同学组局。AA 每人 500。你怕聊起股票。",
   R:{s:"没去",e:{social:-5,mind:1}},L:{s:"去了",e:{spend:500,social:7,mind:-2}}},
  {who:"朋友",av:"🤝",tag:"人情",txt:"朋友开口：借两万。他说，这次一定还。",

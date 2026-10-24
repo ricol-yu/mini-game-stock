@@ -106,7 +106,7 @@ function validateCards(data) {
         v.forEach(function (s) { if (STS.indexOf(s) < 0) err('effect-key', ruleId, side + '.unst', '未知状态「' + s + '」'); });
         continue;
       }
-      if (MONEY_KEYS.indexOf(k) < 0 && ['mind', 'risk', 'social'].indexOf(k) < 0) {
+      if (MONEY_KEYS.indexOf(k) < 0 && ['mind', 'risk', 'social', 'energy'].indexOf(k) < 0) {
         err('effect-key', ruleId, side + '.' + k, '未知效果键「' + k + '」');
         continue;
       }
@@ -116,6 +116,10 @@ function validateCards(data) {
       } else if (k === 'mind' || k === 'risk' || k === 'social') {
         if (v === 0) warn('effect-range', ruleId, side + '.' + k, '加减 0 通常是无意义的占位，请确认');
         if (Math.abs(v) > 30) err('effect-range', ruleId, side + '.' + k, k + ' 单卡变动 |' + v + '| 超过 30');
+      } else if (k === 'energy') {
+        // 精力：花时间的选项（陪伴/私活/婚礼）扣，休息/早睡回；上限 100，单卡 ±35 为叙事上限（婚礼全天 −30/连续熬夜 +20 级别）
+        if (v === 0) warn('effect-range', ruleId, side + '.energy', '精力加减 0 通常是无意义的占位，请确认');
+        if (Math.abs(v) > 35) err('effect-range', ruleId, side + '.energy', 'energy 单卡变动 |' + v + '| 超过 35');
       } else if (['spend', 'buy', 'borrow', 'repay'].indexOf(k) >= 0) {
         if (v <= 0) err('effect-range', ruleId, side + '.' + k, k + ' 应为正数，当前 ' + v);
         // borrow 上限 65000：彩礼（60000）/首付（40000）级叙事债务是设计本意，高于 65000 才算手滑
@@ -215,7 +219,8 @@ function validateCards(data) {
       if (dims < 2) err('choice', id, s + '.effects', s + ' 只触及 ' + dims + ' 条数值（要求 ≥2）：' + JSON.stringify(e));
       var down = (e.spend || 0) > 0 || (e.buy || 0) > 0 || (e.borrow || 0) > 0 ||
                  (e.repay || 0) > 0 || (e.risk || 0) > 0 || (e.mind || 0) < 0 ||
-                 (e.social || 0) < 0 || (e.cash || 0) < 0 || (e.equity || 0) < 0;
+                 (e.social || 0) < 0 || (e.cash || 0) < 0 || (e.equity || 0) < 0 ||
+                 (e.energy || 0) < 0;
       if (!down) err('choice', id, s + '.effects', s + ' 是一个「全赚不赔」选项，必须至少付出一条代价');
     });
     (function () {
@@ -224,10 +229,10 @@ function validateCards(data) {
       var txn = ['buy', 'sell', 'borrow', 'repay'].some(function (k) { return L[k] !== undefined || R[k] !== undefined; });
       if (txn || L.addst || R.addst || L.unst || R.unst) return;
       var vec = function (e) {
-        return { money: (e.cash || 0) - (e.spend || 0), mind: e.mind || 0, risk: -(e.risk || 0), social: e.social || 0 };
+        return { money: (e.cash || 0) - (e.spend || 0), mind: e.mind || 0, risk: -(e.risk || 0), social: e.social || 0, energy: e.energy || 0 };
       };
       var a = vec(L), b = vec(R), ge = true, le = true, same = true;
-      ['money', 'mind', 'risk', 'social'].forEach(function (k) {
+      ['money', 'mind', 'risk', 'social', 'energy'].forEach(function (k) {
         if (a[k] > b[k]) { le = false; same = false; }
         if (a[k] < b[k]) { ge = false; same = false; }
       });

@@ -72,7 +72,8 @@
     "effects": {
      "mind": 4,
      "social": 5,
-     "spend": 3000
+     "spend": 3000,
+     "energy": -6
     }
    }
   },
@@ -97,7 +98,8 @@
     "effects": {
      "spend": 1200,
      "mind": 7,
-     "social": 8
+     "social": 8,
+     "energy": -12
     }
    }
   },
@@ -169,7 +171,8 @@
     "effects": {
      "mind": 9,
      "social": 5,
-     "risk": 5
+     "risk": 5,
+     "energy": -12
     }
    },
    "right": {
@@ -203,7 +206,8 @@
     "effects": {
      "social": 8,
      "mind": 4,
-     "risk": 6
+     "risk": 6,
+     "energy": -15
     }
    }
   },
@@ -228,7 +232,8 @@
     "effects": {
      "spend": 6500,
      "mind": 2,
-     "social": 8
+     "social": 8,
+     "energy": -16
     }
    }
   },
@@ -298,7 +303,8 @@
     "label": "先观察一晚",
     "effects": {
      "mind": -7,
-     "social": -8
+     "social": -8,
+     "energy": -16
     }
    },
    "right": {
@@ -306,7 +312,8 @@
     "effects": {
      "spend": 1600,
      "mind": -3,
-     "social": 6
+     "social": 6,
+     "energy": -24
     }
    }
   },
@@ -324,7 +331,8 @@
     "effects": {
      "mind": 10,
      "social": 7,
-     "risk": 5
+     "risk": 5,
+     "energy": -8
     }
    },
    "right": {
@@ -351,7 +359,8 @@
      "spend": 2100,
      "cash": 1200,
      "mind": 2,
-     "social": -4
+     "social": -4,
+     "energy": -16
     }
    },
    "right": {
@@ -495,7 +504,8 @@
      "cash": 2500,
      "mind": -2,
      "social": -1,
-     "risk": 5
+     "risk": 5,
+     "energy": -14
     }
    },
    "right": {
@@ -606,7 +616,8 @@
     "effects": {
      "mind": 5,
      "social": -4,
-     "risk": -3
+     "risk": -3,
+     "energy": 10
     }
    },
    "right": {
@@ -614,7 +625,8 @@
     "effects": {
      "mind": -6,
      "social": 6,
-     "risk": 6
+     "risk": 6,
+     "energy": -18
     }
    }
   },
@@ -665,7 +677,8 @@
     "label": "接了",
     "effects": {
      "cash": 4000,
-     "mind": -5
+     "mind": -5,
+     "energy": -26
     }
    }
   },
@@ -721,7 +734,8 @@
     "effects": {
      "spend": 1600,
      "social": 5,
-     "mind": -1
+     "mind": -1,
+     "energy": -14
     }
    }
   },
@@ -771,7 +785,8 @@
     "effects": {
      "spend": 600,
      "social": 8,
-     "mind": 4
+     "mind": 4,
+     "energy": -14
     }
    }
   },
@@ -795,7 +810,8 @@
     "label": "随 800",
     "effects": {
      "spend": 800,
-     "social": 6
+     "social": 6,
+     "energy": -12
     }
    }
   },
@@ -867,7 +883,8 @@
     "effects": {
      "mind": 9,
      "social": 3,
-     "spend": 600
+     "spend": 600,
+     "energy": 18
     }
    },
    "right": {
@@ -892,7 +909,8 @@
     "label": "睡了",
     "effects": {
      "mind": 8,
-     "risk": 4
+     "risk": 4,
+     "energy": 20
     }
    },
    "right": {
@@ -943,7 +961,8 @@
      "spend": 1200,
      "mind": 8,
      "social": 7,
-     "risk": 3
+     "risk": 3,
+     "energy": -20
     }
    },
    "right": {
@@ -1000,7 +1019,8 @@
     "effects": {
      "spend": 1200,
      "mind": 5,
-     "risk": 3
+     "risk": 3,
+     "energy": -6
     }
    }
   },
@@ -1845,7 +1865,8 @@
     "effects": {
      "mind": -2,
      "social": 7,
-     "risk": -2
+     "risk": -2,
+     "energy": -6
     }
    }
   },
@@ -1862,14 +1883,16 @@
     "label": "还行，还行",
     "effects": {
      "social": 5,
-     "spend": 3000
+     "spend": 3000,
+     "energy": -8
     }
    },
    "right": {
     "label": "说了实话",
     "effects": {
      "social": -7,
-     "mind": -5
+     "mind": -5,
+     "energy": -8
     }
    }
   },
@@ -1945,7 +1968,8 @@
     "label": "扣下手机",
     "effects": {
      "mind": 5,
-     "risk": 6
+     "risk": 6,
+     "energy": 16
     }
    }
   },
@@ -2386,7 +2410,8 @@
     "effects": {
      "social": 7,
      "mind": -2,
-     "risk": -3
+     "risk": -3,
+     "energy": -8
     }
    }
   },
@@ -2411,7 +2436,8 @@
     "effects": {
      "spend": 800,
      "social": 6,
-     "mind": 2
+     "mind": 2,
+     "energy": -14
     }
    }
   },
@@ -2428,7 +2454,8 @@
     "label": "自己找人修",
     "effects": {
      "spend": 600,
-     "mind": 2
+     "mind": 2,
+     "energy": -8
     }
    },
    "right": {
@@ -2459,7 +2486,8 @@
     "label": "当晚陪作业",
     "effects": {
      "mind": -4,
-     "social": 6
+     "social": 6,
+     "energy": -14
     }
    }
   },
@@ -2477,7 +2505,8 @@
     "effects": {
      "spend": 900,
      "social": 8,
-     "mind": -3
+     "mind": -3,
+     "energy": -12
     }
    },
    "right": {
@@ -2508,7 +2537,8 @@
     "label": "退班，陪他玩",
     "effects": {
      "social": 5,
-     "mind": -2
+     "mind": -2,
+     "energy": -15
     }
    }
   },
@@ -2526,7 +2556,8 @@
     "effects": {
      "spend": 1200,
      "social": 7,
-     "mind": -2
+     "mind": -2,
+     "energy": -16
     }
    },
    "right": {
@@ -2580,7 +2611,8 @@
     "effects": {
      "spend": 900,
      "social": 8,
-     "mind": 4
+     "mind": 4,
+     "energy": -12
     }
    },
    "right": {
@@ -2609,7 +2641,8 @@
     "effects": {
      "mind": 6,
      "social": 8,
-     "risk": 4
+     "risk": 4,
+     "energy": -14
     }
    },
    "right": {
@@ -2727,7 +2760,8 @@
     "effects": {
      "spend": 9000,
      "mind": -6,
-     "social": 6
+     "social": 6,
+     "energy": -26
     }
    },
    "right": {
@@ -2785,7 +2819,8 @@
     "effects": {
      "mind": 6,
      "social": 7,
-     "risk": 5
+     "risk": 5,
+     "energy": -18
     }
    },
    "right": {
@@ -2814,7 +2849,8 @@
     "effects": {
      "spend": 800,
      "mind": -3,
-     "social": 7
+     "social": 7,
+     "energy": -10
     }
    },
    "right": {
@@ -2843,7 +2879,8 @@
     "effects": {
      "spend": 1500,
      "social": 8,
-     "mind": 8
+     "mind": 8,
+     "energy": -14
     }
    },
    "right": {
@@ -2873,7 +2910,8 @@
     "effects": {
      "spend": 300,
      "social": 6,
-     "mind": 4
+     "mind": 4,
+     "energy": -10
     }
    },
    "right": {
@@ -2902,7 +2940,8 @@
     "effects": {
      "spend": 400,
      "social": 6,
-     "mind": 4
+     "mind": 4,
+     "energy": -10
     }
    },
    "right": {
@@ -2931,7 +2970,8 @@
     "effects": {
      "spend": 200,
      "social": 7,
-     "mind": 3
+     "mind": 3,
+     "energy": -12
     }
    },
    "right": {
@@ -2960,7 +3000,8 @@
     "effects": {
      "spend": 800,
      "social": 7,
-     "mind": 3
+     "mind": 3,
+     "energy": -16
     }
    },
    "right": {
@@ -2989,7 +3030,8 @@
     "label": "关软件道歉",
     "effects": {
      "mind": -3,
-     "social": 6
+     "social": 6,
+     "energy": -6
     }
    },
    "right": {
@@ -3018,7 +3060,8 @@
     "effects": {
      "spend": 600,
      "social": 8,
-     "mind": 8
+     "mind": 8,
+     "energy": -10
     }
    },
    "right": {
@@ -3047,7 +3090,8 @@
     "effects": {
      "spend": 1000,
      "mind": -4,
-     "social": 3
+     "social": 3,
+     "energy": -8
     }
    },
    "right": {
@@ -3076,7 +3120,8 @@
     "effects": {
      "spend": 3000,
      "social": 10,
-     "mind": -2
+     "mind": -2,
+     "energy": -24
     }
    },
    "right": {
@@ -3193,7 +3238,8 @@
      "borrow": 60000,
      "spend": 28000,
      "social": 12,
-     "mind": 4
+     "mind": 4,
+     "energy": -20
     }
    },
    "right": {
@@ -3223,7 +3269,8 @@
     "effects": {
      "spend": 15000,
      "social": 12,
-     "mind": 8
+     "mind": 8,
+     "energy": -32
     }
    },
    "right": {
@@ -3231,7 +3278,8 @@
     "effects": {
      "spend": 3000,
      "social": -4,
-     "mind": 3
+     "mind": 3,
+     "energy": -28
     }
    }
   },
@@ -3283,7 +3331,8 @@
     "effects": {
      "mind": 9,
      "social": 6,
-     "risk": 5
+     "risk": 5,
+     "energy": -8
     }
    },
    "right": {
@@ -3341,7 +3390,8 @@
     "effects": {
      "spend": 1200,
      "mind": 5,
-     "social": 2
+     "social": 2,
+     "energy": -10
     }
    },
    "right": {
@@ -3558,7 +3608,8 @@
     "effects": {
      "spend": 300,
      "mind": 2,
-     "risk": -4
+     "risk": -4,
+     "energy": 15
     }
    },
    "right": {
@@ -3590,7 +3641,8 @@
     "effects": {
      "mind": 4,
      "risk": -3,
-     "social": -3
+     "social": -3,
+     "energy": 14
     }
    }
   },
@@ -3608,7 +3660,8 @@
     "effects": {
      "spend": 600,
      "social": 8,
-     "mind": -2
+     "mind": -2,
+     "energy": -16
     }
    },
    "right": {
@@ -3759,7 +3812,8 @@
     "effects": {
      "cash": 3000,
      "mind": -5,
-     "social": 2
+     "social": 2,
+     "energy": -28
     }
    },
    "right": {

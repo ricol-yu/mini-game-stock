@@ -28,7 +28,7 @@ const raw = fs.readFileSync(SRC, 'utf8');
 const data = JSON.parse(raw);
 
 /* ---------- 列定义：这就是"能看见的全部参数" ---------- */
-const NUM_EFFECTS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'equity', 'mind', 'risk', 'social'];
+const NUM_EFFECTS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'equity', 'mind', 'risk', 'social', 'energy'];
 const COLS = [
   { k: '__ops',  t: '操作', w: 46, nosort: true },
   { k: 'id',   t: 'ID',   w: 150, ro: true },

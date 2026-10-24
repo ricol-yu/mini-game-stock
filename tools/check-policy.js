@@ -48,6 +48,7 @@ function vec(eff) {
     // 借钱的代价走的是风险(+5~16)与后续利息，策略能看到的显式 risk 才是它的表面成本
     net: (eff.cash || 0) - (eff.spend || 0) - (eff.repay || 0),
     mind: eff.mind || 0, risk: (eff.risk || 0) + hiddenRisk, social: eff.social || 0,
+    energy: eff.energy || 0,   // 精力是第四条公开属性：花时间的选项当场扣，见底还硬撑会重扣心态——策略有权知道
   };
 }
 
@@ -92,7 +93,8 @@ const POLICIES = {
     const e = effects(c), INIT = 12000, net = S.cash + S.equity - S.debt;
     const wm = S.mind < 35 ? 3 : 1, ws = S.social < 30 ? 3 : 1;
     const wr = S.risk > 60 ? 3 : 1, wn = net < INIT * 0.5 ? 2 : 0.5;
-    const u = function (v) { return v.net / (INIT * 0.1) * wn + v.mind * wm + v.social * ws - v.risk * wr; };
+    const we = S.energy < 25 ? 3 : 1;   // 精力见底硬撑要付心态重税，低精力时先省着花
+    const u = function (v) { return v.net / (INIT * 0.1) * wn + v.mind * wm + v.social * ws - v.risk * wr + v.energy * we; };
     const a = u(e.L), b = u(e.R);
     if (Math.abs(a - b) < 1e-9) return R(c, S, rng);
     return a > b ? 'L' : 'R';
@@ -111,6 +113,8 @@ const POLICIES = {
         clamp01((100 - (S.risk + e.risk)) / 100),
         clamp01((S.social + e.social) / 100),
         clamp01(net / INIT),
+        // 精力：留出每日恢复 +8 的余量再判底线，避免策略过度吝啬精力
+        clamp01((S.energy + e.energy + 8) / 100),
       ];
       return Math.min.apply(null, d) * 10 + d.reduce(function (a, b) { return a + b; }, 0) * 0.01;
     };
