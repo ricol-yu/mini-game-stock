@@ -30,7 +30,7 @@
    "who": "老婆",
    "avatar": "💍",
    "tag": "家庭",
-   "text": "孩子要上补习班，一年两万八。先交这学期 3,900。",
+   "text": "孩子要上补习班，一年七千八。先交这学期 3,900。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -729,7 +729,7 @@
    "who": "朋友",
    "avatar": "💌",
    "tag": "人情",
-   "text": "借我两万周转一下，下个月一定还。",
+   "text": "借我五千周转一下，下个月一定还。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -740,9 +740,9 @@
     }
    },
    "right": {
-    "label": "先借 4,000",
+    "label": "全借",
     "effects": {
-     "spend": 4000,
+     "spend": 5000,
      "social": 5,
      "mind": -2
     }
@@ -1417,7 +1417,7 @@
    "who": "网贷广告",
    "avatar": "📱",
    "tag": "风险",
-   "text": "额度 50,000，日息万三，三分钟到账。",
+   "text": "额度 20,000，日息万三，三分钟到账。",
    "when": null,
    "alwaysStatus": null,
    "left": {
