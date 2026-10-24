@@ -3,6 +3,7 @@
   {
    "id": "fam_mortgage_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
    "text": "这个月房贷 5,500。你看着办。",
@@ -22,12 +23,12 @@
      "social": 6,
      "mind": 2
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "fam_tutor_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
    "text": "孩子要上补习班，一年七千八。先交这学期 3,900。",
@@ -47,12 +48,12 @@
      "social": 7,
      "mind": 3
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "fam_confess_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
    "text": "你到底亏了多少？我要听实话。",
@@ -73,12 +74,12 @@
      "social": 5,
      "spend": 3000
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "fam_dinner_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
    "text": "我们多久没一起吃饭了？",
@@ -98,12 +99,12 @@
      "mind": 7,
      "social": 8
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "fam_pregnant_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
    "text": "我怀孕了。",
@@ -126,12 +127,12 @@
       "baby": -1
      }
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "fam_divorce_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
    "text": "这日子没法过了。离婚吧。",
@@ -152,12 +153,12 @@
      "mind": 12,
      "social": 8
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "fam_child_01",
    "who": "孩子",
+   "whoId": "haizi",
    "avatar": "👧",
    "tag": "家庭",
    "text": "爸爸，你为什么总在看手机？",
@@ -178,12 +179,12 @@
      "social": -4,
      "risk": -3
     }
-   },
-   "whoId": "haizi"
+   }
   },
   {
    "id": "fam_parentmeet_01",
    "who": "老师",
+   "whoId": "laoshi",
    "avatar": "🏫",
    "tag": "家庭",
    "text": "今晚家长会，你来不来？",
@@ -204,12 +205,12 @@
      "mind": 4,
      "risk": 6
     }
-   },
-   "whoId": "laoshi"
+   }
   },
   {
    "id": "fam_hospital_01",
    "who": "老妈",
+   "whoId": "laoma",
    "avatar": "👵",
    "tag": "家庭",
    "text": "你爸住院了，要先垫 6,500。",
@@ -229,12 +230,12 @@
      "mind": 2,
      "social": 8
     }
-   },
-   "whoId": "laoma"
+   }
   },
   {
    "id": "fam_eldermoney_01",
    "who": "老妈",
+   "whoId": "laoma",
    "avatar": "👵",
    "tag": "家庭",
    "text": "我这有二十万养老钱，你拿去做，赚了都是你的。",
@@ -255,12 +256,12 @@
      "mind": -9,
      "social": -6
     }
-   },
-   "whoId": "laoma"
+   }
   },
   {
    "id": "fam_inlaws_01",
    "who": "丈母娘",
+   "whoId": "zhangmuniang",
    "avatar": "🧓",
    "tag": "家庭",
    "text": "听说你最近在做投资？妈这里有点闲钱。",
@@ -281,12 +282,12 @@
      "mind": -8,
      "social": -5
     }
-   },
-   "whoId": "zhangmuniang"
+   }
   },
   {
    "id": "fam_fever_01",
    "who": "孩子",
+   "whoId": "haizi",
    "avatar": "🤒",
    "tag": "家庭",
    "text": "半夜发烧 39 度。",
@@ -306,12 +307,12 @@
      "mind": -3,
      "social": 6
     }
-   },
-   "whoId": "haizi"
+   }
   },
   {
    "id": "fam_babysfirst_01",
    "who": "孩子",
+   "whoId": "haizi",
    "avatar": "👶",
    "tag": "家庭",
    "text": "他第一次叫爸爸。你正在看盘。",
@@ -332,12 +333,12 @@
      "social": -5,
      "risk": -4
     }
-   },
-   "whoId": "haizi"
+   }
   },
   {
    "id": "fam_rent_01",
    "who": "房东",
+   "whoId": "fangdong",
    "avatar": "🏠",
    "tag": "家庭",
    "text": "下个月房租要涨 800。房东在等你回复。",
@@ -359,17 +360,21 @@
      "mind": -2,
      "social": 2
     }
-   },
-   "whoId": "fangdong"
+   }
   },
   {
    "id": "work_layoff_01",
    "who": "老板",
+   "whoId": "laoban",
    "avatar": "😰",
    "tag": "职场",
    "text": "公司要优化，名单下周公布，你心里有个数。",
    "when": "no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",
    "alwaysStatus": null,
+   "window": [
+    28,
+    55
+   ],
    "left": {
     "label": "主动揽活，向老板表态",
     "effects": {
@@ -385,21 +390,21 @@
      "mind": -3,
      "social": -5
     }
-   },
-   "whoId": "laoban",
-   "window": [
-    28,
-    55
-   ]
+   }
   },
   {
    "id": "work_layoff_02",
    "who": "老板",
+   "whoId": "laoban",
    "avatar": "😅",
    "tag": "职场",
    "text": "名单公布，上面没有你。但工区少了三个人。",
    "when": "no:fired;did:work_layoff_01.l",
    "alwaysStatus": null,
+   "window": [
+    30,
+    58
+   ],
    "left": {
     "label": "请部门喝奶茶",
     "effects": {
@@ -415,16 +420,12 @@
      "social": -2,
      "risk": 2
     }
-   },
-   "whoId": "laoban",
-   "window": [
-    30,
-    58
-   ]
+   }
   },
   {
    "id": "work_options_01",
    "who": "老板",
+   "whoId": "laoban",
    "avatar": "😰",
    "tag": "职场",
    "text": "今年年终奖取消，改成期权。大家体谅一下。",
@@ -444,12 +445,12 @@
      "social": 3,
      "spend": 2500
     }
-   },
-   "whoId": "laoban"
+   }
   },
   {
    "id": "work_fired_01",
    "who": "HR",
+   "whoId": "hr",
    "avatar": "📦",
    "tag": "职场",
    "text": "HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
@@ -457,6 +458,10 @@
    "alwaysStatus": {
     "fired": -1
    },
+   "window": [
+    30,
+    58
+   ],
    "left": {
     "label": "我早就不想干了",
     "effects": {
@@ -472,16 +477,12 @@
      "mind": -6,
      "social": -5
     }
-   },
-   "whoId": "hr",
-   "window": [
-    30,
-    58
-   ]
+   }
   },
   {
    "id": "work_jobhunt_01",
    "who": "招聘软件",
+   "whoId": "zhaopin",
    "avatar": "📱",
    "tag": "职场",
    "text": "对方已读，没有回。",
@@ -503,12 +504,12 @@
      "social": -3,
      "sell": 0.3
     }
-   },
-   "whoId": "zhaopin"
+   }
   },
   {
    "id": "work_offer_01",
    "who": "老同事",
+   "whoId": "laotongshi",
    "avatar": "🤝",
    "tag": "职场",
    "text": "我们组缺人，就是降薪三成。你考虑一下。",
@@ -533,12 +534,12 @@
      ],
      "risk": 6
     }
-   },
-   "whoId": "laotongshi"
+   }
   },
   {
    "id": "work_gossip_01",
    "who": "同事",
+   "whoId": "tongshi",
    "avatar": "☕",
    "tag": "职场",
    "text": "茶水间都在聊这只票，已经连着涨好几天了。",
@@ -558,12 +559,12 @@
      "mind": -3,
      "social": 3
     }
-   },
-   "whoId": "tongshi"
+   }
   },
   {
    "id": "work_tip_01",
    "who": "同事小王",
+   "whoId": "tongshi_xiaowang",
    "avatar": "👨‍💼",
    "tag": "职场",
    "text": "我表哥在券商，说最近有个大动作。跟不跟？",
@@ -584,17 +585,21 @@
      "mind": -2,
      "social": 3
     }
-   },
-   "whoId": "tongshi_xiaowang"
+   }
   },
   {
    "id": "work_overtime_01",
    "who": "项目",
+   "whoId": "xiangmu",
    "avatar": "🌃",
    "tag": "职场",
    "text": "今晚上线，全组通宵。你走吗？",
    "when": "no:fired",
    "alwaysStatus": null,
+   "window": [
+    5,
+    42
+   ],
    "left": {
     "label": "准时走",
     "effects": {
@@ -610,16 +615,12 @@
      "social": 6,
      "risk": 6
     }
-   },
-   "whoId": "xiangmu",
-   "window": [
-    5,
-    42
-   ]
+   }
   },
   {
    "id": "inc_salary_01",
    "who": "绩效",
+   "whoId": "jixiao",
    "avatar": "💵",
    "tag": "收入",
    "text": "季度绩效下来了，6,500。",
@@ -641,12 +642,12 @@
      "mind": -2,
      "social": 3
     }
-   },
-   "whoId": "jixiao"
+   }
   },
   {
    "id": "inc_sidejob_01",
    "who": "私活",
+   "whoId": "sihuo",
    "avatar": "🧰",
    "tag": "收入",
    "text": "朋友介绍一个活，做完给 4,000，要占掉两个周末。",
@@ -665,17 +666,21 @@
      "cash": 4000,
      "mind": -5
     }
-   },
-   "whoId": "sihuo"
+   }
   },
   {
    "id": "inc_bonus_01",
    "who": "年终奖",
+   "whoId": "nianzhongjiang",
    "avatar": "🧧",
    "tag": "收入",
    "text": "年终奖发了 15,000。",
    "when": "no:fired; day>24",
    "alwaysStatus": null,
+   "window": [
+    42,
+    60
+   ],
    "left": {
     "label": "给家里买点东西",
     "effects": {
@@ -692,16 +697,12 @@
      "buy": 15000,
      "mind": -4
     }
-   },
-   "whoId": "nianzhongjiang",
-   "window": [
-    42,
-    60
-   ]
+   }
   },
   {
    "id": "soc_wedding_01",
    "who": "朋友",
+   "whoId": "pengyou",
    "avatar": "💌",
    "tag": "人情",
    "text": "我下个月结婚，你知道的。",
@@ -721,12 +722,12 @@
      "social": 5,
      "mind": -1
     }
-   },
-   "whoId": "pengyou"
+   }
   },
   {
    "id": "soc_lend_01",
    "who": "朋友",
+   "whoId": "pengyou",
    "avatar": "💌",
    "tag": "人情",
    "text": "借我五千周转一下，下个月一定还。",
@@ -746,12 +747,12 @@
      "social": 5,
      "mind": -2
     }
-   },
-   "whoId": "pengyou"
+   }
   },
   {
    "id": "soc_reunion_01",
    "who": "同学",
+   "whoId": "tongxue",
    "avatar": "🍻",
    "tag": "人情",
    "text": "老同学聚会，人均 600。听说你最近在做投资？",
@@ -771,12 +772,12 @@
      "social": 8,
      "mind": 4
     }
-   },
-   "whoId": "tongxue"
+   }
   },
   {
    "id": "soc_banquet_01",
    "who": "张阿姨",
+   "whoId": "zhangayi",
    "avatar": "🏘",
    "tag": "人情",
    "text": "楼下办寿宴，整栋楼都去了。",
@@ -795,12 +796,12 @@
      "spend": 800,
      "social": 6
     }
-   },
-   "whoId": "zhangayi"
+   }
   },
   {
    "id": "soc_scam_01",
    "who": "老同学",
+   "whoId": "laotongxue",
    "avatar": "🤳",
    "tag": "人情",
    "text": "有个项目，稳赚，就是得先投点钱。",
@@ -821,12 +822,12 @@
      "mind": -5,
      "social": 3
     }
-   },
-   "whoId": "laotongxue"
+   }
   },
   {
    "id": "soc_whisper_01",
    "who": "饭局",
+   "whoId": "fanju",
    "avatar": "🥢",
    "tag": "人情",
    "text": "有人凑到你耳边说了几句，就几句。",
@@ -849,12 +850,12 @@
      },
      "social": 3
     }
-   },
-   "whoId": "fanju"
+   }
   },
   {
    "id": "self_checkup_01",
    "who": "体检报告",
+   "whoId": "tijian",
    "avatar": "🏥",
    "tag": "自己",
    "text": "血压偏高，熬夜太多。医生让你少盯屏幕。",
@@ -875,12 +876,12 @@
      "social": -3,
      "cash": 900
     }
-   },
-   "whoId": "tijian"
+   }
   },
   {
    "id": "self_night_01",
    "who": "凌晨三点",
+   "whoId": "lingsan",
    "avatar": "🌙",
    "tag": "自己",
    "text": "你还没睡。屏幕的蓝光里，那根线还在跳。",
@@ -900,12 +901,12 @@
      "risk": 2,
      "cash": 700
     }
-   },
-   "whoId": "lingsan"
+   }
   },
   {
    "id": "self_mirror_01",
    "who": "镜子",
+   "whoId": "jingzi",
    "avatar": "🪞",
    "tag": "自己",
    "text": "你盯着屏幕，忽然问自己：我到底在干什么？",
@@ -924,12 +925,12 @@
      "mind": 6,
      "social": -4
     }
-   },
-   "whoId": "jingzi"
+   }
   },
   {
    "id": "self_weekend_01",
    "who": "周末",
+   "whoId": "zhoumo",
    "avatar": "🌿",
    "tag": "自己",
    "text": "难得一个完整的周末，没人找你，也没什么消息。",
@@ -950,12 +951,12 @@
      "mind": -2,
      "risk": -3
     }
-   },
-   "whoId": "zhoumo"
+   }
   },
   {
    "id": "self_hairloss_01",
    "who": "地漏",
+   "whoId": "dilou",
    "avatar": "🚿",
    "tag": "自己",
    "text": "洗完头，地漏上是一层头发。",
@@ -975,12 +976,12 @@
      "mind": -3,
      "social": -2
     }
-   },
-   "whoId": "dilou"
+   }
   },
   {
    "id": "self_birthday_01",
    "who": "生日",
+   "whoId": "shengri",
    "avatar": "🎂",
    "tag": "自己",
    "text": "今天你生日。没有人记得。",
@@ -1000,12 +1001,12 @@
      "mind": 5,
      "risk": 3
     }
-   },
-   "whoId": "shengri"
+   }
   },
   {
    "id": "mkt_easing_01",
    "who": "银行",
+   "whoId": "yinhang",
    "avatar": "🏦",
    "tag": "市场",
    "text": "新闻说银行要放水了，市面上的钱会变多。",
@@ -1025,12 +1026,12 @@
      "mind": -2,
      "social": 3
     }
-   },
-   "whoId": "yinhang"
+   }
   },
   {
    "id": "mkt_macro_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "🌐",
    "tag": "市场",
    "text": "美国那边利息涨了，据说全球的钱都在往回跑。",
@@ -1051,12 +1052,12 @@
      "mind": -3,
      "social": 3
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_policy_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "📺",
    "tag": "市场",
    "text": "要活跃资本市场，提振投资者信心。",
@@ -1076,12 +1077,12 @@
      "mind": -3,
      "social": 4
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_earnings_01",
    "who": "公司公告",
+   "whoId": "gongsi_gonggao",
    "avatar": "⚠️",
    "tag": "市场",
    "text": "你持有的这家公司说，今年赚的钱少了九成。",
@@ -1100,12 +1101,12 @@
      "buy": 2000,
      "mind": -7
     }
-   },
-   "whoId": "gongsi_gonggao"
+   }
   },
   {
    "id": "mkt_insidersell_01",
    "who": "公司公告",
+   "whoId": "gongsi_gonggao",
    "avatar": "📉",
    "tag": "市场",
    "text": "公司老板自己在卖股票，卖了不少。",
@@ -1126,12 +1127,12 @@
      "risk": 5,
      "social": 3
     }
-   },
-   "whoId": "gongsi_gonggao"
+   }
   },
   {
    "id": "dec_takeprofit_01",
    "who": "你的票",
+   "whoId": "nidepiao",
    "avatar": "📈",
    "tag": "决策",
    "text": "它今天又涨了。卖掉一部分落袋，还是再等等？",
@@ -1151,12 +1152,12 @@
      "mind": -3,
      "risk": 5
     }
-   },
-   "whoId": "nidepiao"
+   }
   },
   {
    "id": "dec_stoploss_01",
    "who": "你的票",
+   "whoId": "nidepiao",
    "avatar": "📉",
    "tag": "决策",
    "text": "它已经跌去两成。止损，还是扛着？",
@@ -1176,12 +1177,12 @@
      "mind": -6,
      "risk": 6
     }
-   },
-   "whoId": "nidepiao"
+   }
   },
   {
    "id": "dec_limitup_01",
    "who": "你的票",
+   "whoId": "nidepiao",
    "avatar": "🔴",
    "tag": "决策",
    "text": "今天它封住了涨停。群里都在喊明天还有。",
@@ -1202,12 +1203,63 @@
      "risk": 5,
      "social": 3
     }
+   }
+  },
+  {
+   "id": "dec_size_01",
+   "who": "自己",
+   "whoId": "ziji",
+   "avatar": "🙋",
+   "tag": "决策",
+   "text": "仓位已经七成。今天的线，你又想买。",
+   "when": "risk>25",
+   "alwaysStatus": null,
+   "left": {
+    "label": "只加一半",
+    "effects": {
+     "buy": 4000,
+     "risk": 4,
+     "mind": -2
+    }
    },
-   "whoId": "nidepiao"
+   "right": {
+    "label": "满上",
+    "effects": {
+     "buy": 8000,
+     "risk": 9,
+     "mind": -3
+    }
+   }
+  },
+  {
+   "id": "dec_stop_01",
+   "who": "自己",
+   "whoId": "ziji",
+   "avatar": "🙋",
+   "tag": "决策",
+   "text": "止损位击穿了。纪律说：卖。",
+   "when": "equity>0",
+   "alwaysStatus": null,
+   "left": {
+    "label": "执行，全卖",
+    "effects": {
+     "sell": 1,
+     "mind": -6,
+     "risk": -7
+    }
+   },
+   "right": {
+    "label": "破例，再等等",
+    "effects": {
+     "risk": 10,
+     "mind": -4
+    }
+   }
   },
   {
    "id": "mkt_bubble_01",
    "who": "所有人",
+   "whoId": "suoyouren",
    "avatar": "🫧",
    "tag": "市场",
    "text": "半年没人亏过钱了。连门口的保安都在问你买的什么。",
@@ -1230,12 +1282,12 @@
      "mind": -3,
      "social": 4
     }
-   },
-   "whoId": "suoyouren"
+   }
   },
   {
    "id": "mkt_fomo_01",
    "who": "所有人",
+   "whoId": "suoyouren",
    "avatar": "🫧",
    "tag": "市场",
    "text": "菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。",
@@ -1255,12 +1307,12 @@
      "mind": -3,
      "risk": 6
     }
-   },
-   "whoId": "suoyouren"
+   }
   },
   {
    "id": "mkt_paperwin_01",
    "who": "你的票",
+   "whoId": "nidepiao",
    "avatar": "🤩",
    "tag": "市场",
    "text": "你赚的钱，已经比一整年工资还多。",
@@ -1280,12 +1332,12 @@
      "mind": -4,
      "risk": 5
     }
-   },
-   "whoId": "nidepiao"
+   }
   },
   {
    "id": "mkt_crisis_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "❄️",
    "tag": "市场",
    "text": "有一家很大的银行，一夜之间没了。街上没人笑得出来。",
@@ -1308,12 +1360,12 @@
      "mind": -3,
      "social": 3
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_panic_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "❄️",
    "tag": "市场",
    "text": "群里在传第三轮裁员。这次是真的。",
@@ -1333,12 +1385,12 @@
      "mind": -5,
      "risk": 5
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_halt_01",
    "who": "交易所",
+   "whoId": "jiaoyisuo",
    "avatar": "🚫",
    "tag": "市场",
    "text": "公司公告：筹划重大事项，明日起停牌，复牌时间待定。",
@@ -1360,12 +1412,12 @@
      "mind": -3,
      "risk": 2
     }
-   },
-   "whoId": "jiaoyisuo"
+   }
   },
   {
    "id": "mkt_haltwait_01",
    "who": "交易所",
+   "whoId": "jiaoyisuo",
    "avatar": "🚫",
    "tag": "市场",
    "text": "还是没有复牌的消息。",
@@ -1384,12 +1436,12 @@
      "mind": -3,
      "risk": -4
     }
-   },
-   "whoId": "jiaoyisuo"
+   }
   },
   {
    "id": "risk_margin_01",
    "who": "配资公司",
+   "whoId": "peizigongsi",
    "avatar": "📞",
    "tag": "风险",
    "text": "您好，十倍杠杆，资金秒到账，日息只要万分之八。",
@@ -1409,12 +1461,12 @@
      "mind": -8,
      "social": 3
     }
-   },
-   "whoId": "peizigongsi"
+   }
   },
   {
    "id": "risk_loanad_01",
    "who": "网贷广告",
+   "whoId": "wangdai",
    "avatar": "📱",
    "tag": "风险",
    "text": "额度 20,000，日息万三，三分钟到账。",
@@ -1433,12 +1485,12 @@
      "borrow": 12000,
      "mind": -9
     }
-   },
-   "whoId": "wangdai"
+   }
   },
   {
    "id": "risk_card_01",
    "who": "信用卡",
+   "whoId": "xinyongka",
    "avatar": "💳",
    "tag": "风险",
    "text": "账单 8,000。这个月怎么处理？",
@@ -1457,12 +1509,12 @@
      "borrow": 8000,
      "mind": -4
     }
-   },
-   "whoId": "xinyongka"
+   }
   },
   {
    "id": "risk_scam_01",
    "who": "荐股群",
+   "whoId": "jianguqun",
    "avatar": "🎯",
    "tag": "风险",
    "text": "老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
@@ -1483,12 +1535,12 @@
      "mind": -6,
      "social": 4
     }
-   },
-   "whoId": "jianguqun"
+   }
   },
   {
    "id": "risk_influencer_01",
    "who": "大 V",
+   "whoId": "dawei",
    "avatar": "⭐",
    "tag": "风险",
    "text": "十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。",
@@ -1509,12 +1561,12 @@
      "mind": -3,
      "social": 3
     }
-   },
-   "whoId": "dawei"
+   }
   },
   {
    "id": "risk_leak_01",
    "who": "微信群",
+   "whoId": "weixinqun",
    "avatar": "👥",
    "tag": "风险",
    "text": "群里有人说，这只票下周要有大动作，内部消息。",
@@ -1535,12 +1587,12 @@
      "mind": -5,
      "social": 4
     }
-   },
-   "whoId": "weixinqun"
+   }
   },
   {
    "id": "risk_callmargin_01",
    "who": "券商短信",
+   "whoId": "quanshang",
    "avatar": "📲",
    "tag": "风险",
    "text": "你借的钱快不够抵押了，请追加保证金。",
@@ -1560,12 +1612,12 @@
      "borrow": 5000,
      "mind": -6
     }
-   },
-   "whoId": "quanshang"
+   }
   },
   {
    "id": "risk_repay_01",
    "who": "你的债",
+   "whoId": "nidezhai",
    "avatar": "🧮",
    "tag": "风险",
    "text": "要不要先把欠的钱还掉一部分？",
@@ -1585,12 +1637,12 @@
      "mind": 4,
      "risk": -7
     }
-   },
-   "whoId": "nidezhai"
+   }
   },
   {
    "id": "risk_dca_01",
    "who": "网友",
+   "whoId": "wangyou",
    "avatar": "💬",
    "tag": "风险",
    "text": "别天天看了，每月固定买一点就行，长期拿着。",
@@ -1610,12 +1662,12 @@
      "mind": 5,
      "risk": 6
     }
-   },
-   "whoId": "wangyou"
+   }
   },
   {
    "id": "risk_scoreboard_01",
    "who": "年度账单",
+   "whoId": "nianduzhangdan",
    "avatar": "📊",
    "tag": "风险",
    "text": "你今年的收益，跑赢了 1.2% 的人。",
@@ -1636,12 +1688,12 @@
      "risk": 4,
      "social": 3
     }
-   },
-   "whoId": "nianduzhangdan"
+   }
   },
   {
    "id": "acc_cat_01",
    "who": "你的猫",
+   "whoId": "nidemao",
    "avatar": "🐱",
    "tag": "意外",
    "text": "猫从键盘上踩过去。等你回过神，一笔 8,000 已经买进去了。",
@@ -1660,8 +1712,86 @@
      "buy": 8000,
      "mind": -4
     }
+   }
+  },
+  {
+   "id": "pet_adopt_01",
+   "who": "你的猫",
+   "whoId": "nidemao",
+   "avatar": "🐱",
+   "tag": "意外",
+   "text": "车库门口一只三花猫，赖着不走了。",
+   "when": null,
+   "alwaysStatus": null,
+   "window": [
+    5,
+    45
+   ],
+   "left": {
+    "label": "收编",
+    "effects": {
+     "spend": 800,
+     "mind": 8,
+     "social": 3
+    }
    },
-   "whoId": "nidemao"
+   "right": {
+    "label": "喂完就赶",
+    "effects": {
+     "mind": -4,
+     "social": -2
+    }
+   }
+  },
+  {
+   "id": "acc_blackout_01",
+   "who": "物业",
+   "whoId": "wuye",
+   "avatar": "🔌",
+   "tag": "意外",
+   "text": "小区停电一整晚，手机还剩 7% 的电。",
+   "when": null,
+   "alwaysStatus": null,
+   "left": {
+    "label": "去邻居家蹭电",
+    "effects": {
+     "social": 5,
+     "mind": 2,
+     "risk": 3
+    }
+   },
+   "right": {
+    "label": "关机，睡个整觉",
+    "effects": {
+     "mind": 9,
+     "risk": 4
+    }
+   }
+  },
+  {
+   "id": "acc_oldacct_01",
+   "who": "券商短信",
+   "whoId": "quanshang",
+   "avatar": "📄",
+   "tag": "意外",
+   "text": "翻出 2015 年的老账户，里面躺着 1,800。",
+   "when": null,
+   "alwaysStatus": null,
+   "left": {
+    "label": "转出来直接满上",
+    "effects": {
+     "equity": 1800,
+     "mind": 5,
+     "risk": 5
+    }
+   },
+   "right": {
+    "label": "留在户里当底仓",
+    "effects": {
+     "mind": 3,
+     "risk": 3
+    }
+   }
   },
   {
    "id": "fam_reportcard_01",
@@ -1772,6 +1902,10 @@
    "text": "HR 笑着说：「聊聊你下半年的规划吧。」",
    "when": "no:fired;did:work_raise_01.l",
    "alwaysStatus": null,
+   "window": [
+    22,
+    54
+   ],
    "left": {
     "label": "表了个态",
     "effects": {
@@ -1785,11 +1919,7 @@
      "social": -5,
      "mind": 3
     }
-   },
-   "window": [
-    22,
-    54
-   ]
+   }
   },
   {
    "id": "self_night_02",
@@ -1868,6 +1998,7 @@
   {
    "id": "mkt_bull_open_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "📺",
    "tag": "市场",
    "text": "重磅政策连发：降准降息，长钱获准入市。",
@@ -1889,12 +2020,12 @@
      "mind": -4,
      "social": -4
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_bear_open_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "📉",
    "tag": "市场",
    "text": "指数连跌一个月，新闻说这是「健康调整」。",
@@ -1916,12 +2047,12 @@
      "mind": -5,
      "risk": 4
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_bull_taxi_01",
    "who": "所有人",
+   "whoId": "suoyouren",
    "avatar": "🚕",
    "tag": "市场",
    "text": "出租车司机在跟你聊 K 线，说他上月辞职了。",
@@ -1941,12 +2072,12 @@
      "mind": 2,
      "risk": 9
     }
-   },
-   "whoId": "suoyouren"
+   }
   },
   {
    "id": "mkt_bull_lever_01",
    "who": "配资公司",
+   "whoId": "peizigongsi",
    "avatar": "📞",
    "tag": "市场",
    "text": "广告弹出来：十倍杠杆，牛市造富就等你。",
@@ -1967,12 +2098,12 @@
      "mind": 2,
      "risk": 12
     }
-   },
-   "whoId": "peizigongsi"
+   }
   },
   {
    "id": "mkt_bull_family_01",
    "who": "老婆",
+   "whoId": "laopo",
    "avatar": "💍",
    "tag": "市场",
    "text": "我爸把养老钱全转进股市了，你帮我劝劝。",
@@ -1993,12 +2124,12 @@
      "social": 3,
      "risk": 4
     }
-   },
-   "whoId": "laopo"
+   }
   },
   {
    "id": "mkt_bear_group_01",
    "who": "微信群",
+   "whoId": "weixinqun",
    "avatar": "💬",
    "tag": "市场",
    "text": "五百人的股票群三天没人说话，有人悄悄退群。",
@@ -2018,12 +2149,12 @@
      "social": -6,
      "mind": 3
     }
-   },
-   "whoId": "weixinqun"
+   }
   },
   {
    "id": "mkt_bear_cut_01",
    "who": "所有人",
+   "whoId": "suoyouren",
    "avatar": "🩸",
    "tag": "市场",
    "text": "持仓亏了三成。割肉认赔，还是装死等回本？",
@@ -2043,12 +2174,12 @@
      "risk": 6,
      "mind": -3
     }
-   },
-   "whoId": "suoyouren"
+   }
   },
   {
    "id": "mkt_bear_loan_01",
    "who": "银行",
+   "whoId": "yinhang",
    "avatar": "🏦",
    "tag": "市场",
    "text": "行情不好，催消费贷的短信倒是很准时。",
@@ -2069,12 +2200,12 @@
      "mind": -3,
      "social": -2
     }
-   },
-   "whoId": "yinhang"
+   }
   },
   {
    "id": "mkt_policy_whim_01",
    "who": "新闻",
+   "whoId": "xinwen",
    "avatar": "🔄",
    "tag": "市场",
    "text": "政策一夜转向：昨天还在降温，今天改口呵护。",
@@ -2095,12 +2226,12 @@
      "risk": -3,
      "social": -2
     }
-   },
-   "whoId": "xinwen"
+   }
   },
   {
    "id": "mkt_bear_fund_01",
    "who": "券商短信",
+   "whoId": "quanshang",
    "avatar": "📄",
    "tag": "市场",
    "text": "你买的基金清盘了，道歉信写得很诚恳。",
@@ -2122,8 +2253,62 @@
      "mind": -3,
      "risk": 6
     }
+   }
+  },
+  {
+   "id": "mkt_taxi_02",
+   "who": "出租车司机",
+   "whoId": "taxi",
+   "avatar": "🚕",
+   "tag": "市场",
+   "text": "那司机又发来一只票：这回他压上全部了。",
+   "when": "did:mkt_bull_taxi_01.r; has:bull",
+   "alwaysStatus": null,
+   "left": {
+    "label": "跟一手小的",
+    "effects": {
+     "buy": 3000,
+     "risk": 9,
+     "mind": -2
+    }
    },
-   "whoId": "quanshang"
+   "right": {
+    "label": "祝你好运",
+    "effects": {
+     "mind": 3,
+     "social": -3
+    }
+   }
+  },
+  {
+   "id": "mkt_chase_01",
+   "who": "自己",
+   "whoId": "ziji",
+   "avatar": "🙋",
+   "tag": "市场",
+   "text": "割肉那天起，指数悄悄涨回了 8%。",
+   "when": "did:mkt_bear_cut_01.l",
+   "alwaysStatus": null,
+   "window": [
+    8,
+    58
+   ],
+   "left": {
+    "label": "追买回来",
+    "effects": {
+     "buy": 6000,
+     "risk": 8,
+     "mind": -3
+    }
+   },
+   "right": {
+    "label": "截图发群，摩拳擦掌",
+    "effects": {
+     "social": 5,
+     "mind": 3,
+     "risk": 5
+    }
+   }
   },
   {
    "id": "soc_insider_01",
@@ -2374,6 +2559,385 @@
    }
   },
   {
+   "id": "fam_anniv_02",
+   "who": "老婆",
+   "whoId": "laopo",
+   "avatar": "💍",
+   "tag": "家庭",
+   "text": "那家店她说还想再去一次。",
+   "when": "did:fam_anniv_01.l",
+   "alwaysStatus": null,
+   "window": [
+    6,
+    40
+   ],
+   "left": {
+    "label": "再订一次",
+    "effects": {
+     "spend": 900,
+     "social": 8,
+     "mind": 4
+    }
+   },
+   "right": {
+    "label": "等下月发薪",
+    "effects": {
+     "social": -7,
+     "mind": -4
+    }
+   }
+  },
+  {
+   "id": "fam_dinner_02",
+   "who": "老婆",
+   "whoId": "laopo",
+   "avatar": "💍",
+   "tag": "家庭",
+   "text": "我们多久没一起好好吃顿饭了？",
+   "when": "did:fam_dinner_01.l|did:fam_laopo_02.l",
+   "alwaysStatus": null,
+   "window": [
+    15,
+    55
+   ],
+   "left": {
+    "label": "关电脑，现在做",
+    "effects": {
+     "mind": 6,
+     "social": 8,
+     "risk": 4
+    }
+   },
+   "right": {
+    "label": "忙完这波再说",
+    "effects": {
+     "social": -9,
+     "mind": -5
+    }
+   }
+  },
+  {
+   "id": "fam_confess_02",
+   "who": "老婆",
+   "whoId": "laopo",
+   "avatar": "💍",
+   "tag": "家庭",
+   "text": "亏成这样也不告诉我？以后我的钱自己管。",
+   "when": "did:fam_confess_01.r; risk>40",
+   "alwaysStatus": null,
+   "window": [
+    20,
+    58
+   ],
+   "left": {
+    "label": "交出一半仓位",
+    "effects": {
+     "sell": 0.5,
+     "social": 8,
+     "mind": -3,
+     "risk": -6
+    }
+   },
+   "right": {
+    "label": "我下次一定说",
+    "effects": {
+     "social": -8,
+     "mind": -3
+    }
+   }
+  },
+  {
+   "id": "fam_momcall_02",
+   "who": "老妈",
+   "whoId": "laoma",
+   "avatar": "📞",
+   "tag": "家庭",
+   "text": "邻居说在菜市场听见你妈叹气。",
+   "when": "did:fam_momcall_01.l",
+   "alwaysStatus": null,
+   "window": [
+    10,
+    55
+   ],
+   "left": {
+    "label": "寄箱水果回去",
+    "effects": {
+     "spend": 300,
+     "social": 6,
+     "mind": 2
+    }
+   },
+   "right": {
+    "label": "下次再打吧",
+    "effects": {
+     "social": -7,
+     "mind": -4
+    }
+   }
+  },
+  {
+   "id": "fam_momhealth_02",
+   "who": "老妈",
+   "whoId": "laoma",
+   "avatar": "📞",
+   "tag": "家庭",
+   "text": "复查稳住了。她把一罐腌笋塞进你后备箱。",
+   "when": "did:fam_momhealth_01.r",
+   "alwaysStatus": null,
+   "window": [
+    12,
+    55
+   ],
+   "left": {
+    "label": "收下，报喜不报忧",
+    "effects": {
+     "mind": 6,
+     "social": 3,
+     "risk": 3
+    }
+   },
+   "right": {
+    "label": "转 2,000 买补品",
+    "effects": {
+     "spend": 2000,
+     "social": 6,
+     "mind": 3
+    }
+   }
+  },
+  {
+   "id": "fam_hospital_02",
+   "who": "老爸",
+   "whoId": "laoma",
+   "avatar": "🧑‍🦳",
+   "tag": "家庭",
+   "text": "爸住院了。这回，是你自己没接那个电话。",
+   "when": "did:fam_momcall_01.l; did:fam_momhealth_01.l",
+   "alwaysStatus": null,
+   "window": [
+    30,
+    58
+   ],
+   "left": {
+    "label": "连夜回去垫 9,000",
+    "effects": {
+     "spend": 9000,
+     "mind": -6,
+     "social": 6
+    }
+   },
+   "right": {
+    "label": "让弟弟先顶着",
+    "effects": {
+     "mind": -10,
+     "social": -13
+    }
+   }
+  },
+  {
+   "id": "fam_child_02",
+   "who": "孩子",
+   "whoId": "haizi",
+   "avatar": "🧒",
+   "tag": "家庭",
+   "text": "她画了幅画：爸爸、妈妈，和一根红 K 线。",
+   "when": "did:fam_child_01.l",
+   "alwaysStatus": null,
+   "window": [
+    12,
+    55
+   ],
+   "left": {
+    "label": "装裱起来挂客厅",
+    "effects": {
+     "spend": 500,
+     "mind": 8,
+     "social": 5
+    }
+   },
+   "right": {
+    "label": "真棒，忙完看",
+    "effects": {
+     "mind": -5,
+     "social": -6
+    }
+   }
+  },
+  {
+   "id": "fam_child_03",
+   "who": "老婆",
+   "whoId": "laopo",
+   "avatar": "💍",
+   "tag": "家庭",
+   "text": "孩子说，爸爸的手机长在手上。",
+   "when": "did:fam_child_01.r",
+   "alwaysStatus": null,
+   "window": [
+    15,
+    55
+   ],
+   "left": {
+    "label": "周末断网半天",
+    "effects": {
+     "mind": 6,
+     "social": 7,
+     "risk": 5
+    }
+   },
+   "right": {
+    "label": "爸爸要赚钱养家",
+    "effects": {
+     "social": -8,
+     "mind": -6
+    }
+   }
+  },
+  {
+   "id": "fam_teacher_02",
+   "who": "老师",
+   "whoId": "laoshi",
+   "avatar": "🎓",
+   "tag": "家庭",
+   "text": "家长会点名：作文《我的爸爸》全篇写手机。",
+   "when": "did:fam_child_01.r; did:fam_teacher_01.l",
+   "alwaysStatus": null,
+   "window": [
+    28,
+    58
+   ],
+   "left": {
+    "label": "当场保证，买亲子票",
+    "effects": {
+     "spend": 800,
+     "mind": -3,
+     "social": 7
+    }
+   },
+   "right": {
+    "label": "做投资也是为了他",
+    "effects": {
+     "social": -12,
+     "mind": -8
+    }
+   }
+  },
+  {
+   "id": "fam_reportcard_02",
+   "who": "孩子",
+   "whoId": "haizi",
+   "avatar": "🧒",
+   "tag": "家庭",
+   "text": "奖状背面：谢谢爸爸陪我写作业。",
+   "when": "did:fam_teacher_01.r; did:fam_child_01.l",
+   "alwaysStatus": null,
+   "window": [
+    25,
+    58
+   ],
+   "left": {
+    "label": "全家下馆子庆祝",
+    "effects": {
+     "spend": 1500,
+     "social": 8,
+     "mind": 8
+    }
+   },
+   "right": {
+    "label": "拍照发朋友圈",
+    "effects": {
+     "mind": 6,
+     "social": 4,
+     "risk": 3
+    }
+   }
+  },
+  {
+   "id": "pet_food_01",
+   "who": "你的猫",
+   "whoId": "nidemao",
+   "avatar": "🐱",
+   "tag": "家庭",
+   "text": "猫粮见底了。它蹲在碗前看你。",
+   "when": "did:pet_adopt_01.l",
+   "alwaysStatus": null,
+   "window": [
+    8,
+    55
+   ],
+   "left": {
+    "label": "下单进口的",
+    "effects": {
+     "spend": 300,
+     "mind": 4
+    }
+   },
+   "right": {
+    "label": "先吃白米饭吧",
+    "effects": {
+     "mind": -5,
+     "social": -2
+    }
+   }
+  },
+  {
+   "id": "pet_vac_01",
+   "who": "你的猫",
+   "whoId": "nidemao",
+   "avatar": "🐱",
+   "tag": "家庭",
+   "text": "宠物医院提醒：疫苗该打了，1,200。",
+   "when": "did:pet_adopt_01.l",
+   "alwaysStatus": null,
+   "window": [
+    10,
+    50
+   ],
+   "left": {
+    "label": "打",
+    "effects": {
+     "spend": 1200,
+     "mind": 5,
+     "social": 2
+    }
+   },
+   "right": {
+    "label": "它看着挺壮实",
+    "effects": {
+     "risk": 3,
+     "mind": -3
+    }
+   }
+  },
+  {
+   "id": "pet_sick_01",
+   "who": "你的猫",
+   "whoId": "nidemao",
+   "avatar": "🐱",
+   "tag": "家庭",
+   "text": "它吐了，不吃东西。兽医说先交 4,500。",
+   "when": "did:pet_adopt_01.l",
+   "alwaysStatus": null,
+   "window": [
+    25,
+    58
+   ],
+   "left": {
+    "label": "治",
+    "effects": {
+     "spend": 4500,
+     "mind": 9,
+     "social": 3
+    }
+   },
+   "right": {
+    "label": "猫有九条命",
+    "effects": {
+     "mind": -13,
+     "social": -7
+    }
+   }
+  },
+  {
    "id": "work_bossmeet_01",
    "who": "老板",
    "whoId": "laoban",
@@ -2382,6 +2946,10 @@
    "text": "例会上你走神了。老板停顿两秒，点了你的名。",
    "when": "no:fired",
    "alwaysStatus": null,
+   "window": [
+    6,
+    42
+   ],
    "left": {
     "label": "承认走神",
     "effects": {
@@ -2397,11 +2965,7 @@
      "mind": -4,
      "risk": -2
     }
-   },
-   "window": [
-    6,
-    42
-   ]
+   }
   },
   {
    "id": "work_raise_01",
@@ -2412,6 +2976,10 @@
    "text": "调薪名单出了。你从头看到尾，没有你。",
    "when": "no:fired;did:work_screen_01.l|no:fired;did:work_bossmeet_01.l|no:fired;did:work_overtime_01.l|no:fired;did:work_tuanjian_01.l",
    "alwaysStatus": null,
+   "window": [
+    18,
+    50
+   ],
    "left": {
     "label": "忍了",
     "effects": {
@@ -2427,11 +2995,7 @@
      "mind": -3,
      "risk": 3
     }
-   },
-   "window": [
-    18,
-    50
-   ]
+   }
   },
   {
    "id": "work_headhunt_01",
@@ -2516,6 +3080,10 @@
    "text": "项目明早上线。今晚，你在改自己的止损位。",
    "when": "no:fired",
    "alwaysStatus": null,
+   "window": [
+    4,
+    40
+   ],
    "left": {
     "label": "改完再说",
     "effects": {
@@ -2530,11 +3098,7 @@
      "social": 5,
      "risk": 3
     }
-   },
-   "window": [
-    4,
-    40
-   ]
+   }
   },
   {
    "id": "self_checkup_02",
@@ -2738,6 +3302,31 @@
    }
   },
   {
+   "id": "inc_moon_01",
+   "who": "同事",
+   "whoId": "tongshi",
+   "avatar": "☕",
+   "tag": "收入",
+   "text": "同事问你接不接私活：一套小程序，3,000。",
+   "when": null,
+   "alwaysStatus": null,
+   "left": {
+    "label": "接，周末干",
+    "effects": {
+     "cash": 3000,
+     "mind": -5,
+     "social": 2
+    }
+   },
+   "right": {
+    "label": "最近没空",
+    "effects": {
+     "social": -4,
+     "mind": 2
+    }
+   }
+  },
+  {
    "id": "soc_oldmate_01",
    "who": "老同学",
    "whoId": "laotongxue",
@@ -2790,11 +3379,12 @@
   {
    "id": "work_tuanjian_01",
    "who": "团建",
+   "whoId": "tuangjian",
    "avatar": "🍺",
    "tag": "职场",
    "text": "部门团建，火锅局。你知道他们想聊年终评。",
-   "whoId": "tuangjian",
    "when": "no:fired",
+   "alwaysStatus": null,
    "window": [
     8,
     40
@@ -2813,6 +3403,94 @@
      "social": 6,
      "mind": -3,
      "risk": 3
+    }
+   }
+  },
+  {
+   "id": "work_focus_02",
+   "who": "老板",
+   "whoId": "laoban",
+   "avatar": "📋",
+   "tag": "职场",
+   "text": "项目上线零事故，老板当众点了你的名。",
+   "when": "did:work_screen_01.r",
+   "alwaysStatus": null,
+   "window": [
+    10,
+    55
+   ],
+   "left": {
+    "label": "请组员喝奶茶",
+    "effects": {
+     "spend": 400,
+     "social": 9,
+     "mind": 5
+    }
+   },
+   "right": {
+    "label": "都是应该的",
+    "effects": {
+     "mind": 3,
+     "social": -2
+    }
+   }
+  },
+  {
+   "id": "work_raise_02",
+   "who": "老板",
+   "whoId": "laoban",
+   "avatar": "📋",
+   "tag": "职场",
+   "text": "调薪名单这次有你。涨得不多，但是个信号。",
+   "when": "did:work_screen_01.r; did:work_overtime_01.r",
+   "alwaysStatus": null,
+   "window": [
+    20,
+    58
+   ],
+   "left": {
+    "label": "存起来",
+    "effects": {
+     "cash": 3000,
+     "mind": 5,
+     "social": -3
+    }
+   },
+   "right": {
+    "label": "请客庆祝",
+    "effects": {
+     "spend": 1000,
+     "social": 8,
+     "mind": 6
+    }
+   }
+  },
+  {
+   "id": "work_lead_01",
+   "who": "老板",
+   "whoId": "laoban",
+   "avatar": "📋",
+   "tag": "职场",
+   "text": "下个季度你带新人。多操心，也算多一条腿。",
+   "when": "seen:work_focus_02",
+   "alwaysStatus": null,
+   "window": [
+    25,
+    58
+   ],
+   "left": {
+    "label": "认真带",
+    "effects": {
+     "mind": 4,
+     "social": 6,
+     "risk": 3
+    }
+   },
+   "right": {
+    "label": "挂名不管",
+    "effects": {
+     "social": -6,
+     "mind": 2
     }
    }
   }
