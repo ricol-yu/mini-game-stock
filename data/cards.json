@@ -1517,7 +1517,7 @@
    "avatar": "💳",
    "tag": "风险",
    "text": "账单 8,000。这个月怎么处理？",
-   "when": null,
+   "when": "debt>0",
    "alwaysStatus": null,
    "left": {
     "label": "咬牙全额还",

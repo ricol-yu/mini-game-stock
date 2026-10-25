@@ -220,7 +220,7 @@ function spend(x){
     S.cost -= S.cost * (S.equity > 0 ? cut / S.equity : 1);
     S.equity -= cut; S.mind -= 5; S.trades++; need -= cut;
   }
-  if(need > 0){ S.debt += need; S.social -= 3; }
+  if(need > 0){ S.debt += need; S.social -= 3; S._autoDebt = (S._autoDebt || 0) + need; }
 }
 function borrow(x){
   // 借来的钱先进现金、欠账记进负债（进度条上看得见），花不花、买不买由玩家自己定
@@ -709,7 +709,13 @@ function fly(dir){
   S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
   setTimeout(function(){
-    if(borrowed > 0) m = "💳 借到 " + money(borrowed) + "，已记进负债" + (m ? "　·　" + m : "");
+    // 借钱分两种来路，措辞不同：主动借（卡面 borrow）vs 现金不够被动欠（spend 自动记负债）
+    if(borrowed > 0){
+      var auto = S._autoDebt || 0; S._autoDebt = 0;
+      m = (auto > 0 ? "💸 现金不够，欠下 " + money(auto) + "，已记进负债" : "💳 借到 " + money(borrowed) + "，已记进负债") + (m ? "　·　" + m : "");
+    } else if(borrowed < 0){
+      m = "✅ 还掉 " + money(-borrowed) + "，负债减少" + (m ? "　·　" + m : "");
+    }
     if(m) toast(m);
   }, c.st ? 1800 : 260);
   setTimeout(function(){ busy = false; check(); if(!S.over) nextCard(); }, 340);
@@ -931,7 +937,7 @@ CARDS = [
   R:{s:"先配 12,000",e:{borrow:12000,buy:12000,mind:-8,social:3}},L:{s:"直接挂断",e:{mind:4,social:-4}}},
  {who:"网贷广告",av:"📱",tag:"风险",txt:"额度 20,000，日息万三，三分钟到账。",
   R:{s:"借 12,000 抄底",e:{borrow:12000,buy:12000,mind:-9}},L:{s:"关掉",e:{mind:4,social:-3}}},
- {who:"信用卡",av:"💳",tag:"风险",txt:"账单 8,000。这个月怎么处理？",
+ {who:"信用卡",av:"💳",tag:"风险",when:"debt>0",txt:"账单 8,000。这个月怎么处理？",
   R:{s:"还最低",e:{repay:3000,mind:-4}},L:{s:"咬牙全额还",e:{spend:8000,mind:5}}},
  {who:"荐股群",av:"🎯",tag:"风险",txt:"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
   R:{s:"交钱",e:{spend:8888,risk:8,mind:-6,social:4}},L:{s:"这就是骗局",e:{mind:5,social:-4}}},

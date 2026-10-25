@@ -165,6 +165,14 @@ function validateCards(data) {
     /* 4+5. 效果键与数值 */
     ['left', 'right'].forEach(function (s) { if (c[s]) checkEffect(id, s, c[s].effects); });
 
+    /* 4.5 还钱卡必须挂负债条件：没欠过钱的玩家不该抽到「还钱」选项（2026-10-25 线上反馈） */
+    var hasRepay = ['left', 'right'].some(function (s) {
+      return c[s] && c[s].effects && c[s].effects.repay;
+    });
+    if (hasRepay && !(typeof c.when === 'string' && c.when.indexOf('debt') >= 0)) {
+      err('effect-key', id, 'when', '卡面含 repay（还钱），但 when 没有负债条件（如 debt>0）——零负债玩家会抽到无法执行的还钱卡');
+    }
+
     /* alwaysStatus */
     if (c.alwaysStatus) {
       var as = c.alwaysStatus;
