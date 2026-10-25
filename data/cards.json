@@ -7,7 +7,7 @@
    "avatar": "💍",
    "tag": "家庭",
    "text": "这个月房贷 5,500。你看着办。",
-   "when": null,
+   "when": "did:fam_shoufu_01.l",
    "alwaysStatus": null,
    "left": {
     "label": "先拖两天",
@@ -32,7 +32,7 @@
    "avatar": "💍",
    "tag": "家庭",
    "text": "孩子要上补习班，一年七千八。先交这学期 3,900。",
-   "when": null,
+   "when": "did:fam_hunli_01; has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "太贵了，不报",
@@ -84,7 +84,7 @@
    "avatar": "💍",
    "tag": "家庭",
    "text": "我们多久没一起吃饭了？",
-   "when": null,
+   "when": "did:fam_hunli_01",
    "alwaysStatus": null,
    "left": {
     "label": "最近有点忙",
@@ -164,7 +164,7 @@
    "avatar": "👧",
    "tag": "家庭",
    "text": "爸爸，你为什么总在看手机？",
-   "when": null,
+   "when": "has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "陪她玩一会儿",
@@ -191,7 +191,7 @@
    "avatar": "🏫",
    "tag": "家庭",
    "text": "今晚家长会，你来不来？",
-   "when": null,
+   "when": "has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "让妈妈去吧",
@@ -1824,7 +1824,7 @@
    "avatar": "🧒",
    "tag": "家庭",
    "text": "孩子举着卷子过来，站在你旁边，没说话。",
-   "when": null,
+   "when": "has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "等一下",
@@ -2473,7 +2473,7 @@
    "avatar": "🎓",
    "tag": "家庭",
    "text": "班主任来电话：孩子最近上课，总是走神。",
-   "when": null,
+   "when": "has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "说最近忙",
@@ -2524,7 +2524,7 @@
    "avatar": "🧒",
    "tag": "家庭",
    "text": "兴趣班该交钱了，6,800。他说，其实不想去了。",
-   "when": null,
+   "when": "has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "续费",
@@ -2899,7 +2899,7 @@
    "avatar": "💐",
    "tag": "家庭",
    "text": "周末有空吗？想去江边走走。",
-   "when": null,
+   "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     1,
@@ -2929,7 +2929,7 @@
    "avatar": "🎬",
    "tag": "家庭",
    "text": "她发来消息：新上的电影，一起？",
-   "when": null,
+   "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     1,
@@ -2959,7 +2959,7 @@
    "avatar": "🥟",
    "tag": "家庭",
    "text": "她说家里包了饺子，喊你回去吃。",
-   "when": null,
+   "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     2,
@@ -2989,7 +2989,7 @@
    "avatar": "🎂",
    "tag": "家庭",
    "text": "她生日。想要一顿像样的晚饭。",
-   "when": "did:fam_yuehui_01.l",
+   "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     3,
@@ -3020,7 +3020,7 @@
    "avatar": "💭",
    "tag": "家庭",
    "text": "她问：你是不是更喜欢那根线？",
-   "when": "did:fam_yuehui_01.r|did:fam_shengri_01.r|did:fam_zhaohu_01.r|did:fam_zhoumo_01.r",
+   "when": "did:fam_yuehui_01.r; no:did:fam_hunli_01|did:fam_shengri_01.r; no:did:fam_hunli_01|did:fam_zhaohu_01.r; no:did:fam_hunli_01|did:fam_zhoumo_01.r; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     6,
@@ -3049,7 +3049,7 @@
    "avatar": "🤝",
    "tag": "家庭",
    "text": "要不要……就这样走下去？",
-   "when": "did:fam_yuehui_01.l|did:fam_zhaohu_01.l|did:fam_zhoumo_01.l",
+   "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     6,
@@ -3197,7 +3197,7 @@
    "avatar": "📵",
    "tag": "家庭",
    "text": "她三天没回你消息了。",
-   "when": "did:fam_queding_01.l; did:fam_jiazhang_01.r",
+   "when": "did:fam_queding_01.l; did:fam_jiazhang_01.r; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     12,
@@ -3226,7 +3226,7 @@
    "avatar": "💍",
    "tag": "家庭",
    "text": "她家开口：彩礼八万八。",
-   "when": "did:fam_jiazhang_01.l; social>35|did:fam_zanqian_01.l; social>35",
+   "when": "did:fam_jiazhang_01.l; social>35; no:did:fam_hunli_01|did:fam_zanqian_01.l; social>35; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     12,
