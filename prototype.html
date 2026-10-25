@@ -106,11 +106,7 @@
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 0}
   .life div{font-size:10.5px;color:var(--ink-3);text-align:left}
   .life div b{display:block;font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:1px}
-  .intro .intro-body{max-width:320px;text-align:left;font-size:11.5px;line-height:1.9;color:var(--ink-3);
-    background:rgba(0,0,0,.035);border-radius:12px;padding:14px 16px;margin-bottom:20px}
-  .intro .intro-body p{margin:0 0 10px}
-  .intro .intro-body p:last-child{margin-bottom:0}
-  .intro .intro-body b{color:var(--ink)}
+  .intro .intro-hint{font-size:11.5px;color:var(--ink-3);margin:0 0 20px;letter-spacing:1px}
   .btn{background:var(--ink);color:#fff;border:0;border-radius:22px;padding:11px 30px;font-size:14px;cursor:pointer}
   .legend{margin-top:14px;font-size:11.5px;color:var(--ink-3);text-align:center;line-height:1.9;max-width:540px}
   @media (max-width:420px){.phone{width:100%;max-width:344px}}
@@ -154,12 +150,8 @@
     <div class="over intro" id="intro">
       <h2>《韭菜之王》</h2>
       <div class="sub">一个关于炒股、生活和不赔上人生的 60 天</div>
-      <div class="intro-body">
-        <p><b>你的目标</b>：你是个普通打工人，兜里有 18,000 元（一半已经买成了股票），工资每 15 天发 6,500。撑过 <b>60 天</b>，并且让<b>净值</b>（现金 + 股票 − 欠款）尽可能多。净值翻倍、体面通关，是高手；只是活着，也不丢人。</p>
-        <p><b>怎么玩</b>：每天发生一件事，你只有两个选择——<b>右滑 = 照做/投入</b>，<b>左滑 = 拒绝/抽身</b>。买股票、卖股票都藏在卡片选项里。</p>
-        <p><b>四条命</b>：<b>精力</b>、<b>心态</b>、<b>社会</b>（人际关系）任意一条归零，或者<b>净值 ≤ 0（穿仓）</b>、<b>风险拉满（爆仓）</b>，游戏就结束。生活每天都在花钱，工资每 15 天才发一次。</p>
-      </div>
-      <button class="btn" id="i-b">开始第一周</button>
+      <p class="intro-hint">右滑＝照做 · 左滑＝推掉 · 进去就懂了</p>
+      <button class="btn" id="i-b">开始</button>
     </div>
 
     <div class="over" id="over">
@@ -199,11 +191,12 @@ ST = {
   over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。｜心态 ≥88 时进入：下单自动放大 ×1.35、风险每天 +0.3；心态回落到 74 以下解除。"}
 };
 
+var _skipTut = false;                                // 重开一局不重播序幕教程（刷新页面才重播）
 function reset(){
   // 开局自带底仓 ¥9,000（现金 9,000）——一半身家在场内，从第一天起行情就攥着你的心跳；
   // 现金比旧版少 3000：生活是要烧钱的，手里那点活钱撑不了几件家事
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
-        mind:58, risk:0, social:56, energy:50, day:1,
+        mind:58, risk:0, social:56, energy:50, day:1, tut:(_skipTut ? TUT.length : 0),
         st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
@@ -671,10 +664,26 @@ function build(c){
     '<div class="foot"><span class="l">← ' + c.L.s + '</span><span class="r">' + c.R.s + ' →</span></div>';
   d._c = c; return d;
 }
+/* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片 */
+var TUT = [
+ {who:"深夜的出租屋",av:"🌙",tag:"序幕",_tut:true,
+  txt:"屏幕亮着，里面是你全部身家：18,000 元，一半已经换成了股票。从今天起的 60 天——行情天天在动，日子天天花钱。你要做的，是带着更多的钱、和还没散架的生活，走到第 60 天。",
+  L:{s:"……然后呢"},R:{s:"说下去"}},
+ {who:"你自己",av:"🫵",tag:"序幕",_tut:true,
+  txt:"接下来的每一天，都只问你一个问题：做，还是不做。右滑，是把事情接下来——照做、投入、认了；左滑，是把它推掉——拒绝、抽身、转身走。不信？往随便哪边滑一下试试。",
+  L:{s:"← 这样推掉"},R:{s:"这样接下 →"}},
+ {who:"开盘之前",av:"📊",tag:"序幕",_tut:true,
+  txt:"盯住中间那串数字：净值＝现金＋股票−欠款，它是你的总分。头顶四条命——精力、心态、社会，归零一样完蛋；风险拉满会被强制平仓。另外记住：工资每 15 天才发 6,500，生活每天都要花钱。",
+  L:{s:"记住了"},R:{s:"开工"}}
+];
 function nextCard(){
   if(busy) return;
   var old = stage.querySelectorAll(".card");
   for(var i = 0; i < old.length; i++) old[i].remove();
+  if(S.tut < TUT.length){                            // 序幕：一次只发一张教程卡，压不住别的卡
+    var t = build(TUT[S.tut]);
+    stage.appendChild(t); cur = t; bind(t); return;
+  }
   var a = build(pick()), b = build(pickPeek(1, a._c)), c = build(pickPeek(2, a._c));
   c.className = "card under2"; b.className = "card under";
   stage.appendChild(c); stage.appendChild(b); stage.appendChild(a);
@@ -712,6 +721,12 @@ function fly(dir){
   cur.style.transition = "transform .34s ease-out, opacity .34s";
   cur.style.transform = "translate(" + (dir === "R" ? 460 : -460) + "px,10px) rotate(" + (dir === "R" ? 26 : -26) + "deg)";
   cur.style.opacity = 0;
+
+  if(c._tut){                                        // 序幕教程卡：只教，不算账——不推进天数、不动数值
+    S.tut++;
+    setTimeout(function(){ busy = false; nextCard(); }, 340);
+    return;
+  }
 
   var debt0 = S.debt;
   resolve(c, dir);
@@ -826,7 +841,7 @@ function check(){
   var mm = $("o-m"); mm.textContent = "-" + (S.mdd * 100).toFixed(0) + "%"; mm.className = "down";
   $("over").classList.add("on");
 }
-$("o-b").onclick = function(){ $("over").classList.remove("on"); reset(); };
+$("o-b").onclick = function(){ $("over").classList.remove("on"); _skipTut = true; reset(); };  // 重开不重播序幕教程（刷新页面才重播）
 
 /* ================= 卡池 =================
    e 字段：buy 加仓 · sell 减仓(比例) · spend 出金 · borrow 借钱 · repay 还钱
