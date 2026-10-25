@@ -495,7 +495,7 @@
    "whoId": "zhaopin",
    "avatar": "📱",
    "tag": "职场",
-   "text": "对方已读，没有回。",
+   "text": "投出去的简历，五份全都已读不回。",
    "when": "has:fired",
    "alwaysStatus": null,
    "left": {
@@ -719,7 +719,7 @@
    "whoId": "pengyou",
    "avatar": "💌",
    "tag": "人情",
-   "text": "我下个月结婚，你知道的。",
+   "text": "我下个月结婚，喜帖给你留着呢。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -847,7 +847,7 @@
    "whoId": "fanju",
    "avatar": "🥢",
    "tag": "人情",
-   "text": "有人凑到你耳边说了几句，就几句。",
+   "text": "饭局上有人凑过来，压低声音：「有只票，下周必涨。」",
    "when": "no:insider; social>45",
    "alwaysStatus": null,
    "left": {
@@ -902,7 +902,7 @@
    "whoId": "lingsan",
    "avatar": "🌙",
    "tag": "自己",
-   "text": "你还没睡。屏幕的蓝光里，那根线还在跳。",
+   "text": "还没睡。屏幕上的行情曲线一跳一跳，你盯得眼睛发干。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -979,7 +979,7 @@
    "whoId": "dilou",
    "avatar": "🚿",
    "tag": "自己",
-   "text": "洗完头，地漏上是一层头发。",
+   "text": "洗完头，地漏上是一团头发。最近掉得越来越多了。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -1232,7 +1232,7 @@
    "whoId": "ziji",
    "avatar": "🙋",
    "tag": "决策",
-   "text": "仓位已经七成。今天的线，你又想买。",
+   "text": "七成的钱已经买成了股票。看着今天的行情，你又想再买一点。",
    "when": "risk>25",
    "alwaysStatus": null,
    "left": {
@@ -1258,7 +1258,7 @@
    "whoId": "ziji",
    "avatar": "🙋",
    "tag": "决策",
-   "text": "止损位击穿了。纪律说：卖。",
+   "text": "股价跌穿了你早就定好的「到价就卖」线。计划写得明白：卖。",
    "when": "equity>0",
    "alwaysStatus": null,
    "left": {
@@ -1694,7 +1694,7 @@
    "whoId": "nianduzhangdan",
    "avatar": "📊",
    "tag": "风险",
-   "text": "你今年的收益，跑赢了 1.2% 的人。",
+   "text": "年度账单出炉：全市场 98.8% 的人，收益都比你高。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -1823,7 +1823,7 @@
    "whoId": "haizi",
    "avatar": "🧒",
    "tag": "家庭",
-   "text": "孩子举着卷子过来，站在你旁边，没说话。",
+   "text": "孩子举着考卷等你在家长栏签字，站在你旁边，不说话。",
    "when": "has:baby",
    "alwaysStatus": null,
    "left": {
@@ -1849,7 +1849,7 @@
    "whoId": "laopo",
    "avatar": "💍",
    "tag": "家庭",
-   "text": "「今晚吃什么？」她站在门口。你盯着 K 线。",
+   "text": "「今晚吃什么？」她站在门口问。你的眼睛还黏在行情图上。",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
    "left": {
@@ -1954,7 +1954,7 @@
    "whoId": "lingsan",
    "avatar": "🌙",
    "tag": "自己",
-   "text": "凌晨三点。美股开盘了，你算了算明天的账。",
+   "text": "凌晨三点，美股都开盘了。你还在算：明天那笔亏损，到底卖不卖。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -2210,7 +2210,7 @@
    "whoId": "yinhang",
    "avatar": "🏦",
    "tag": "市场",
-   "text": "行情不好，催消费贷的短信倒是很准时。",
+   "text": "欠的消费贷今天到还款日，催收短信一条接一条，比行情还准时。",
    "when": "has:bear",
    "alwaysStatus": null,
    "left": {
@@ -2262,7 +2262,7 @@
    "whoId": "quanshang",
    "avatar": "📄",
    "tag": "市场",
-   "text": "你买的基金清盘了，道歉信写得很诚恳。",
+   "text": "你买的基金清盘解散了，钱亏了一大截退回来。道歉信倒是很诚恳。",
    "when": "has:bear",
    "alwaysStatus": null,
    "left": {
@@ -2778,7 +2778,7 @@
    "whoId": "haizi",
    "avatar": "🧒",
    "tag": "家庭",
-   "text": "她画了幅画：爸爸、妈妈，和一根红 K 线。",
+   "text": "她画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
    "when": "did:fam_child_01.l",
    "alwaysStatus": null,
    "window": [
@@ -3019,7 +3019,7 @@
    "whoId": "laopo",
    "avatar": "💭",
    "tag": "家庭",
-   "text": "她问：你是不是更喜欢那根线？",
+   "text": "她问你：「股票和我，到底哪个重要？」",
    "when": "did:fam_yuehui_01.r; no:did:fam_hunli_01|did:fam_shengri_01.r; no:did:fam_hunli_01|did:fam_zhaohu_01.r; no:did:fam_hunli_01|did:fam_zhoumo_01.r; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
@@ -3048,7 +3048,7 @@
    "whoId": "laopo",
    "avatar": "🤝",
    "tag": "家庭",
-   "text": "要不要……就这样走下去？",
+   "text": "她认真地看着你，等你一句话：这段感情，要不要定下来？",
    "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
@@ -3571,7 +3571,7 @@
    "whoId": "xiangmu",
    "avatar": "📊",
    "tag": "职场",
-   "text": "项目明早上线。今晚，你在改自己的止损位。",
+   "text": "项目明早上线。今晚你却分着心，在偷偷改股票的「到价卖出」线。",
    "when": "no:fired",
    "alwaysStatus": null,
    "window": [
@@ -3626,7 +3626,7 @@
    "whoId": "lingsan",
    "avatar": "🌙",
    "tag": "自己",
-   "text": "睡前刷到群消息：明天，见分晓。",
+   "text": "睡前刷到群消息：「明天开盘有大动静，等着见证。」",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -3678,7 +3678,7 @@
    "whoId": "shengri",
    "avatar": "🎂",
    "tag": "自己",
-   "text": "生日这天。你打开账户，绿了。",
+   "text": "生日这天你打开账户：一片绿色，又亏了一天。",
    "when": null,
    "alwaysStatus": null,
    "left": {
@@ -3704,7 +3704,7 @@
    "whoId": "dilou",
    "avatar": "🚿",
    "tag": "自己",
-   "text": "地漏又堵了。水漫过来，像某种预兆。",
+   "text": "地漏又堵了，水漫到脚边。这一阵子，好像什么都在出问题。",
    "when": null,
    "alwaysStatus": null,
    "left": {
