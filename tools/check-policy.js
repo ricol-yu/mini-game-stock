@@ -56,11 +56,11 @@ function play(pick, seed) {
   const rng = mulberry32(seed);
   setRNG(sandbox, rng);
   let survived = 0, days = 0;
-  const endings = {};
+  const endings = {}, daysArr = [];
   for (let g = 0; g < RUNS; g++) {
     sandbox.reset();
     let p = 0;
-    for (let t = 0; t < 60 && !sandbox.S.over; t++) {
+    for (let t = 0; t < 360 && !sandbox.S.over; t++) {   // 开放局：上限 360 天，结局由玩法决定
       const card = nextCard(rng, sandbox.S);
       sandbox.resolve(card, pick(card, sandbox.S, rng));
       sandbox.tick();
@@ -68,13 +68,24 @@ function play(pick, seed) {
       p++;
     }
     days += p;
-    if (p === 60) survived++;
+    daysArr.push(p);
+    if (p >= 60) survived++;   // 通关口径（开放局）：活过 60 天——旧「活满 60 天」的连续对照版
     if (sandbox.S.over) {
       const k = getEl('o-t')._t + ' | ' + ((getEl('o-s')._t.split('·')[1] || '').trim());
       endings[k] = (endings[k] || 0) + 1;
     }
   }
-  return { win: survived / RUNS * 100, days: days / RUNS, endings: endings };
+  return { win: survived / RUNS * 100, days: days / RUNS, endings: endings, daysArr: daysArr };
+}
+
+/* 开放局护栏口径（docs/plan/openend-design.md §3.5）：
+   甜头期不许随便死（<30 天死亡率）、中位寿命落 45–60、p90 ≥100、内容深度（≥60 天占比） */
+function distLine(daysArr) {
+  const s = daysArr.slice().sort((a, b) => a - b);
+  const q = p => s[Math.min(s.length - 1, Math.floor(s.length * p))];
+  const pct = f => (daysArr.filter(f).length / daysArr.length * 100).toFixed(1);
+  return 'p50=' + q(0.5) + ' p90=' + q(0.9) +
+    ' · <30天死 ' + pct(d => d < 30) + '% · ≥60天 ' + pct(d => d >= 60) + '% · ≥120天 ' + pct(d => d >= 120) + '%';
 }
 
 const R = function (c, S, rng) { return rng() < 0.5 ? 'L' : 'R'; };
@@ -134,6 +145,7 @@ if (MODE === 'policy') {
     const r = play(POLICIES[name], SEED);
     out[name] = r;
     console.log('  ' + name.padEnd(24) + '通关 ' + r.win.toFixed(1).padStart(5) + '%   平均 ' + r.days.toFixed(1).padStart(5) + ' 天');
+    console.log('  ' + ''.padEnd(24) + distLine(r.daysArr));
   });
   const base = out['随机乱滑'].win;
   console.log('\n---- 相对随机（技巧回报，目标 ≥2.0x）----');

@@ -61,10 +61,10 @@ let poolResets = 0, overBefore = 0;
 
 for (let g = 0; g < RUNS; g++) {
   sandbox.reset();                          // 真实 reset（render 已置空、nextCard 已摘除）
-  let played = 0, uniqN = 0;
+  let played = 0, uniqN = 0, uniq60 = 0;
   const uniq = {};
 
-  for (let turn = 0; turn < 60 && !sandbox.S.over; turn++) {
+  for (let turn = 0; turn < 360 && !sandbox.S.over; turn++) {
     // 真实抽卡：抽三张（后两张是垫层，不计数）、只打第一张
     const first = sandbox.pick();
     sandbox.pickPeek(1, first);      // 垫层只预览不消耗
@@ -74,7 +74,7 @@ for (let g = 0; g < RUNS; g++) {
     const dir = rng() < 0.5 ? 'L' : 'R';    // 玩家随机乱滑（与原型图例 600 局口径一致）
     const id = first._id;
     plays[id] = (plays[id] || 0) + 1;
-    if (!uniq[id]) { uniq[id] = 1; uniqN++; }
+    if (!uniq[id]) { uniq[id] = 1; uniqN++; if (turn < 60) uniq60++; }
     played++;
 
     sandbox.resolve(first, dir);            // 真实出牌
@@ -85,7 +85,7 @@ for (let g = 0; g < RUNS; g++) {
 
   days.push(played);
   uniquePerGame.push(uniqN);
-  if (played === 60) fullUnique.push(uniqN); // 活满 60 天的局单独记：N2 重复率目标约束的就是这批
+  if (played >= 60) fullUnique.push([uniq60, 60]);   // 活过 60 天的局：重复率只数前 60 天，跨版本可比
   if (played < 60) overBefore++;
 
   if (sandbox.S.over) {
@@ -105,7 +105,7 @@ const quant = p => daysSorted[Math.min(daysSorted.length - 1, Math.floor(daysSor
 const totalDays = days.reduce((a, b) => a + b, 0);
 const repeatRate = 1 - (uniquePerGame.reduce((a, b) => a + b, 0) / (totalDays || 1));
 const fullGames = fullUnique.length;
-const fullRepeatRate = fullGames ? 1 - (fullUnique.reduce((a, b) => a + b, 0) / (fullGames * 60)) : null;
+const fullRepeatRate = fullGames ? 1 - (fullUnique.reduce((a, b) => a + b[0], 0) / (fullUnique.reduce((a, b) => a + b[1], 0) || 1)) : null;
 const totalPicks = Object.values(picks).reduce((a, b) => a + b, 0);
 
 const endingList = Object.entries(endings)
@@ -148,7 +148,7 @@ console.log('');
 console.log(`==== ${RUNS.toLocaleString()} 局 · seed=${SEED} · 耗时 ${elapsed.toFixed(1)}s ====`);
 console.log(`平均寿命 ${s.avgDays} 张卡 · p50=${s.p50Days} · p90=${s.p90Days} · 提前结局率 ${s.earlyEndPct}%`);
 console.log(`单局重复率 ${s.repeatRatePct}%（一局平均 ${s.avgUniquePerGame} 张不同的卡）` +
-  (s.repeatRateFullPct !== null ? `；活满 60 天的局：${s.repeatRateFullPct}%（${fullGames} 局）` : ''));
+  (s.repeatRateFullPct !== null ? `；活过 60 天的局：${s.repeatRateFullPct}%（${fullGames} 局）` : ''));
 console.log(`池被抽空重置的局占比 ${s.poolResetsPct}%`);
 console.log('---- 结局分布 ----');
 endingList.forEach(e => console.log(`  ${String(e.pct).padStart(6)}%  ${String(e.count).padStart(7)} 局 · 均寿 ${e.avgDay} · ${e.ending}`));

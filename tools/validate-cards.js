@@ -196,8 +196,8 @@ function validateCards(data) {
     if (c.window !== undefined && c.window !== null) {
       var w = c.window;
       if (!Array.isArray(w) || w.length !== 2 || !Number.isInteger(w[0]) || !Number.isInteger(w[1]) ||
-          w[0] < 1 || w[1] > 60 || w[0] > w[1])
-        err('window', id, 'window', 'window 应为 [起,止]，1..60 的整数且起≤止，当前 ' + JSON.stringify(w));
+          w[0] < 1 || w[1] > 360 || w[0] > w[1])
+        err('window', id, 'window', 'window 应为 [起,止]，1..360 的整数且起≤止（开放局上限 360），当前 ' + JSON.stringify(w));
     }
     if (c.weight !== undefined && (typeof c.weight !== 'number' || c.weight < 0.1 || c.weight > 10))
       err('window', id, 'weight', 'weight 应在 0.1..10，当前 ' + c.weight);

@@ -149,7 +149,7 @@
 
     <div class="over intro" id="intro">
       <h2>《韭菜之王》</h2>
-      <div class="sub">一个关于炒股、生活和不赔上人生的 60 天</div>
+      <div class="sub">一个关于炒股、生活和不赔上人生的故事</div>
       <p class="intro-hint">右滑＝照做 · 左滑＝推掉 · 进去就懂了</p>
       <button class="btn" id="i-b">开始</button>
     </div>
@@ -176,7 +176,15 @@
 </div>
 
 <script>
-var S, MAX_DAY = 60, INIT = 18000, SEED_EQ = 9000, MONEY_CAP = 40000, CARDS = [], ST = {};
+var S, MAX_DAY = 360, INIT = 20000, SEED_EQ = 9000, MONEY_CAP = 40000,
+    /* 开放局压力引擎（2026-10-26）：60 天清算已取消，压力靠三条曲线递增——
+       通胀：生活成本从第 INFL_FROM 天起按复利爬坡（前 20 天豁免且更低，保前期体验）；
+       波动：行情振幅随天数线性放大；发卡：bagFind 里按 tag 软门控漂移（见 PHASE_GATE）。
+       开局现金 11,000（INIT 20,000 − 底仓 9,000）：比旧版多 2,000 缓冲——
+       仿真实测开局 9,000 会被甜头期的卡片支出在 19 天左右打死（前 30 天死亡率 41%），
+       「先甜后苦」的第一口必须是真的甜。调难度先调这些常数 + 三件套对表，别手拍单卡数值。 */
+    INFL_FROM = 20, INFL_RATE = 0.008, VOL_GROW = 0.003, EARLY_BURN = 120,
+    CARDS = [], ST = {};
 
 /* ============ 状态（Buff / Debuff）字典 ============ */
 ST = {
@@ -193,8 +201,8 @@ ST = {
 
 var _skipTut = false;                                // 重开一局不重播序幕教程（刷新页面才重播）
 function reset(){
-  // 开局自带底仓 ¥9,000（现金 9,000）——一半身家在场内，从第一天起行情就攥着你的心跳；
-  // 现金比旧版少 3000：生活是要烧钱的，手里那点活钱撑不了几件家事
+  // 开局自带底仓 ¥9,000——一半身家在场内，从第一天起行情就攥着你的心跳；
+  // 现金 11,000：够撑过甜头期的卡片支出，但撑不起挥霍（通胀曲线在后面等着）
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
         mind:58, risk:0, social:56, energy:50, day:1, tut:(_skipTut ? TUT.length : 0),
         st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
@@ -355,7 +363,7 @@ function tick(){
     // 停牌：价格冻结，什么都做不了
     msg.push("停牌中，价格冻结");
   }else{
-    var vol = 0.042;
+    var vol = 0.042 * (1 + Math.max(0, S.day - INFL_FROM) * VOL_GROW);   // 波动随天数放大：日子越长，行情越颠
     if(st.bull)   vol *= 2.1;
     if(st.bear)   vol *= 1.8;
     if(st.bubble) vol *= 1.4;
@@ -447,8 +455,11 @@ function tick(){
     else { S.cash += 6500; S.mind += 2; msg.push("工资到账 ¥6,500"); }
   }
 
-  // 生活的燃烧：房租、吃饭、通勤，一天都免不了（60 天 −15,000；失业也照烧）
-  S.cash -= 200;
+  // 生活的燃烧：房租、吃饭、通勤，一天都免不了（失业也照烧）。
+  // 开放局通胀：前 20 天 120/天（甜头期，日子还没那么贵），之后回到 200 并按复利爬坡
+  var burn = (S.day <= INFL_FROM ? EARLY_BURN : 200 * Math.pow(1 + INFL_RATE, S.day - INFL_FROM));
+  S.cash -= burn;
+  if(S.day === INFL_FROM + 1) msg.push("🧾 房租涨了，菜价也涨了。日子比前一阵贵了");
   if(S.day % 10 === 0 && S.cash < 2000) msg.push("🧾 房租水电一样不少，账户快见底了");
 
   var interest = S.debt * 0.0015 * (1 + S.risk / 70);   // 风险越高，钱越贵
@@ -563,10 +574,32 @@ var stage = $("stage"), cur = null, busy = false;
 */
 var _bag = [], _recent = [], _lastTag = "", COOL = 10, _pickResets = 0, _bagRefills = 0;
 
+/* 难度曲线（docs/plan/openend-design.md §3.5）：好选项变稀、高压卡变多，
+   用「按 tag 的软门控」实现——不是把卡删掉，而是特定阶段以概率跳过：
+     甜头期(day≤25)：意外/风险/市场类被压 —— 前期先让玩家尝到甜头、学会系统；
+     艰辛期(day>55)：收入/自己/人情被压 —— 回血手段变稀，每个选择都开始割肉。
+   只作用于普通抽卡（bagFind），关联卡插队通道（bagFindChain）不受影响——
+   叙事大事件不该被曲线吞掉。 */
+var PHASE_GATE = {
+  early: { until: 25, skip: { "意外": 0.5, "风险": 0.5, "市场": 0.4, "家庭": 0.2, "人情": 0.15 } },
+  late : { from : 55, skip: { "收入": 0.6, "自己": 0.3, "人情": 0.25 } }
+};
+function phaseGated(tag){
+  var e = PHASE_GATE.early, l = PHASE_GATE.late;
+  if(S.day <= e.until && e.skip[tag] && Math.random() < e.skip[tag]) return true;
+  if(S.day > l.from && l.skip[tag] && Math.random() < l.skip[tag]) return true;
+  return false;
+}
+
 function bagShuffle(){
   var buckets = {}, tags = [], i, t;
   for(i = 0; i < CARDS.length; i++){
     t = CARDS[i].tag || "-";
+    // 难度曲线在这里生效：按当前天数把某些 tag 的卡从「这一轮的袋子」里抽掉。
+    // 不能在 bagFind 扫描时拦（试过：同类相邻 13%→33%、垫层预览出现重复 15.8%，
+    //  分层交错和预览一致性全被打乱）——抽在洗牌期，扫描逻辑一行不动。
+    // 关联卡永不抽：它们要留在袋里走插队通道，叙事大事件不能被曲线吞掉。
+    if(!isChain(CARDS[i]) && phaseGated(t)) continue;
     if(!buckets[t]){ buckets[t] = []; tags.push(t); }
     buckets[t].push(i);
   }
@@ -667,7 +700,7 @@ function build(c){
 /* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片 */
 var TUT = [
  {who:"深夜的出租屋",av:"🌙",tag:"序幕",_tut:true,
-  txt:"屏幕亮着，里面是你全部身家：18,000 元，一半已经换成了股票。从今天起的 60 天——行情天天在动，日子天天花钱。你要做的，是带着更多的钱、和还没散架的生活，走到第 60 天。",
+  txt:"屏幕亮着，里面是你全部身家：20,000 元，一半已经换成了股票。行情天天在动，日子天天花钱——而且日子会越过越贵。你要做的，是带着更多的钱、和还没散架的生活，活得尽量久一点。",
   L:{s:"……然后呢"},R:{s:"说下去"}},
  {who:"你自己",av:"🫵",tag:"序幕",_tut:true,
   txt:"接下来的每一天，都只问你一个问题：做，还是不做。右滑，是把事情接下来——照做、投入、认了；左滑，是把它推掉——拒绝、抽身、转身走。不信？往随便哪边滑一下试试。",
@@ -755,7 +788,7 @@ function fly(dir){
 /* ============ 结局 ============ */
 function check(){
   var n = net(), d = S.day, rate = (n - INIT) / INIT * 100, f = S.flags, e = null, why = "";
-  if(f.burst && d - f.burstDay <= 10 && n <= INIT * 0.5 && f.burstDrop > 0.42){
+  if(f.burst && d > 30 && d - f.burstDay <= 10 && n <= INIT * 0.5 && f.burstDrop > 0.42){
     e = ["🫧","泡沫之后","第 " + d + " 天 · 它终于跌回来了",
          "它涨的时候你也觉得不真实。只是那时候，所有人都在笑。"];
     why = "泡沫破的那天单日砸了 " + Math.round(f.burstDrop * 100) + "%，之后 10 天里净值一直没回到起步资金一半（¥" +
@@ -803,31 +836,27 @@ function check(){
          "账面上的数字够你安静很久。你花了整个人才走到这里，然后发现自己还是每天打开它。"];
     why = "净值达到 ¥80,000 —— 落袋为安。";
   }
-  else if(d > MAX_DAY && S.neverBought){
-    e = ["👁","一次都没动","活满 60 天 · 底仓之外毫无动作",
-         "除了开局跟着大流买的那笔底仓，你再没碰过它。你管这叫清醒。"];
-    why = "60 天里你一次都没有主动交易——只有开局那笔 ¥6,000 底仓在场内跟着涨跌。";
+  else if(S.equity <= 1 && S.debt <= 1 && S.trades > 0 && n >= INIT * 1.5){
+    e = ["🌅","上岸","第 " + d + " 天 · 清仓，还清，删掉 App",
+         "你没等到暴富，也没等到爆仓。你只是决定，今天到此为止。"];
+    why = "清空持仓、还清负债后带着 " + money(n) + " 离场——收益 " + rate.toFixed(1) +
+          "%。在这个市场里，知道什么时候走，比知道什么时候进更难。";
   }
-  else if(d > MAX_DAY && S.did && S.did.fam_wed_day_01 && S.social >= 70){
-    e = ["🏠","两个人","活满 60 天 · 钱没大赚，但照片挂在客厅",
+  else if(d > 60 && S.did && S.did.fam_wed_day_01 && S.social >= 70 && n > 0){
+    e = ["🏠","两个人","第 " + d + " 天 · 钱没大赚，但照片挂在客厅",
          "你们没赢市场。可这局你真正想赢的，本来就不是市场。"];
-    why = "活满 60 天，收益率 " + rate.toFixed(1) + "%；结婚了，且社会 " + Math.round(S.social) +
-          "/100——她还在，朋友们也还在。婚礼的照片挂在客厅。";
+    why = "结了婚，社会 " + Math.round(S.social) + "/100，净值 " + money(n) +
+          "——她还在，朋友们也还在。婚礼的照片挂在客厅。";
   }
-  else if(d > MAX_DAY && rate >= 60){
-    e = ["🏆","六十天","活满 60 天 · 你还站着",
-         "你活着，而且赢了。至于哪一步靠的是运气，你自己清楚。"];
-    why = "活满 60 天，最终收益率 +" + rate.toFixed(1) + "%。";
+  else if(d > 150 && n > 0){
+    e = ["🗿","熬成精","第 " + d + " 天 · 五个月了，你还站着",
+         "老韭菜不是不亏，是亏完还敢开盘，亏完还睡得着。"];
+    why = "150 天，净值仍为正（" + money(n) + "）。通胀、熊市、生活的账单都没能把你打穿。";
   }
-  else if(d > MAX_DAY && rate >= 0){
-    e = ["🌤","六十天","活满 60 天 · 钱没多，人也没散",
-         "这样的年份，往后你会怀念。"];
-    why = "活满 60 天，最终收益率 " + rate.toFixed(1) + "%。";
-  }
-  else if(d > MAX_DAY){
-    e = ["🌧","六十天","活满 60 天 · 钱没了，人还在",
-         "账可以慢慢算，日子不行。"];
-    why = "活满 60 天，最终收益率 " + rate.toFixed(1) + "%。";
+  else if(d > 120 && S.neverBought){
+    e = ["👁","一次都没动","第 " + d + " 天 · 底仓之外毫无动作",
+         "除了开局跟着大流买的那笔底仓，你再没碰过它。你管这叫清醒。"];
+    why = "120 天里你一次都没有主动交易——只有开局那笔 ¥6,000 底仓在场内跟着涨跌。";
   }
   if(!e) return;
   S.over = true;
