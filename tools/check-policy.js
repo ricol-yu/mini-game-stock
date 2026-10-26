@@ -98,7 +98,7 @@ const POLICIES = {
     return a > b ? 'L' : 'R';
   },
   '会玩（哪条快见底先救哪条）': function (c, S, rng) {
-    const e = effects(c), INIT = 12000, net = S.cash + S.equity - S.debt;
+    const e = effects(c), INIT = 20000, net = S.cash + S.equity - S.debt;   // 开局净值 20,000（原按 1.2 万估，策略会误判自己很穷）
     const wm = S.mind < 35 ? 3 : 1, ws = S.social < 30 ? 3 : 1;
     const wr = S.risk > 60 ? 3 : 1, wn = net < INIT * 0.5 ? 2 : 0.5;
     const we = S.energy < 25 ? 3 : 1;   // 精力见底硬撑要付心态重税，低精力时先省着花
@@ -111,7 +111,7 @@ const POLICIES = {
      （钱亏了它不在乎，直到跌破 6000 才加权）。maximin 换成「先把离死线最近的那条抬高」，
      更接近真人在 Reigns 里的玩法：不让任何一条触底。两者并存，不做替换。 */
   '会玩·maximin（先保住最短板）': function (c, S, rng) {
-    const INIT = 12000;
+    const INIT = 20000;
     const e = effects(c);
     const score = function (e) {
       if (!e) e = {};

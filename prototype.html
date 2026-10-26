@@ -206,7 +206,7 @@ var S, MAX_DAY = 360, INIT = 20000, SEED_EQ = 9000, MONEY_CAP = 40000,
        开局现金 11,000（INIT 20,000 − 底仓 9,000）：比旧版多 2,000 缓冲——
        仿真实测开局 9,000 会被甜头期的卡片支出在 19 天左右打死（前 30 天死亡率 41%），
        「先甜后苦」的第一口必须是真的甜。调难度先调这些常数 + 三件套对表，别手拍单卡数值。 */
-    INFL_FROM = 20, INFL_RATE = 0.008, VOL_GROW = 0.003, EARLY_BURN = 120,
+    INFL_FROM = 20, INFL_RATE = 0.016, VOL_GROW = 0.003, EARLY_BURN = 120,
     CARDS = [], ST = {};
 
 /* ============ 状态（Buff / Debuff）字典 ============ */
@@ -231,7 +231,7 @@ function reset(){
         st:{}, flags:{}, did:{}, seen:{}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
-  _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0;   // 新的一局：袋子、冷却、同类记忆都重来
+  _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0; _lastWasChain = false;   // 新的一局：袋子、冷却、同类记忆、插队节流都重来
   render(); nextCard();
 }
 function net(){ return S.cash + S.equity - S.debt; }
@@ -714,7 +714,7 @@ var stage = $("stage"), cur = null, busy = false;
        否则每天 3 抽会把分层间距打乱成 1/3，前面的摊开全白做。
    成本：一次抽卡最多扫一遍袋（97 个数），浏览器里无感。
 */
-var _bag = [], _recent = [], _lastTag = "", COOL = 10, _pickResets = 0, _bagRefills = 0;
+var _bag = [], _recent = [], _lastTag = "", COOL = 10, _pickResets = 0, _bagRefills = 0, _lastWasChain = false;
 
 /* 难度曲线（docs/plan/openend-design.md §3.5）：好选项变稀、高压卡变多，
    用「按 tag 的软门控」实现——不是把卡删掉，而是特定阶段以概率跳过：
@@ -723,8 +723,9 @@ var _bag = [], _recent = [], _lastTag = "", COOL = 10, _pickResets = 0, _bagRefi
    只作用于普通抽卡（bagFind），关联卡插队通道（bagFindChain）不受影响——
    叙事大事件不该被曲线吞掉。 */
 var PHASE_GATE = {
-  early: { until: 25, skip: { "意外": 0.5, "风险": 0.5, "市场": 0.4, "家庭": 0.2, "人情": 0.15 } },
-  late : { from : 55, skip: { "收入": 0.6, "自己": 0.3, "人情": 0.25 } }
+  early: { until: 25, skip: { "意外": 0.5, "风险": 0.5, "市场": 0.4,
+                             "伴侣": 0.15, "家人": 0.2, "孩子": 0.3, "宠物": 0.2, "房子": 0.2, "人情": 0.15 } },
+  late : { from : 55, skip: { "收入": 0.6, "自己": 0.3, "人情": 0.25, "伴侣": 0.1 } }
 };
 function phaseGated(tag){
   var e = PHASE_GATE.early, l = PHASE_GATE.late;
@@ -759,62 +760,104 @@ function bagShuffle(){
   _bagRefills++;
 }
 
+/* 最近 n 张里某分类出现了几次：同类的密集度控制（只比"上一张不同类"不够——
+   伴侣卡 28 张 + 一堆链卡插队时，两张之间常常只隔 1~2 天，读起来就是「一天到晚都是她」） */
+function recentTag(tag, n){
+  var cnt = 0, lim = Math.min(n, _recent.length);
+  for(var i = 0; i < lim; i++) if(CARDS[_recent[i]].tag === tag) cnt++;
+  return cnt;
+}
+
 /* 在袋里找第一张「能出」的卡，返回它在袋中的下标；不取走 */
-function bagFind(strict, avoidTag){
+function bagFind(strict, avoidTag, tagCap){
   for(var i = 0; i < _bag.length; i++){
     var k = _bag[i], c = CARDS[k];
-    var cap = isChain(c) ? 1 : 2;                    // 关联卡是叙事大事件，一局只出一次
+    var cap = c.cap || (isChain(c) ? 1 : 2);         // 关联卡是叙事大事件，一局只出一次；c.cap 可放宽（如彩礼可再来一次）
     if((c._used|0) >= cap) continue;
     if(!whenOK(c.when)) continue;
     if(c.win && (S.day < c.win[0] || S.day > c.win[1])) continue;   // window:[起,止]——时机没到就不出场
     if(strict && _recent.indexOf(k) >= 0) continue;
     if(avoidTag && c.tag === avoidTag) continue;      // 不和上一张同类
+    if(tagCap && recentTag(c.tag, 6) >= tagCap) continue;   // 最近 6 张里同类已经够多，让它歇会儿
     return i;
   }
   return -1;
 }
 
-/* 关联卡：when 里带 did:/seen: 的叙事卡——账已经记下的事，要尽快回响 */
+/* 关联卡：when 里带 did:/seen: 的叙事卡——账已经记下的事，要尽快回响。
+   注意 no:did: / no:seen: 不算：它表达的是「这件事还没发生」，是前置未满足，
+   不是回响。早先没排除，三张恋爱入口卡被判成关联卡 → 天天插队、一局只出一次。 */
 function isChain(c){
-  return !!c.when && c.when.indexOf("did:") >= 0 || !!c.when && c.when.indexOf("seen:") >= 0;
+  if(!c.when) return false;
+  var w = c.when.replace(/no:(did|seen):/g, "");
+  return w.indexOf("did:") >= 0 || w.indexOf("seen:") >= 0;
 }
 
-/* 插队通道：条件已满足的关联卡优先于普通抽卡出场 */
-function bagFindChain(){
-  for(var i = 0; i < _bag.length; i++){
-    var k = _bag[i], c = CARDS[k];
+/* 插队通道：条件已满足的关联卡优先于普通抽卡出场。
+   排队三条（2026-10-26）：插队曾占认真玩 63% 的抽卡，把普通卡挤到 4%——
+    ① 隔天：昨天已经插过队，今天必须出普通卡（叙事回响晚一天，天塌不下来）
+    ② 同类不连：插队也要看上一张的分类；都同类时才让步，不能把卡憋过期
+    ③ 快过期先出：有人只剩 15 天以内时优先救它，否则保持袋内顺序（无 window 的卡不能永远垫底） */
+function bagFindChain(avoidTag){
+  if(_lastWasChain) return -1;                      // ① 隔天
+  var cands = [], i, k, c;
+  for(i = 0; i < _bag.length; i++){
+    k = _bag[i]; c = CARDS[k];
     if(!isChain(c)) continue;
-    if((c._used|0) >= 1) continue;
+    if((c._used|0) >= (c.cap || 1)) continue;
     if(c.win && (S.day < c.win[0] || S.day > c.win[1])) continue;
     if(!whenOK(c.when)) continue;
     if(_recent.indexOf(k) >= 0) continue;             // 刚打过的不算回响
-    return i;
+    if(recentTag(c.tag, 6) >= 2) continue;            // 同类密度：最近 6 张里这个分类已经有两张了
+    cands.push(i);
   }
-  return -1;
+  if(!cands.length) return -1;
+  // ③ 快过期先出：只在真的有人快过期（15 天内）时才生效。
+  //    早先无条件按 window 上限排序，结果「无 window」的链卡（怀孕、婚后系列）永远垫底，
+  //    只要有别的链卡可出就轮不到它们——怀孕卡几乎出不来。
+  var urgent = [], w;
+  for(i = 0; i < cands.length; i++){
+    w = CARDS[_bag[cands[i]]].win;
+    if(w && w[1] - S.day <= 15) urgent.push(cands[i]);
+  }
+  if(urgent.length){
+    urgent.sort(function(a, b){                       // 真的急：谁剩得少谁先
+      return CARDS[_bag[a]].win[1] - CARDS[_bag[b]].win[1];
+    });
+    cands = urgent;
+  }
+  // ④ 关键节点优先：pri 高的先出（如婚后怀孕）。sort 稳定，同 pri 仍按袋内顺序
+  cands.sort(function(a, b){ return (CARDS[_bag[b]].pri || 0) - (CARDS[_bag[a]].pri || 0); });
+  if(avoidTag){                                       // ② 同类不连
+    for(i = 0; i < cands.length; i++) if(CARDS[_bag[cands[i]]].tag !== avoidTag) return cands[i];
+  }
+  return cands[0];                                    // 全是同类：让路给叙事，别憋过期
 }
 
 /* 三级让步：同类间隔 → 冷却 → 都不管 */
 function bagPick(avoidTag){
-  var i = bagFind(true, avoidTag);
-  if(i < 0) i = bagFind(true);
-  if(i < 0) i = bagFind(false);
+  var i = bagFind(true, avoidTag, 1);                // 最严：不同类、且最近 6 张里这个分类还没来过
+  if(i < 0) i = bagFind(true, avoidTag, 2);          //    退一步：允许最近 6 张里已有 1 张
+  if(i < 0) i = bagFind(true, null, 2);              //    再退：连"不同类"也不要求了
+  if(i < 0) i = bagFind(false);                      //    兜底：只看上限和条件
   return i;
 }
 
 function pick(){
-  var i = bagFindChain();                             // ① 账记下了，事要来——关联卡插队
+  var i = bagFindChain(_lastTag), chain = i >= 0;      // ① 账记下了，事要来——关联卡插队（隔天+同类不连+快过期先出）
   if(i < 0) i = bagPick(_lastTag);
-  if(i < 0){ bagShuffle(); i = bagFindChain(); }
-  if(i < 0){ bagShuffle(); i = bagPick(_lastTag); }   // 袋里没有能出的 → 重洗一轮
+  if(i < 0){ bagShuffle(); i = bagFindChain(_lastTag); chain = i >= 0; }
+  if(i < 0){ bagShuffle(); i = bagPick(_lastTag); chain = false; }   // 袋里没有能出的 → 重洗一轮
   if(i < 0){                                          // 全池都到 2 次上限 → 清零重开
     CARDS.forEach(function(c){ c._used = 0; });
     _pickResets++;
-    bagShuffle(); i = bagPick(_lastTag);
+    bagShuffle(); i = bagPick(_lastTag); chain = false;
   }
   if(i < 0) return CARDS[0];                          // 理论不可达
   var k = _bag.splice(i, 1)[0], c = CARDS[k];
   c._used = (c._used|0) + 1;
   _lastTag = c.tag;
+  _lastWasChain = chain;                              // 给明天的插队节流看
   _recent.unshift(k); if(_recent.length > COOL) _recent.pop();
   S.seen[c._id] = 1;                                  // 见过就是见过，伏笔从这记起
   return c;
@@ -1020,41 +1063,41 @@ $("o-b").onclick = function(){ $("over").classList.remove("on"); _skipTut = true
    卡牌级 st：无论怎么选都会发生的事（时代、公告、命运）
 ========================================= */
 CARDS = [
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_shoufu_01.l",txt:"这个月房贷 5,500。你看着办。",
-  R:{s:"出 5,500",e:{spend:5500,social:6,mind:2}},L:{s:"先拖两天",e:{mind:-5,social:-5}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; has:baby",txt:"孩子要上补习班，一年七千八。先交这学期 3,900。",
-  R:{s:"出 3,900 报名",e:{spend:3900,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"你到底亏了多少？我要听实话。",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_shoufu_01.l",txt:"这个月房贷 3,500。你看着办。",
+  R:{s:"出 3,500",e:{spend:3500,social:6,mind:2}},L:{s:"先拖两天",e:{mind:-5,social:-5}}},
+ {who:"老婆",av:"💍",tag:"孩子",when:"did:fam_hunli_01; has:baby",txt:"孩子要上补习班，一年六千。先交这学期 3,000。",
+  R:{s:"出 3,000 报名",e:{spend:3000,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6}}},
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01",txt:"你到底亏了多少？我要听实话。",
   R:{s:"说实话",e:{mind:4,social:5,spend:3000,energy:-6}},L:{s:"报喜不报忧",e:{mind:-5,social:-6,risk:3}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"我们多久没一起吃饭了？",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01",txt:"我们多久没一起吃饭了？",
   R:{s:"出去吃，我请",e:{spend:1200,mind:7,social:8,energy:-12}},L:{s:"最近有点忙",e:{mind:-3,social:-7}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; no:baby",txt:"我怀孕了。",
-  R:{s:"留着吧",e:{spend:5200,mind:15,social:12,addst:{"baby":-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35",txt:"这日子没法过了。离婚吧。",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01; no:baby; cash>8000",pri:9,txt:"我怀孕了。产检、待产包，先要 3,000。",
+  R:{s:"留着吧",e:{spend:3000,mind:15,social:12,addst:{"baby":-1}}},L:{s:"现在不合适",e:{mind:-12,social:-14}}},
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35",txt:"这日子没法过了。离婚吧。",
   R:{s:"挽留，转 5,800",e:{spend:5800,mind:12,social:8}},L:{s:"……好",e:{mind:-14,social:-20,cash:-3000}}},
- {who:"孩子",av:"👧",tag:"家庭",when:"has:baby",txt:"爸爸，你为什么总在看手机？",
+ {who:"孩子",av:"👧",tag:"孩子",when:"has:baby",txt:"爸爸，你为什么总在看手机？",
   R:{s:"爸爸在工作",e:{mind:-4,social:-4,risk:-3}},L:{s:"陪她玩一会儿",e:{mind:9,social:5,risk:5,energy:-12}}},
- {who:"老师",av:"🏫",tag:"家庭",when:"has:baby",txt:"今晚家长会，你来不来？",
+ {who:"老师",av:"🏫",tag:"孩子",when:"has:baby",txt:"今晚家长会，你来不来？",
   R:{s:"我去",e:{social:8,mind:4,risk:6,energy:-15}},L:{s:"让妈妈去吧",e:{social:-7,mind:-3,cash:900}}},
- {who:"老妈",av:"👵",tag:"家庭",txt:"你爸住院了，要先垫 6,500。",
+ {who:"老妈",av:"👵",tag:"家人",txt:"你爸住院了，要先垫 6,500。",
   R:{s:"我出 6,500",e:{spend:6500,mind:2,social:8,energy:-16}},L:{s:"让弟弟先垫",e:{mind:-7,social:-11}}},
- {who:"老妈",av:"👵",tag:"家庭",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
+ {who:"老妈",av:"👵",tag:"家人",txt:"我这有二十万养老钱，你拿去做，赚了都是你的。",
   R:{s:"收下，投进去",e:{borrow:12000,buy:12000,mind:-9,social:-6}},L:{s:"妈，这个不能要",e:{mind:6,social:5,spend:1500}}},
- {who:"丈母娘",av:"🧓",tag:"家庭",when:"did:fam_hunli_01",txt:"听说你最近在做投资？妈这里有点闲钱。",
+ {who:"丈母娘",av:"🧓",tag:"家人",when:"did:fam_hunli_01",txt:"听说你最近在做投资？妈这里有点闲钱。",
   R:{s:"拿 20,000",e:{borrow:20000,mind:-8,social:-5}},L:{s:"您留着养老",e:{mind:5,social:5,spend:1200}}},
- {who:"孩子",av:"🤒",tag:"家庭",when:"has:baby",txt:"半夜发烧 39 度。",
+ {who:"孩子",av:"🤒",tag:"孩子",when:"has:baby",txt:"半夜发烧 39 度。",
   R:{s:"连夜去医院",e:{spend:1600,mind:-3,social:6,energy:-24}},L:{s:"先观察一晚",e:{mind:-7,social:-8,energy:-16}}},
- {who:"孩子",av:"👶",tag:"家庭",when:"has:baby",txt:"他第一次叫爸爸。你正在看盘。",
+ {who:"孩子",av:"👶",tag:"孩子",when:"has:baby",txt:"他第一次叫爸爸。你正在看盘。",
   R:{s:"再看一会儿",e:{mind:-4,social:-5,risk:-4}},L:{s:"把他抱起来",e:{mind:10,social:7,risk:5,energy:-8}}},
- {who:"房东",av:"🏠",tag:"家庭",txt:"下个月房租要涨 800。房东在等你回复。",
+ {who:"房东",av:"🏠",tag:"房子",txt:"下个月房租要涨 800。房东在等你回复。",
   R:{s:"认了",e:{spend:800,mind:-2,social:2}},L:{s:"搬家",e:{spend:2100,cash:1200,mind:2,social:-4,energy:-16}}},
- {who:"老板",av:"😰",tag:"职场",when:"no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",win:[28,55],txt:"公司要优化，名单下周公布，你心里有个数。",
+ {who:"老板",av:"😰",tag:"职场",when:"no:fired;did:work_raise_01.l;did:work_screen_01.l|no:fired;did:work_raise_01.l;did:work_bossmeet_01.l|no:fired;did:work_raise_01.l;did:work_overtime_01.l|no:fired;did:work_raise_01.l;did:work_tuanjian_01.l",win:[28,180],txt:"公司要优化，名单下周公布，你心里有个数。",
   R:{s:"装没听见，继续盯盘",e:{buy:4000,mind:-3,social:-5}},L:{s:"主动揽活，向老板表态",e:{mind:-6,social:3,risk:3}}},
- {who:"老板",av:"😅",tag:"职场",when:"no:fired;did:work_layoff_01.l",win:[30,58],txt:"名单公布，上面没有你。但工区少了三个人。",
+ {who:"老板",av:"😅",tag:"职场",when:"no:fired;did:work_layoff_01.l",win:[30,200],txt:"名单公布，上面没有你。但工区少了三个人。",
   R:{s:"只敢在心里松口气",e:{mind:3,social:-2,risk:2}},L:{s:"请部门喝奶茶",e:{spend:800,social:4,mind:1}}},
  {who:"老板",av:"😰",tag:"职场",txt:"今年年终奖取消，改成期权。大家体谅一下。",
   R:{s:"理解",e:{mind:-5,social:3,spend:2500}},L:{s:"我不理解",e:{mind:-2,social:-7}}},
- {who:"HR",av:"📦",tag:"职场",when:"no:fired;did:work_layoff_01.r",win:[30,58],txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
+ {who:"HR",av:"📦",tag:"职场",when:"no:fired;did:work_layoff_01.r",win:[30,200],txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
   st:{fired:-1},
   R:{s:"再给我一次机会",e:{cash:9000,mind:-6,social:-5}},L:{s:"我早就不想干了",e:{cash:5000,mind:2,social:-3}}},
  {who:"招聘软件",av:"📱",tag:"职场",when:"has:fired",txt:"投出去的简历，五份全都已读不回。",
@@ -1065,13 +1108,13 @@ CARDS = [
   R:{s:"上车 3,000",e:{buy:3000,mind:-3,social:3}},L:{s:"不接最后一棒",e:{mind:4,social:-5}}},
  {who:"同事小王",av:"👨‍💼",tag:"职场",txt:"我表哥在券商，说最近有个大动作。跟不跟？",
   R:{s:"跟 3,000",e:{buy:3000,risk:4,mind:-2,social:3}},L:{s:"不信小道消息",e:{mind:3,social:-4}}},
- {who:"项目",av:"🌃",tag:"职场",when:"no:fired",win:[5,42],txt:"今晚上线，全组通宵。你走吗？",
+ {who:"项目",av:"🌃",tag:"职场",when:"no:fired",win:[5,240],txt:"今晚上线，全组通宵。你走吗？",
   R:{s:"留下来",e:{mind:-6,social:6,risk:6,energy:-18}},L:{s:"准时走",e:{mind:5,social:-4,risk:-3,energy:10}}},
  {who:"绩效",av:"💵",tag:"收入",when:"no:fired",txt:"季度绩效下来了，6,500。",
   R:{s:"投进去 5,000",e:{cash:6500,buy:5000,mind:-2,social:3}},L:{s:"留着过日子",e:{cash:6500,mind:3,social:-2}}},
  {who:"私活",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 4,000，要占掉两个周末。",
   R:{s:"接了",e:{cash:4000,mind:-5,energy:-26}},L:{s:"算了",e:{mind:3,social:-2}}},
- {who:"年终奖",av:"🧧",tag:"收入",when:"no:fired; day>24",win:[42,60],txt:"年终奖发了 15,000。",
+ {who:"年终奖",av:"🧧",tag:"收入",when:"no:fired; day>24",win:[42,300],txt:"年终奖发了 15,000。",
   R:{s:"全部加仓",e:{cash:15000,buy:15000,mind:-4}},L:{s:"给家里买点东西",e:{cash:15000,spend:5200,mind:6,social:9}}},
  {who:"朋友",av:"💌",tag:"人情",txt:"我下个月结婚，喜帖给你留着呢。",
   R:{s:"随 1,600",e:{spend:1600,social:5,mind:-1,energy:-14}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
@@ -1156,21 +1199,21 @@ CARDS = [
   R:{s:"再来一年",e:{mind:-5,risk:4,social:3}},L:{s:"删掉 App",e:{mind:-3,risk:-4,social:-5}}},
  {who:"你的猫",av:"🐱",tag:"意外",txt:"猫从键盘上踩过去。等你回过神，一笔 8,000 已经买进去了。",
   R:{s:"就当长线投资",e:{buy:8000,mind:-4}},L:{s:"赶紧撤单",e:{mind:-2,spend:400}}},
- {who:"你的猫",av:"🐱",tag:"意外",win:[5,45],txt:"车库门口一只三花猫，赖着不走了。",
+ {who:"你的猫",av:"🐱",tag:"意外",win:[5,120],txt:"车库门口一只三花猫，赖着不走了。",
   R:{s:"喂完就赶",e:{mind:-4,social:-2}},L:{s:"收编",e:{spend:800,mind:8,social:3}}},
  {who:"物业",av:"🔌",tag:"意外",txt:"小区停电一整晚，手机还剩 7% 的电。",
   R:{s:"关机，睡个整觉",e:{mind:9,risk:4}},L:{s:"去邻居家蹭电",e:{social:5,mind:2,risk:3}}},
  {who:"券商短信",av:"📄",tag:"意外",txt:"翻出 2015 年的老账户，里面躺着 1,800。",
   R:{s:"留在户里当底仓",e:{mind:3,risk:3}},L:{s:"转出来直接满上",e:{equity:1800,mind:5,risk:5}}},
- {who:"孩子",av:"🧒",tag:"家庭",when:"has:baby",txt:"孩子举着考卷等你在家长栏签字，站在你旁边，不说话。",
+ {who:"孩子",av:"🧒",tag:"孩子",when:"has:baby",txt:"孩子举着考卷等你在家长栏签字，站在你旁边，不说话。",
   R:{s:"现在就签",e:{mind:-2,social:6,spend:200}},L:{s:"等一下",e:{mind:1,social:-8,risk:3}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"「今晚吃什么？」她站在门口问。你的眼睛还黏在行情图上。",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01",txt:"「今晚吃什么？」她站在门口问。你的眼睛还黏在行情图上。",
   R:{s:"放下手机问她",e:{mind:-2,social:7,risk:-2,energy:-6}},L:{s:"随便",e:{mind:1,social:-6,risk:3}}},
- {who:"丈母娘",av:"👵",tag:"家庭",when:"did:fam_hunli_01",txt:"饭桌上，丈母娘随口问：「今年，攒下了吧？」",
+ {who:"丈母娘",av:"👵",tag:"家人",when:"did:fam_hunli_01",txt:"饭桌上，丈母娘随口问：「今年，攒下了吧？」",
   R:{s:"说了实话",e:{social:-7,mind:-5,energy:-8}},L:{s:"还行，还行",e:{social:5,spend:3000,energy:-8}}},
  {who:"同事小王",av:"👔",tag:"职场",txt:"小王压低声音：「哥，你买啥，我跟着买。」",
   R:{s:"把持仓给他看",e:{social:7,risk:8}},L:{s:"别跟着我",e:{social:-6,mind:2}}},
- {who:"HR",av:"🗂",tag:"职场",when:"no:fired;did:work_raise_01.l",win:[22,54],txt:"HR 笑着说：「聊聊你下半年的规划吧。」",
+ {who:"HR",av:"🗂",tag:"职场",when:"no:fired;did:work_raise_01.l",win:[22,200],txt:"HR 笑着说：「聊聊你下半年的规划吧。」",
   R:{s:"问补偿方案",e:{social:-5,mind:3}},L:{s:"表了个态",e:{social:4,mind:-8}}},
  {who:"凌晨三点",av:"🌙",tag:"自己",txt:"凌晨三点，美股都开盘了。你还在算：明天那笔亏损，到底卖不卖。",
   R:{s:"扣下手机",e:{mind:5,risk:6,energy:16}},L:{s:"接着算",e:{mind:-6,risk:-4}}},
@@ -1202,87 +1245,91 @@ CARDS = [
   R:{s:"补一笔摊低成本",e:{buy:4000,mind:-3,risk:6}},L:{s:"全部赎回，落袋",e:{sell:1,mind:2,risk:-5,social:-3}}},
  {who:"出租车司机",av:"🚕",tag:"市场",when:"did:mkt_bull_taxi_01.r; has:bull",txt:"那司机又发来一只票：这回他压上全部了。",
   R:{s:"祝你好运",e:{mind:3,social:-3}},L:{s:"跟一手小的",e:{buy:3000,risk:9,mind:-2}}},
- {who:"自己",av:"🙋",tag:"市场",when:"did:mkt_bear_cut_01.l",win:[8,58],txt:"割肉那天起，指数悄悄涨回了 8%。",
+ {who:"自己",av:"🙋",tag:"市场",when:"did:mkt_bear_cut_01.l",win:[8,300],txt:"割肉那天起，指数悄悄涨回了 8%。",
   R:{s:"截图发群，摩拳擦掌",e:{social:5,mind:3,risk:5}},L:{s:"追买回来",e:{buy:6000,risk:8,mind:-3}}},
  {who:"张阿姨",av:"🧶",tag:"人情",txt:"张阿姨拉住你：「有个内部渠道，稳得很。」",
   R:{s:"投五千试试",e:{spend:5000,risk:10,social:4}},L:{s:"婉拒了",e:{social:-4,risk:-2,mind:1}}},
  {who:"镜子",av:"🪞",tag:"自己",when:"mind<45",txt:"镜子里的人眼下乌青，像在问：还来吗？",
   R:{s:"笑了笑，没说话",e:{mind:-2,risk:-4}},L:{s:"再战一次",e:{mind:4,risk:6}}},
- {who:"老妈",av:"📞",tag:"家庭",txt:"老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
+ {who:"老妈",av:"📞",tag:"家人",txt:"老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
   R:{s:"回厨房看她",e:{social:7,mind:-2,risk:-3,energy:-8}},L:{s:"嗯嗯两声",e:{social:-5,mind:1,risk:3}}},
- {who:"老妈",av:"📞",tag:"家庭",txt:"老妈拍来一张体检单：她血压也高了。",
+ {who:"老妈",av:"📞",tag:"家人",txt:"老妈拍来一张体检单：她血压也高了。",
   R:{s:"预约陪复查",e:{spend:800,social:6,mind:2,energy:-14}},L:{s:"让她别操心",e:{mind:-4,social:-4}}},
- {who:"房东",av:"🔧",tag:"家庭",txt:"热水器坏了三天。房东说要排期。",
+ {who:"房东",av:"🔧",tag:"房子",txt:"热水器坏了三天。房东说要排期。",
   R:{s:"等下周",e:{mind:-5,social:-3}},L:{s:"自己找人修",e:{spend:600,mind:2,energy:-8}}},
- {who:"老师",av:"🎓",tag:"家庭",when:"has:baby",txt:"班主任来电话：孩子最近上课，总是走神。",
+ {who:"老师",av:"🎓",tag:"孩子",when:"has:baby",txt:"班主任来电话：孩子最近上课，总是走神。",
   R:{s:"当晚陪作业",e:{mind:-4,social:6,energy:-14}},L:{s:"说最近忙",e:{social:-5,mind:-2}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01",txt:"日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01",txt:"日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
   R:{s:"说明年补",e:{social:-10,mind:2}},L:{s:"订了餐厅",e:{spend:900,social:8,mind:-3,energy:-12}}},
- {who:"孩子",av:"🧒",tag:"家庭",when:"has:baby",txt:"兴趣班该交钱了，6,800。他说，其实不想去了。",
-  R:{s:"退班，陪他玩",e:{social:5,mind:-2,energy:-15}},L:{s:"续费",e:{spend:6800,mind:3}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"has:baby",txt:"产检约在周四上午。她说：你来吧。",
+ {who:"孩子",av:"🧒",tag:"孩子",when:"has:baby",txt:"兴趣班该交钱了，4,500。他说，其实不想去了。",
+  R:{s:"退班，陪他玩",e:{social:5,mind:-2,energy:-15}},L:{s:"续费",e:{spend:4500,mind:3}}},
+ {who:"老婆",av:"💍",tag:"伴侣",when:"has:baby",txt:"产检约在周四上午。她说：你来吧。",
   R:{s:"让她妈陪",e:{social:-8,mind:1}},L:{s:"陪她去",e:{spend:1200,social:7,mind:-2,energy:-16}}},
- {who:"丈母娘",av:"👵",tag:"家庭",when:"did:fam_hunli_01",txt:"丈母娘生日。红包行情，你研究了一晚上。",
+ {who:"丈母娘",av:"👵",tag:"家人",when:"did:fam_hunli_01",txt:"丈母娘生日。红包行情，你研究了一晚上。",
   R:{s:"包 1,600",e:{social:-6,mind:-2,spend:1600}},L:{s:"包 6,600",e:{spend:6600,social:8}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_anniv_01.l",win:[36,60],txt:"那家店她说还想再去一次。",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_anniv_01.l",win:[36,240],txt:"那家店她说还想再去一次。",
   R:{s:"等下月发薪",e:{social:-7,mind:-4}},L:{s:"再订一次",e:{spend:900,social:8,mind:4,energy:-12}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_dinner_01.l|did:fam_laopo_02.l",win:[15,55],txt:"我们多久没一起好好吃顿饭了？",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_dinner_01.l|did:fam_laopo_02.l",win:[20,240],txt:"我们多久没一起好好吃顿饭了？",
   R:{s:"忙完这波再说",e:{social:-9,mind:-5}},L:{s:"关电脑，现在做",e:{mind:6,social:8,risk:4,energy:-14}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_hunli_01; did:fam_confess_01.r; risk>40",win:[20,58],txt:"亏成这样也不告诉我？以后我的钱自己管。",
+ {who:"老婆",av:"💍",tag:"伴侣",when:"did:fam_hunli_01; did:fam_confess_01.r; risk>40",win:[25,240],txt:"亏成这样也不告诉我？以后我的钱自己管。",
   R:{s:"我下次一定说",e:{social:-8,mind:-3}},L:{s:"交出一半仓位",e:{sell:0.5,social:8,mind:-3,risk:-6}}},
- {who:"老妈",av:"📞",tag:"家庭",when:"did:fam_momcall_01.l",win:[10,55],txt:"邻居说在菜市场听见你妈叹气。",
+ {who:"老妈",av:"📞",tag:"家人",when:"did:fam_momcall_01.l",win:[12,200],txt:"邻居说在菜市场听见你妈叹气。",
   R:{s:"下次再打吧",e:{social:-7,mind:-4}},L:{s:"寄箱水果回去",e:{spend:300,social:6,mind:2}}},
- {who:"老妈",av:"📞",tag:"家庭",when:"did:fam_momhealth_01.r",win:[12,55],txt:"复查稳住了。她把一罐腌笋塞进你后备箱。",
+ {who:"老妈",av:"📞",tag:"家人",when:"did:fam_momhealth_01.r",win:[15,200],txt:"复查稳住了。她把一罐腌笋塞进你后备箱。",
   R:{s:"转 2,000 买补品",e:{spend:2000,social:6,mind:3}},L:{s:"收下，报喜不报忧",e:{mind:6,social:3,risk:3}}},
- {who:"老爸",av:"🧑‍🦳",tag:"家庭",when:"did:fam_momcall_01.l; did:fam_momhealth_01.l",win:[30,58],txt:"爸住院了。这回，是你自己没接那个电话。",
+ {who:"老爸",av:"🧑‍🦳",tag:"家人",when:"did:fam_momcall_01.l; did:fam_momhealth_01.l",win:[40,300],txt:"爸住院了。这回，是你自己没接那个电话。",
   R:{s:"让弟弟先顶着",e:{mind:-10,social:-13}},L:{s:"连夜回去垫 9,000",e:{spend:9000,mind:-6,social:6,energy:-26}}},
- {who:"孩子",av:"🧒",tag:"家庭",when:"did:fam_child_01.l",win:[12,55],txt:"她画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
+ {who:"孩子",av:"🧒",tag:"孩子",when:"did:fam_child_01.l",win:[15,200],txt:"她画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
   R:{s:"真棒，忙完看",e:{mind:-5,social:-6}},L:{s:"装裱起来挂客厅",e:{spend:500,mind:8,social:5}}},
- {who:"老婆",av:"💍",tag:"家庭",when:"did:fam_child_01.r",win:[15,55],txt:"孩子说，爸爸的手机长在手上。",
+ {who:"老婆",av:"💍",tag:"孩子",when:"did:fam_child_01.r",win:[20,200],txt:"孩子说，爸爸的手机长在手上。",
   R:{s:"爸爸要赚钱养家",e:{social:-8,mind:-6}},L:{s:"周末断网半天",e:{mind:6,social:7,risk:5,energy:-18}}},
- {who:"老师",av:"🎓",tag:"家庭",when:"did:fam_child_01.r; did:fam_teacher_01.l",win:[28,58],txt:"家长会点名：作文《我的爸爸》全篇写手机。",
+ {who:"老师",av:"🎓",tag:"孩子",when:"did:fam_child_01.r; did:fam_teacher_01.l",win:[30,240],txt:"家长会点名：作文《我的爸爸》全篇写手机。",
   R:{s:"做投资也是为了他",e:{social:-12,mind:-8}},L:{s:"当场保证，买亲子票",e:{spend:800,mind:-3,social:7,energy:-10}}},
- {who:"孩子",av:"🧒",tag:"家庭",when:"did:fam_teacher_01.r; did:fam_child_01.l",win:[25,58],txt:"奖状背面：谢谢爸爸陪我写作业。",
+ {who:"孩子",av:"🧒",tag:"孩子",when:"did:fam_teacher_01.r; did:fam_child_01.l",win:[30,240],txt:"奖状背面：谢谢爸爸陪我写作业。",
   R:{s:"拍照发朋友圈",e:{mind:6,social:4,risk:3}},L:{s:"全家下馆子庆祝",e:{spend:1500,social:8,mind:8,energy:-14}}},
- {who:"女友",av:"💐",tag:"家庭",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[1,58],txt:"周末有空吗？想去江边走走。",
-  R:{s:"这周行情要紧",e:{social:-5,mind:-2}},L:{s:"陪她走一走",e:{spend:300,social:6,mind:4,energy:-10}}},
- {who:"女友",av:"🎬",tag:"家庭",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[1,45],txt:"她发来消息：新上的电影，一起？",
-  R:{s:"推说加班",e:{social:-5,mind:-2}},L:{s:"陪她看",e:{spend:400,social:6,mind:4,energy:-10}}},
- {who:"女友",av:"🥟",tag:"家庭",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[2,50],txt:"她说家里包了饺子，喊你回去吃。",
-  R:{s:"在公司盯盘",e:{social:-6,mind:-3}},L:{s:"回去吃饭",e:{spend:200,social:7,mind:3,energy:-12}}},
- {who:"女友",av:"🎂",tag:"家庭",when:"did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",win:[3,58],txt:"她生日。想要一顿像样的晚饭。",
+ {who:"女友",av:"💐",tag:"伴侣",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[1,100],txt:"周末有空吗？想去江边走走。",
+  R:{s:"这周行情要紧",e:{social:-5,mind:-2}},L:{s:"陪她走一走",e:{spend:300,social:6,mind:4,energy:-8}}},
+ {who:"女友",av:"🎬",tag:"伴侣",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[1,80],txt:"她发来消息：新上的电影，一起？",
+  R:{s:"推说加班",e:{social:-5,mind:-2}},L:{s:"陪她看",e:{spend:400,social:6,mind:4,energy:-8}}},
+ {who:"女友",av:"🥟",tag:"伴侣",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[2,90],txt:"她说家里包了饺子，喊你回去吃。",
+  R:{s:"在公司盯盘",e:{social:-6,mind:-3}},L:{s:"回去吃饭",e:{spend:200,social:7,mind:3,energy:-10}}},
+ {who:"女友",av:"🎂",tag:"伴侣",when:"did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",win:[3,100],txt:"她生日。想要一顿像样的晚饭。",
   R:{s:"转个红包打发",e:{spend:500,social:-4,mind:-2}},L:{s:"认真安排",e:{spend:800,social:7,mind:3,energy:-16}}},
- {who:"女友",av:"💭",tag:"家庭",when:"did:fam_yuehui_01.r; no:did:fam_hunli_01|did:fam_shengri_01.r; no:did:fam_hunli_01|did:fam_zhaohu_01.r; no:did:fam_hunli_01|did:fam_zhoumo_01.r; no:did:fam_hunli_01",win:[6,56],txt:"她问你：「股票和我，到底哪个重要？」",
+ {who:"女友",av:"💭",tag:"伴侣",when:"did:fam_yuehui_01.r; no:did:fam_hunli_01|did:fam_shengri_01.r; no:did:fam_hunli_01|did:fam_zhaohu_01.r; no:did:fam_hunli_01|did:fam_zhoumo_01.r; no:did:fam_hunli_01",win:[6,100],txt:"她问你：「股票和我，到底哪个重要？」",
   R:{s:"赚钱都是为了家",e:{social:-6,mind:-2}},L:{s:"关软件道歉",e:{mind:-3,social:6,energy:-6}}},
- {who:"女友",av:"🤝",tag:"家庭",when:"did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",win:[6,58],txt:"她认真地看着你，等你一句话：这段感情，要不要定下来？",
+ {who:"女友",av:"🤝",tag:"伴侣",when:"did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",win:[6,100],txt:"她认真地看着你，等你一句话：这段感情，要不要定下来？",
   R:{s:"再等等看",e:{social:-8,mind:-4}},L:{s:"正式在一起",e:{spend:600,social:8,mind:8,energy:-10}}},
- {who:"女友",av:"🥀",tag:"家庭",when:"did:fam_yuehui_01.l; no:did:fam_queding_01|did:fam_zhaohu_01.l; no:did:fam_queding_01|did:fam_zhoumo_01.l; no:did:fam_queding_01",win:[40,58],txt:"她不再问你周末有没有空了。",
+ {who:"女友",av:"🥀",tag:"伴侣",when:"did:fam_yuehui_01.l; no:did:fam_queding_01|did:fam_zhaohu_01.l; no:did:fam_queding_01|did:fam_zhoumo_01.l; no:did:fam_queding_01",win:[40,120],txt:"她不再问你周末有没有空了。",
   R:{s:"让它过去",e:{social:-10,mind:-5}},L:{s:"补救一下",e:{spend:1000,mind:-4,social:3,energy:-8}}},
- {who:"女友",av:"🎁",tag:"家庭",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[8,56],txt:"见她爸妈。烟酒礼盒摆一桌。",
-  R:{s:"空手上门",e:{social:-9,mind:2}},L:{s:"备足礼数",e:{spend:3000,social:10,mind:-2,energy:-24}}},
- {who:"女友",av:"👀",tag:"家庭",when:"did:fam_jiazhang_01.l; no:did:fam_hunli_01",win:[12,56],txt:"丈母娘笑眯眯：有房吗？存款呢？",
+ {who:"女友",av:"🎁",tag:"伴侣",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[8,100],txt:"见她爸妈。烟酒礼盒摆一桌。",
+  R:{s:"空手上门",e:{social:-9,mind:2}},L:{s:"备足礼数",e:{spend:1500,social:10,mind:-2,energy:-14}}},
+ {who:"女友",av:"👀",tag:"伴侣",when:"did:fam_jiazhang_01.l; no:did:fam_hunli_01",win:[12,100],txt:"丈母娘笑眯眯：有房吗？存款呢？",
   R:{s:"吹了个牛",e:{social:4,risk:6}},L:{s:"实话实说",e:{social:-3,mind:2}}},
- {who:"女友",av:"🏡",tag:"家庭",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[12,56],txt:"她说：我们什么时候有自己的家？",
+ {who:"女友",av:"🏡",tag:"伴侣",when:"did:fam_queding_01.l; no:did:fam_hunli_01",win:[12,100],txt:"她说：我们什么时候有自己的家？",
   R:{s:"炒一波就有了",e:{risk:8,social:-5,mind:2}},L:{s:"一起攒，我改",e:{spend:2000,social:8,mind:2}}},
- {who:"女友",av:"📵",tag:"家庭",when:"did:fam_queding_01.l; did:fam_jiazhang_01.r; no:did:fam_hunli_01",win:[12,56],txt:"她三天没回你消息了。",
+ {who:"女友",av:"📵",tag:"伴侣",when:"did:fam_queding_01.l; did:fam_jiazhang_01.r; no:did:fam_hunli_01",win:[12,100],txt:"她三天没回你消息了。",
   R:{s:"等她消气",e:{social:-8,mind:-3}},L:{s:"上门道歉",e:{spend:600,social:7,mind:-2}}},
- {who:"女友",av:"💍",tag:"家庭",when:"did:fam_jiazhang_01.l; social>35; no:did:fam_hunli_01|did:fam_zanqian_01.l; social>35; no:did:fam_hunli_01",win:[12,58],txt:"她家开口：彩礼八万八。",
-  R:{s:"谈一谈，少些",e:{spend:10000,social:-7,mind:-3}},L:{s:"借，也要给",e:{borrow:60000,spend:28000,social:12,mind:4,energy:-20}}},
- {who:"女友",av:"👰",tag:"家庭",when:"did:fam_caili_01",win:[16,58],txt:"婚礼这天。她哭着笑了。",
-  R:{s:"一切从简",e:{spend:3000,social:-4,mind:3,energy:-28}},L:{s:"风风光光办",e:{spend:15000,social:12,mind:8,energy:-32}}},
- {who:"老婆",av:"🏠",tag:"家庭",when:"did:fam_hunli_01",win:[22,58],txt:"首付还差四万。借，还是等？",
-  R:{s:"再等等",e:{social:-5,mind:-3}},L:{s:"借",e:{borrow:40000,social:6,risk:5,mind:-2}}},
- {who:"老婆",av:"🫂",tag:"家庭",when:"did:fam_hunli_01.l; did:fam_jiazhang_01.l",win:[36,60],txt:"她说：钱没了可以再赚，你在就好。",
+ {who:"女友",av:"💍",tag:"伴侣",when:"did:fam_jiazhang_01.l; social>35; cash>10000; no:did:fam_hunli_01|did:fam_zanqian_01.l; social>35; cash>10000; no:did:fam_hunli_01",win:[20,110],cap:2,txt:"她家开口：彩礼八万八。",
+  R:{s:"先不结，再攒攒",e:{social:-10,mind:-2}},L:{s:"先付一半，剩下打欠条",e:{spend:12000,borrow:15000,social:12,mind:4,energy:-12}}},
+ {who:"女友",av:"👰",tag:"伴侣",when:"did:fam_caili_01.l",win:[24,150],txt:"婚礼这天。她哭着笑了。",
+  R:{s:"一切从简",e:{spend:2000,social:-4,mind:3,energy:-10}},L:{s:"风风光光办",e:{spend:12500,social:12,mind:8,energy:-12}}},
+ {who:"老婆",av:"🏠",tag:"伴侣",when:"did:fam_hunli_01",win:[30,200],txt:"首付还差四万。借，还是等？",
+  R:{s:"再等等",e:{social:-5,mind:-3}},L:{s:"借",e:{borrow:25000,social:6,risk:5,mind:-2}}},
+ {who:"老婆",av:"🫂",tag:"伴侣",when:"did:fam_hunli_01.l; did:fam_jiazhang_01.l",win:[36,300],txt:"她说：钱没了可以再赚，你在就好。",
   R:{s:"红着眼说谢谢",e:{mind:6,social:3,risk:2}},L:{s:"抱抱她，请天假",e:{mind:9,social:6,risk:5,energy:-8}}},
- {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[8,55],txt:"猫粮见底了。它蹲在碗前看你。",
+ {who:"伴侣",av:"🌙",tag:"伴侣",when:"did:fam_queding_01",cap:2,txt:"她说：今晚先不聊股票，行吗？",
+  R:{s:"再看一小时盘",e:{energy:-6,mind:-2,risk:-4}},L:{s:"陪她早睡，今晚不看盘",e:{energy:16,social:6,mind:3,risk:4}}},
+ {who:"伴侣",av:"📄",tag:"伴侣",when:"did:fam_caili_01.l; debt>0",win:[22,240],cap:2,txt:"彩礼的欠条还压在抽屉里。这个月怎么还？",
+  R:{s:"先还最低 500",e:{repay:500,mind:-3}},L:{s:"多还 2,000",e:{spend:2000,repay:2000,mind:3}}},
+ {who:"你的猫",av:"🐱",tag:"宠物",when:"did:pet_adopt_01.l",win:[8,240],txt:"猫粮见底了。它蹲在碗前看你。",
   R:{s:"先吃白米饭吧",e:{mind:-5,social:-2}},L:{s:"下单进口的",e:{spend:300,mind:4}}},
- {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[10,50],txt:"宠物医院提醒：疫苗该打了，1,200。",
+ {who:"你的猫",av:"🐱",tag:"宠物",when:"did:pet_adopt_01.l",win:[10,240],txt:"宠物医院提醒：疫苗该打了，1,200。",
   R:{s:"它看着挺壮实",e:{risk:3,mind:-3}},L:{s:"打",e:{spend:1200,mind:5,social:2,energy:-10}}},
- {who:"你的猫",av:"🐱",tag:"家庭",when:"did:pet_adopt_01.l",win:[25,58],txt:"它吐了，不吃东西。兽医说先交 4,500。",
+ {who:"你的猫",av:"🐱",tag:"宠物",when:"did:pet_adopt_01.l",win:[25,240],txt:"它吐了，不吃东西。兽医说先交 4,500。",
   R:{s:"猫有九条命",e:{mind:-13,social:-7}},L:{s:"治",e:{spend:4500,mind:9,social:3}}},
- {who:"老板",av:"📋",tag:"职场",when:"no:fired",win:[6,42],txt:"例会上你走神了。老板停顿两秒，点了你的名。",
+ {who:"老板",av:"📋",tag:"职场",when:"no:fired",win:[6,240],txt:"例会上你走神了。老板停顿两秒，点了你的名。",
   R:{s:"找理由圆",e:{social:2,mind:-4,risk:-2}},L:{s:"承认走神",e:{social:-4,mind:1,risk:2}}},
- {who:"老板",av:"📋",tag:"职场",when:"no:fired;did:work_screen_01.l|no:fired;did:work_bossmeet_01.l|no:fired;did:work_overtime_01.l|no:fired;did:work_tuanjian_01.l",win:[18,50],txt:"调薪名单出了。你从头看到尾，没有你。",
+ {who:"老板",av:"📋",tag:"职场",when:"no:fired;did:work_screen_01.l|no:fired;did:work_bossmeet_01.l|no:fired;did:work_overtime_01.l|no:fired;did:work_tuanjian_01.l",win:[18,200],txt:"调薪名单出了。你从头看到尾，没有你。",
   R:{s:"去找他谈",e:{social:3,mind:-3,risk:3}},L:{s:"忍了",e:{mind:-5,social:-2,cash:1200}}},
  {who:"招聘软件",av:"📱",tag:"职场",txt:"猎头：薪资涨三成。背景调查会联系现公司。",
   R:{s:"聊聊看",e:{mind:4,risk:6}},L:{s:"回绝了",e:{mind:-2,social:3}}},
@@ -1290,7 +1337,7 @@ CARDS = [
   R:{s:"没投",e:{mind:-3,social:2}},L:{s:"投了简历",e:{mind:4,social:-3,risk:3}}},
  {who:"同事小王",av:"👔",tag:"职场",txt:"小王开口：借 5,000 补仓，下个月一定还。",
   R:{s:"拒绝了",e:{social:-6,mind:-1}},L:{s:"借了",e:{spend:5000,social:5,risk:4}}},
- {who:"项目",av:"📊",tag:"职场",when:"no:fired",win:[4,40],txt:"项目明早上线。今晚你却分着心，在偷偷改股票的「到价卖出」线。",
+ {who:"项目",av:"📊",tag:"职场",when:"no:fired",win:[4,240],txt:"项目明早上线。今晚你却分着心，在偷偷改股票的「到价卖出」线。",
   R:{s:"专心上线",e:{mind:-4,social:5,risk:3}},L:{s:"改完再说",e:{social:-7,mind:3}}},
  {who:"体检报告",av:"🩺",tag:"自己",txt:"复查单出来了。血压，还是高。",
   R:{s:"先放放",e:{mind:-3,risk:4}},L:{s:"吃药，早睡",e:{spend:300,mind:2,risk:-4,energy:15}}},
@@ -1314,13 +1361,13 @@ CARDS = [
   R:{s:"没去",e:{social:-5,mind:1}},L:{s:"去了",e:{spend:500,social:7,mind:-2}}},
  {who:"朋友",av:"🤝",tag:"人情",txt:"朋友开口：借两万。他说，这次一定还。",
   R:{s:"婉拒了",e:{social:-8,mind:-2}},L:{s:"借一半",e:{spend:10000,social:2,risk:3}}},
- {who:"团建",av:"🍺",tag:"职场",when:"no:fired",win:[8,40],txt:"部门团建，火锅局。你知道他们想聊年终评。",
+ {who:"团建",av:"🍺",tag:"职场",when:"no:fired",win:[8,240],txt:"部门团建，火锅局。你知道他们想聊年终评。",
   R:{s:"去",e:{spend:400,social:6,mind:-3,risk:3}},L:{s:"不去",e:{mind:3,social:-6}}},
- {who:"老板",av:"📋",tag:"职场",when:"did:work_screen_01.r",win:[10,55],txt:"项目上线零事故，老板当众点了你的名。",
+ {who:"老板",av:"📋",tag:"职场",when:"did:work_screen_01.r",win:[10,240],txt:"项目上线零事故，老板当众点了你的名。",
   R:{s:"都是应该的",e:{mind:3,social:-2}},L:{s:"请组员喝奶茶",e:{spend:400,social:9,mind:5}}},
- {who:"老板",av:"📋",tag:"职场",when:"did:work_screen_01.r; did:work_overtime_01.r",win:[20,58],txt:"调薪名单这次有你。涨得不多，但是个信号。",
+ {who:"老板",av:"📋",tag:"职场",when:"did:work_screen_01.r; did:work_overtime_01.r",win:[20,240],txt:"调薪名单这次有你。涨得不多，但是个信号。",
   R:{s:"请客庆祝",e:{spend:1000,social:8,mind:6}},L:{s:"存起来",e:{cash:3000,mind:5,social:-3}}},
- {who:"老板",av:"📋",tag:"职场",when:"seen:work_focus_02",win:[25,58],txt:"下个季度你带新人。多操心，也算多一条腿。",
+ {who:"老板",av:"📋",tag:"职场",when:"seen:work_focus_02",win:[25,240],txt:"下个季度你带新人。多操心，也算多一条腿。",
   R:{s:"挂名不管",e:{social:-6,mind:2}},L:{s:"认真带",e:{mind:4,social:6,risk:3}}},
 ];
 $("i-b").onclick = function(){ $("intro").classList.remove("on"); };

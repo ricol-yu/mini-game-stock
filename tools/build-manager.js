@@ -170,7 +170,8 @@ const tagList = [...new Set(rows.map(r => r.tag))].sort();
 // 内容指纹代替生成时间：同样数据必定同样字节，跨机器也一样，
 // 这样「收工前跑一次应无 diff」这条判据才成立（时间戳会让每次构建都产生噪音 diff）
 const digest = require('crypto').createHash('sha1').update(JSON.stringify(rows)).digest('hex').slice(0, 8);
-const TAG_PREFIX = JSON.stringify({ '家庭':'fam','职场':'work','收入':'inc','人情':'soc','自己':'self','市场':'mkt','决策':'dec','风险':'risk','意外':'acc' });
+// id 前缀：老卡沿用 fam_（几十条 when 引用着它们，改名风险远大于收益），新卡按新分类走新前缀
+const TAG_PREFIX = JSON.stringify({ '伴侣':'love','家人':'par','孩子':'kid','宠物':'pet','房子':'home','职场':'work','收入':'inc','人情':'soc','自己':'self','市场':'mkt','决策':'dec','风险':'risk','意外':'acc' });
 
 const html = `<!DOCTYPE html>
 <html lang="zh-CN">

@@ -33,10 +33,10 @@ function validateCards(data) {
   function err(rule, id, field, msg) { ISSUES.push({ rule: rule, id: id, field: field, msg: msg, level: 'error' }); }
   function warn(rule, id, field, msg) { ISSUES.push({ rule: rule, id: id, field: field, msg: msg, level: 'warn' }); }
 
-  var TAGS = ['家庭', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
+  var TAGS = ['伴侣', '家人', '孩子', '宠物', '房子', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
   var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear'];
   var STAT_KEYS = ['cash', 'equity', 'cost', 'mind', 'risk', 'social', 'day'];
-  var WHEN_VARS = ['mind', 'social', 'risk', 'day', 'equity', 'cash', 'debt', 'cost'];
+  var WHEN_VARS = ['mind', 'social', 'risk', 'day', 'equity', 'cash', 'debt', 'cost', 'energy'];
   var MONEY_KEYS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'equity', 'cost'];
   var ID_RE = /^[a-z]+(_[a-z]+){1,3}_[0-9]{2}$/;
 

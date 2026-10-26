@@ -5,8 +5,8 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
-   "text": "这个月房贷 5,500。你看着办。",
+   "tag": "伴侣",
+   "text": "这个月房贷 3,500。你看着办。",
    "when": "did:fam_shoufu_01.l",
    "alwaysStatus": null,
    "left": {
@@ -17,9 +17,9 @@
     }
    },
    "right": {
-    "label": "出 5,500",
+    "label": "出 3,500",
     "effects": {
-     "spend": 5500,
+     "spend": 3500,
      "social": 6,
      "mind": 2
     }
@@ -30,8 +30,8 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
-   "text": "孩子要上补习班，一年七千八。先交这学期 3,900。",
+   "tag": "孩子",
+   "text": "孩子要上补习班，一年六千。先交这学期 3,000。",
    "when": "did:fam_hunli_01; has:baby",
    "alwaysStatus": null,
    "left": {
@@ -42,9 +42,9 @@
     }
    },
    "right": {
-    "label": "出 3,900 报名",
+    "label": "出 3,000 报名",
     "effects": {
-     "spend": 3900,
+     "spend": 3000,
      "social": 7,
      "mind": 3
     }
@@ -55,7 +55,7 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "你到底亏了多少？我要听实话。",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -82,7 +82,7 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "我们多久没一起吃饭了？",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -108,9 +108,9 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
-   "text": "我怀孕了。",
-   "when": "did:fam_hunli_01; no:baby",
+   "tag": "伴侣",
+   "text": "我怀孕了。产检、待产包，先要 3,000。",
+   "when": "did:fam_hunli_01; no:baby; cash>8000",
    "alwaysStatus": null,
    "left": {
     "label": "现在不合适",
@@ -122,21 +122,22 @@
    "right": {
     "label": "留着吧",
     "effects": {
-     "spend": 5200,
+     "spend": 3000,
      "mind": 15,
      "social": 12,
      "addst": {
       "baby": -1
      }
     }
-   }
+   },
+   "pri": 9
   },
   {
    "id": "fam_divorce_01",
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "这日子没法过了。离婚吧。",
    "when": "did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35",
    "alwaysStatus": null,
@@ -162,7 +163,7 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "👧",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "爸爸，你为什么总在看手机？",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -189,7 +190,7 @@
    "who": "老师",
    "whoId": "laoshi",
    "avatar": "🏫",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "今晚家长会，你来不来？",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -216,7 +217,7 @@
    "who": "老妈",
    "whoId": "laoma",
    "avatar": "👵",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "你爸住院了，要先垫 6,500。",
    "when": null,
    "alwaysStatus": null,
@@ -242,7 +243,7 @@
    "who": "老妈",
    "whoId": "laoma",
    "avatar": "👵",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "我这有二十万养老钱，你拿去做，赚了都是你的。",
    "when": null,
    "alwaysStatus": null,
@@ -269,7 +270,7 @@
    "who": "丈母娘",
    "whoId": "zhangmuniang",
    "avatar": "🧓",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "听说你最近在做投资？妈这里有点闲钱。",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -295,7 +296,7 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "🤒",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "半夜发烧 39 度。",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -322,7 +323,7 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "👶",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "他第一次叫爸爸。你正在看盘。",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -349,7 +350,7 @@
    "who": "房东",
    "whoId": "fangdong",
    "avatar": "🏠",
-   "tag": "家庭",
+   "tag": "房子",
    "text": "下个月房租要涨 800。房东在等你回复。",
    "when": null,
    "alwaysStatus": null,
@@ -383,7 +384,7 @@
    "alwaysStatus": null,
    "window": [
     28,
-    55
+    180
    ],
    "left": {
     "label": "主动揽活，向老板表态",
@@ -413,7 +414,7 @@
    "alwaysStatus": null,
    "window": [
     30,
-    58
+    200
    ],
    "left": {
     "label": "请部门喝奶茶",
@@ -470,7 +471,7 @@
    },
    "window": [
     30,
-    58
+    200
    ],
    "left": {
     "label": "我早就不想干了",
@@ -609,7 +610,7 @@
    "alwaysStatus": null,
    "window": [
     5,
-    42
+    240
    ],
    "left": {
     "label": "准时走",
@@ -693,7 +694,7 @@
    "alwaysStatus": null,
    "window": [
     42,
-    60
+    300
    ],
    "left": {
     "label": "给家里买点东西",
@@ -1749,7 +1750,7 @@
    "alwaysStatus": null,
    "window": [
     5,
-    45
+    120
    ],
    "left": {
     "label": "收编",
@@ -1822,7 +1823,7 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "🧒",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "孩子举着考卷等你在家长栏签字，站在你旁边，不说话。",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -1848,7 +1849,7 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "「今晚吃什么？」她站在门口问。你的眼睛还黏在行情图上。",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -1875,7 +1876,7 @@
    "who": "丈母娘",
    "whoId": "zhangmuniang",
    "avatar": "👵",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "饭桌上，丈母娘随口问：「今年，攒下了吧？」",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -1931,7 +1932,7 @@
    "alwaysStatus": null,
    "window": [
     22,
-    54
+    200
    ],
    "left": {
     "label": "表了个态",
@@ -2319,7 +2320,7 @@
    "alwaysStatus": null,
    "window": [
     8,
-    58
+    300
    ],
    "left": {
     "label": "追买回来",
@@ -2393,7 +2394,7 @@
    "who": "老妈",
    "whoId": "laoma",
    "avatar": "📞",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
    "when": null,
    "alwaysStatus": null,
@@ -2420,7 +2421,7 @@
    "who": "老妈",
    "whoId": "laoma",
    "avatar": "📞",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "老妈拍来一张体检单：她血压也高了。",
    "when": null,
    "alwaysStatus": null,
@@ -2446,7 +2447,7 @@
    "who": "房东",
    "whoId": "fangdong",
    "avatar": "🔧",
-   "tag": "家庭",
+   "tag": "房子",
    "text": "热水器坏了三天。房东说要排期。",
    "when": null,
    "alwaysStatus": null,
@@ -2471,7 +2472,7 @@
    "who": "老师",
    "whoId": "laoshi",
    "avatar": "🎓",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "班主任来电话：孩子最近上课，总是走神。",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -2496,7 +2497,7 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -2522,14 +2523,14 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "🧒",
-   "tag": "家庭",
-   "text": "兴趣班该交钱了，6,800。他说，其实不想去了。",
+   "tag": "孩子",
+   "text": "兴趣班该交钱了，4,500。他说，其实不想去了。",
    "when": "has:baby",
    "alwaysStatus": null,
    "left": {
     "label": "续费",
     "effects": {
-     "spend": 6800,
+     "spend": 4500,
      "mind": 3
     }
    },
@@ -2547,7 +2548,7 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "产检约在周四上午。她说：你来吧。",
    "when": "has:baby",
    "alwaysStatus": null,
@@ -2573,7 +2574,7 @@
    "who": "丈母娘",
    "whoId": "zhangmuniang",
    "avatar": "👵",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "丈母娘生日。红包行情，你研究了一晚上。",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
@@ -2598,13 +2599,13 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "那家店她说还想再去一次。",
    "when": "did:fam_anniv_01.l",
    "alwaysStatus": null,
    "window": [
     36,
-    60
+    240
    ],
    "left": {
     "label": "再订一次",
@@ -2628,13 +2629,13 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "我们多久没一起好好吃顿饭了？",
    "when": "did:fam_dinner_01.l|did:fam_laopo_02.l",
    "alwaysStatus": null,
    "window": [
-    15,
-    55
+    20,
+    240
    ],
    "left": {
     "label": "关电脑，现在做",
@@ -2658,13 +2659,13 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "亏成这样也不告诉我？以后我的钱自己管。",
    "when": "did:fam_hunli_01; did:fam_confess_01.r; risk>40",
    "alwaysStatus": null,
    "window": [
-    20,
-    58
+    25,
+    240
    ],
    "left": {
     "label": "交出一半仓位",
@@ -2688,13 +2689,13 @@
    "who": "老妈",
    "whoId": "laoma",
    "avatar": "📞",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "邻居说在菜市场听见你妈叹气。",
    "when": "did:fam_momcall_01.l",
    "alwaysStatus": null,
    "window": [
-    10,
-    55
+    12,
+    200
    ],
    "left": {
     "label": "寄箱水果回去",
@@ -2717,13 +2718,13 @@
    "who": "老妈",
    "whoId": "laoma",
    "avatar": "📞",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "复查稳住了。她把一罐腌笋塞进你后备箱。",
    "when": "did:fam_momhealth_01.r",
    "alwaysStatus": null,
    "window": [
-    12,
-    55
+    15,
+    200
    ],
    "left": {
     "label": "收下，报喜不报忧",
@@ -2747,13 +2748,13 @@
    "who": "老爸",
    "whoId": "laoma",
    "avatar": "🧑‍🦳",
-   "tag": "家庭",
+   "tag": "家人",
    "text": "爸住院了。这回，是你自己没接那个电话。",
    "when": "did:fam_momcall_01.l; did:fam_momhealth_01.l",
    "alwaysStatus": null,
    "window": [
-    30,
-    58
+    40,
+    300
    ],
    "left": {
     "label": "连夜回去垫 9,000",
@@ -2777,13 +2778,13 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "🧒",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "她画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
    "when": "did:fam_child_01.l",
    "alwaysStatus": null,
    "window": [
-    12,
-    55
+    15,
+    200
    ],
    "left": {
     "label": "装裱起来挂客厅",
@@ -2806,13 +2807,13 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "孩子说，爸爸的手机长在手上。",
    "when": "did:fam_child_01.r",
    "alwaysStatus": null,
    "window": [
-    15,
-    55
+    20,
+    200
    ],
    "left": {
     "label": "周末断网半天",
@@ -2836,13 +2837,13 @@
    "who": "老师",
    "whoId": "laoshi",
    "avatar": "🎓",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "家长会点名：作文《我的爸爸》全篇写手机。",
    "when": "did:fam_child_01.r; did:fam_teacher_01.l",
    "alwaysStatus": null,
    "window": [
-    28,
-    58
+    30,
+    240
    ],
    "left": {
     "label": "当场保证，买亲子票",
@@ -2866,13 +2867,13 @@
    "who": "孩子",
    "whoId": "haizi",
    "avatar": "🧒",
-   "tag": "家庭",
+   "tag": "孩子",
    "text": "奖状背面：谢谢爸爸陪我写作业。",
    "when": "did:fam_teacher_01.r; did:fam_child_01.l",
    "alwaysStatus": null,
    "window": [
-    25,
-    58
+    30,
+    240
    ],
    "left": {
     "label": "全家下馆子庆祝",
@@ -2897,13 +2898,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "💐",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "周末有空吗？想去江边走走。",
    "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     1,
-    58
+    100
    ],
    "left": {
     "label": "陪她走一走",
@@ -2911,7 +2912,7 @@
      "spend": 300,
      "social": 6,
      "mind": 4,
-     "energy": -10
+     "energy": -8
     }
    },
    "right": {
@@ -2927,13 +2928,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🎬",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她发来消息：新上的电影，一起？",
    "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     1,
-    45
+    80
    ],
    "left": {
     "label": "陪她看",
@@ -2941,7 +2942,7 @@
      "spend": 400,
      "social": 6,
      "mind": 4,
-     "energy": -10
+     "energy": -8
     }
    },
    "right": {
@@ -2957,13 +2958,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🥟",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她说家里包了饺子，喊你回去吃。",
    "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     2,
-    50
+    90
    ],
    "left": {
     "label": "回去吃饭",
@@ -2971,7 +2972,7 @@
      "spend": 200,
      "social": 7,
      "mind": 3,
-     "energy": -12
+     "energy": -10
     }
    },
    "right": {
@@ -2987,13 +2988,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🎂",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她生日。想要一顿像样的晚饭。",
    "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     3,
-    58
+    100
    ],
    "left": {
     "label": "认真安排",
@@ -3018,13 +3019,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "💭",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她问你：「股票和我，到底哪个重要？」",
    "when": "did:fam_yuehui_01.r; no:did:fam_hunli_01|did:fam_shengri_01.r; no:did:fam_hunli_01|did:fam_zhaohu_01.r; no:did:fam_hunli_01|did:fam_zhoumo_01.r; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     6,
-    56
+    100
    ],
    "left": {
     "label": "关软件道歉",
@@ -3047,13 +3048,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🤝",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她认真地看着你，等你一句话：这段感情，要不要定下来？",
    "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     6,
-    58
+    100
    ],
    "left": {
     "label": "正式在一起",
@@ -3077,13 +3078,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🥀",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她不再问你周末有没有空了。",
    "when": "did:fam_yuehui_01.l; no:did:fam_queding_01|did:fam_zhaohu_01.l; no:did:fam_queding_01|did:fam_zhoumo_01.l; no:did:fam_queding_01",
    "alwaysStatus": null,
    "window": [
     40,
-    58
+    120
    ],
    "left": {
     "label": "补救一下",
@@ -3107,21 +3108,21 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🎁",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "见她爸妈。烟酒礼盒摆一桌。",
    "when": "did:fam_queding_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     8,
-    56
+    100
    ],
    "left": {
     "label": "备足礼数",
     "effects": {
-     "spend": 3000,
+     "spend": 1500,
      "social": 10,
      "mind": -2,
-     "energy": -24
+     "energy": -14
     }
    },
    "right": {
@@ -3137,13 +3138,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "👀",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "丈母娘笑眯眯：有房吗？存款呢？",
    "when": "did:fam_jiazhang_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     12,
-    56
+    100
    ],
    "left": {
     "label": "实话实说",
@@ -3165,13 +3166,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "🏡",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她说：我们什么时候有自己的家？",
    "when": "did:fam_queding_01.l; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     12,
-    56
+    100
    ],
    "left": {
     "label": "一起攒，我改",
@@ -3195,13 +3196,13 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "📵",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她三天没回你消息了。",
    "when": "did:fam_queding_01.l; did:fam_jiazhang_01.r; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
     12,
-    56
+    100
    ],
    "left": {
     "label": "上门道歉",
@@ -3224,62 +3225,62 @@
    "who": "女友",
    "whoId": "laopo",
    "avatar": "💍",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她家开口：彩礼八万八。",
-   "when": "did:fam_jiazhang_01.l; social>35; no:did:fam_hunli_01|did:fam_zanqian_01.l; social>35; no:did:fam_hunli_01",
+   "when": "did:fam_jiazhang_01.l; social>35; cash>10000; no:did:fam_hunli_01|did:fam_zanqian_01.l; social>35; cash>10000; no:did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
-    12,
-    58
+    20,
+    110
    ],
    "left": {
-    "label": "借，也要给",
+    "label": "先付一半，剩下打欠条",
     "effects": {
-     "borrow": 60000,
-     "spend": 28000,
+     "spend": 12000,
+     "borrow": 15000,
      "social": 12,
      "mind": 4,
-     "energy": -20
+     "energy": -12
     }
    },
    "right": {
-    "label": "谈一谈，少些",
+    "label": "先不结，再攒攒",
     "effects": {
-     "spend": 10000,
-     "social": -7,
-     "mind": -3
+     "social": -10,
+     "mind": -2
     }
-   }
+   },
+   "cap": 2
   },
   {
    "id": "fam_hunli_01",
    "who": "女友",
    "whoId": "laopo",
    "avatar": "👰",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "婚礼这天。她哭着笑了。",
-   "when": "did:fam_caili_01",
+   "when": "did:fam_caili_01.l",
    "alwaysStatus": null,
    "window": [
-    16,
-    58
+    24,
+    150
    ],
    "left": {
     "label": "风风光光办",
     "effects": {
-     "spend": 15000,
+     "spend": 12500,
      "social": 12,
      "mind": 8,
-     "energy": -32
+     "energy": -12
     }
    },
    "right": {
     "label": "一切从简",
     "effects": {
-     "spend": 3000,
+     "spend": 2000,
      "social": -4,
      "mind": 3,
-     "energy": -28
+     "energy": -10
     }
    }
   },
@@ -3288,18 +3289,18 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "🏠",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "首付还差四万。借，还是等？",
    "when": "did:fam_hunli_01",
    "alwaysStatus": null,
    "window": [
-    22,
-    58
+    30,
+    200
    ],
    "left": {
     "label": "借",
     "effects": {
-     "borrow": 40000,
+     "borrow": 25000,
      "social": 6,
      "risk": 5,
      "mind": -2
@@ -3318,13 +3319,13 @@
    "who": "老婆",
    "whoId": "laopo",
    "avatar": "🫂",
-   "tag": "家庭",
+   "tag": "伴侣",
    "text": "她说：钱没了可以再赚，你在就好。",
    "when": "did:fam_hunli_01.l; did:fam_jiazhang_01.l",
    "alwaysStatus": null,
    "window": [
     36,
-    60
+    300
    ],
    "left": {
     "label": "抱抱她，请天假",
@@ -3345,17 +3346,75 @@
    }
   },
   {
+   "id": "love_night_01",
+   "who": "伴侣",
+   "whoId": "laopo",
+   "avatar": "🌙",
+   "tag": "伴侣",
+   "text": "她说：今晚先不聊股票，行吗？",
+   "when": "did:fam_queding_01",
+   "alwaysStatus": null,
+   "cap": 2,
+   "left": {
+    "label": "陪她早睡，今晚不看盘",
+    "effects": {
+     "energy": 16,
+     "social": 6,
+     "mind": 3,
+     "risk": 4
+    }
+   },
+   "right": {
+    "label": "再看一小时盘",
+    "effects": {
+     "energy": -6,
+     "mind": -2,
+     "risk": -4
+    }
+   }
+  },
+  {
+   "id": "love_debt_01",
+   "who": "伴侣",
+   "whoId": "laopo",
+   "avatar": "📄",
+   "tag": "伴侣",
+   "text": "彩礼的欠条还压在抽屉里。这个月怎么还？",
+   "when": "did:fam_caili_01.l; debt>0",
+   "alwaysStatus": null,
+   "window": [
+    22,
+    240
+   ],
+   "cap": 2,
+   "left": {
+    "label": "多还 2,000",
+    "effects": {
+     "spend": 2000,
+     "repay": 2000,
+     "mind": 3
+    }
+   },
+   "right": {
+    "label": "先还最低 500",
+    "effects": {
+     "repay": 500,
+     "mind": -3
+    }
+   }
+  },
+  {
    "id": "pet_food_01",
    "who": "你的猫",
    "whoId": "nidemao",
    "avatar": "🐱",
-   "tag": "家庭",
+   "tag": "宠物",
    "text": "猫粮见底了。它蹲在碗前看你。",
    "when": "did:pet_adopt_01.l",
    "alwaysStatus": null,
    "window": [
     8,
-    55
+    240
    ],
    "left": {
     "label": "下单进口的",
@@ -3377,13 +3436,13 @@
    "who": "你的猫",
    "whoId": "nidemao",
    "avatar": "🐱",
-   "tag": "家庭",
+   "tag": "宠物",
    "text": "宠物医院提醒：疫苗该打了，1,200。",
    "when": "did:pet_adopt_01.l",
    "alwaysStatus": null,
    "window": [
     10,
-    50
+    240
    ],
    "left": {
     "label": "打",
@@ -3407,13 +3466,13 @@
    "who": "你的猫",
    "whoId": "nidemao",
    "avatar": "🐱",
-   "tag": "家庭",
+   "tag": "宠物",
    "text": "它吐了，不吃东西。兽医说先交 4,500。",
    "when": "did:pet_adopt_01.l",
    "alwaysStatus": null,
    "window": [
     25,
-    58
+    240
    ],
    "left": {
     "label": "治",
@@ -3442,7 +3501,7 @@
    "alwaysStatus": null,
    "window": [
     6,
-    42
+    240
    ],
    "left": {
     "label": "承认走神",
@@ -3472,7 +3531,7 @@
    "alwaysStatus": null,
    "window": [
     18,
-    50
+    200
    ],
    "left": {
     "label": "忍了",
@@ -3576,7 +3635,7 @@
    "alwaysStatus": null,
    "window": [
     4,
-    40
+    240
    ],
    "left": {
     "label": "改完再说",
@@ -3885,7 +3944,7 @@
    "alwaysStatus": null,
    "window": [
     8,
-    40
+    240
    ],
    "left": {
     "label": "不去",
@@ -3915,7 +3974,7 @@
    "alwaysStatus": null,
    "window": [
     10,
-    55
+    240
    ],
    "left": {
     "label": "请组员喝奶茶",
@@ -3944,7 +4003,7 @@
    "alwaysStatus": null,
    "window": [
     20,
-    58
+    240
    ],
    "left": {
     "label": "存起来",
@@ -3974,7 +4033,7 @@
    "alwaysStatus": null,
    "window": [
     25,
-    58
+    240
    ],
    "left": {
     "label": "认真带",
