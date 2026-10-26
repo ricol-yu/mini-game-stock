@@ -374,7 +374,7 @@ function trend5(){                                  // 近 5 日涨跌幅：给�
 }
 function tick(){
   cyc++;
-  var st = S.st, msg = [];
+  var st = S.st, msg = [], stockAt = -1;               // stockAt：今天那句「这只票…」在 msg 里的下标（泡沫破要回写）
   // 期望略为负（大多数人赚不到钱——这就是市场）+ 小幅牛熊摆动；大事件状态再叠加
   var drift = -0.004 + Math.sin(cyc / 14) * 0.012;
   if(st.bubble) drift += 0.028;
@@ -421,8 +421,17 @@ function tick(){
       else if(pct < -0.02)   S.mind -= 0.8;
       else if(pct >= 0.095)  S.mind += 4;           // 吃到涨停
       else if(pct > 0.03)    S.mind += 1.6;
-      var d = S.equity - before;
-      msg.push("这只票" + (d >= 0 ? "涨" : "跌") + Math.abs(pct * 100).toFixed(1) + "%");
+      // 【口径铁律】这句写的是「这只票」的涨跌，必须用股票本身的涨跌 r——和分时图同一个数。
+      // 别用 pct（持仓涨跌幅）：它带 1.3× 杠杆和风险放大，符号会跟图相反，玩家会当场发现对不上。
+      // 两者差得明显时单独补一句「你的仓位」，让人看得懂杠杆在干什么。
+      var sp = r * 100;
+      var line = Math.abs(sp) < 0.05 ? "这只票几乎没动"
+               : "这只票" + (sp > 0 ? "涨" : "跌") + Math.abs(sp).toFixed(1) + "%";
+      var hold = (S.equity - before) / before * 100;
+      if(Math.abs(hold - sp) >= 1.5)
+        line += "，你的仓位" + (hold >= 0 ? "赚" : "亏") + Math.abs(hold).toFixed(1) + "%";
+      stockAt = msg.length;                            // 记位置：泡沫破要回头改写这一句，否则文字和图又对不上
+      msg.push(line);
     } else msg.push("空仓，与你无关");
   }
 
@@ -433,10 +442,20 @@ function tick(){
     var p = 0.09 + 0.05 * age;
     if(Math.random() < p || age >= 14){
       var drop = 0.30 + Math.random() * 0.28;
-      if(!S.st.halt) S.equity *= (1 - drop);
+      if(!S.st.halt){
+        S.equity *= (1 - drop);
+        // 泡沫破是这只票自己的崩盘，行情线必须跟着崩——否则图上是红的、文字却是 −44%，
+        // 玩家一眼就看出两套账。指数只用于展示，改它不影响平衡。
+        S.index *= (1 - drop);
+        if(S.hist.length) S.hist[S.hist.length - 1] = S.index;
+        if(S.intra) S.intra = { prev: S.intra.prev, close: S.index, day: S.day, lim: "crash" };
+        // 文字直接读图用的那个数（崩盘是叠在当天涨跌之上的，不等于 drop 本身），保证两边一位不差
+        if(stockAt >= 0 && S.intra)
+          msg[stockAt] = "这只票崩了 −" + Math.abs((S.intra.close / S.intra.prev - 1) * 100).toFixed(1) + "%";
+      }
       S.mind -= 14; S.flags.burst = true; S.flags.burstDay = S.day; S.flags.burstDrop = drop;
       clearST("bubble"); S.flags.bubbleAge = 0;
-      msg.push("🫧 泡沫破了 −" + Math.round(drop * 100) + "%");
+      msg.push("🫧 泡沫破了");
     }
   }
   // 内线：迟早会被证伪或被查
@@ -531,8 +550,8 @@ function tapeHTML(){
   var pts = [], mx = 0;
   for(i = 0; i < n; i++){
     t = i / (n - 1);
-    if(lim === "up" || lim === "down"){
-      p = t >= knee ? 1 : t / knee;                   // 冲到板，然后一直封着
+    if(lim === "up" || lim === "down" || lim === "crash"){
+      p = t >= knee ? 1 : t / knee;                   // 冲到板（或崩到底），然后一直封着
       p = p * p * (3 - 2 * p);
       damp = t >= knee ? 0 : Math.sin(Math.PI * Math.min(t / knee, 1));
     }else{
@@ -545,8 +564,11 @@ function tapeHTML(){
     if(Math.abs(pts[i]) > mx) mx = Math.abs(pts[i]);
   }
   pts[0] = 0; pts[n - 1] = dev;                       // 两端钉死在真实收盘上
-  var band = Math.min(0.10, Math.max(0.03, mx * 1.3));   // 纵向标尺：小行情放大看，到板就是 ±10%
-  var C = lim === "halt" ? "#8f959e" : (dev >= 0 ? "#e02020" : "#0aa344");
+  var band = lim === "crash"
+      ? Math.min(0.60, Math.max(0.12, Math.abs(dev) * 1.12))   // 崩盘日按实际跌幅撑开标尺，否则线会跑出画布
+      : Math.min(0.10, Math.max(0.03, mx * 1.3));              // 纵向标尺：小行情放大看，到板就是 ±10%
+  var flat = Math.abs(dev) < 0.0005;                    // 平盘：不涂红也不涂绿，免得「今 +0.0%」标成上涨
+  var C = lim === "halt" || flat ? "#8f959e" : (dev >= 0 ? "#e02020" : "#0aa344");
   var ln = "", x, y, lastY = mid;
   for(i = 0; i < n; i++){
     x = (i / (n - 1) * W).toFixed(1);
@@ -559,6 +581,8 @@ function tapeHTML(){
   if(lim === "halt"){ tag = "停牌"; cls = "halt"; }
   else if(lim === "up"){ tag = "涨停 +10%"; cls = "seal-up"; }
   else if(lim === "down"){ tag = "跌停 −10%"; cls = "seal-down"; }
+  else if(lim === "crash"){ tag = "崩 " + dp.replace("-", "−"); cls = "seal-down"; }   // 泡沫破：一天崩掉 30%+
+  else if(flat){ tag = "今 0.0%"; cls = "halt"; }
   else { tag = "今 " + dp; cls = dev >= 0 ? "up" : "down"; }
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
       '<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">' +
