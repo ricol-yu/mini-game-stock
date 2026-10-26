@@ -203,6 +203,13 @@ function validateCards(data) {
       err('window', id, 'weight', 'weight 应在 0.1..10，当前 ' + c.weight);
     if (c.once !== undefined && typeof c.once !== 'boolean') err('window', id, 'once', 'once 应为布尔值');
     if (c.hidden !== undefined && typeof c.hidden !== 'boolean') err('window', id, 'hidden', 'hidden 应为布尔值');
+    /* urgent（2026-10-26 加）：关键卡不走袋子，条件满足就插队来问——所以必须带 when，
+       否则一局从头问到底。目前只有「上岸」确认一张。 */
+    if (c.urgent !== undefined) {
+      if (typeof c.urgent !== 'boolean') err('window', id, 'urgent', 'urgent 应为布尔值');
+      if (!c.when) err('window', id, 'when', 'urgent 卡必须带 when——它不走袋子，没有条件就会天天插队');
+      if (!c.cap) warn('window', id, 'cap', 'urgent 卡建议设 cap（一局最多问几次），否则会反复插队');
+    }
     /* 9. choice 决策质量（L1 写作规则，2026-10-21 加）
           ① 正文不得包含选项原文（正文替玩家做选择 = 剧透，选择张力归零）
           ② 每个选项至少触及 2 条数值（只碰心态/社会 = 金钱风险全程缺席）

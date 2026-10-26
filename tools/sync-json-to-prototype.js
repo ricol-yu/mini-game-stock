@@ -33,11 +33,16 @@ function sideStr(sd) {
 }
 
 const lines = data.cards.map(c => {
-  let head = ' {who:' + j(c.who) + ',av:' + j(c.avatar) + ',tag:' + j(c.tag);
+  // id 必须写进原型：resolve() 用 c.id 记 did:，pick() 用 c.id 记 seen:，
+  // 早先这里没写 id → 浏览器里 S.did[undefined] 全是同一个键，
+  // 所有 did:/seen: 条件永远不成立，整条家庭线（彩礼→婚礼→首付→房贷）在玩家手里根本不会出现。
+  // 仿真当时看不出来，是因为 sim/engine.js 会按 json 顺序补 _id。
+  let head = ' {id:' + j(c.id) + ',who:' + j(c.who) + ',av:' + j(c.avatar) + ',tag:' + j(c.tag);
   if (c.when) head += ',when:' + j(c.when);
   if (c.window) head += ',win:' + j(c.window);   // [起,止]：关联卡/时机卡的出场窗口
   if (c.cap) head += ',cap:' + c.cap;            // 一局最多出几次（缺省：关联卡 1、普通卡 2）
   if (c.pri) head += ',pri:' + c.pri;            // 插队优先级（数大先出），用于「婚后必须尽快来的节点卡」
+  if (c.urgent) head += ',urgent:1';             // 关键卡：条件满足就插队问一句（不走袋子），如「上岸」确认
   head += ',txt:' + j(c.text) + ',';
   let body = '';
   if (c.alwaysStatus) body += '\n  st:' + effStr(c.alwaysStatus) + ',';

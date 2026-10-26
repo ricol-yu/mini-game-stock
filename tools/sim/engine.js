@@ -74,16 +74,20 @@ function load() {
   sandbox.render = function () {};
   sandbox.money = function (n) { return (n < 0 ? '-¥' : '¥') + Math.round(Math.abs(n)); };
 
-  // 卡片无 id（sync 脚本不往 CARDS 写 id）→ 从真源 json 按顺序对齐贴上，
-  // 并逐卡核对 who/tag/text 防错位，错位即中止。
+  // 卡片 id：原型现在自己带 id（sync 会写），这里按顺序核对并补 _id 给工具用。
+  // 曾经原型没有 id → 浏览器里 S.did[undefined]，did: 全线失效，而仿真照常通过
+  // （因为仿真自己补了 _id）。这条核对就是为了让那种漂移再也过不去。
   const data = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'cards.json'), 'utf8'));
   const CARDS = sandbox.CARDS;
   if (CARDS.length !== data.cards.length)
     throw new Error(`原型 ${CARDS.length} 张卡 vs json ${data.cards.length} 张卡，数量不一致`);
   CARDS.forEach((c, i) => {
     const j = data.cards[i];
-    if (c.who !== j.who || c.tag !== j.tag || c.txt !== j.text)
-      throw new Error(`第 ${i} 张卡原型与 json 不对齐：${c.who}/${c.tag} vs ${j.who}/${j.tag}`);
+    if (!c.id)
+      throw new Error(`第 ${i} 张卡（${c.who} / ${c.txt}）在原型里没有 id` +
+                      ` —— 忘了跑 sync-json-to-prototype？没有 id 就等于 did:/seen: 全记在 undefined 上`);
+    if (c.id !== j.id || c.who !== j.who || c.tag !== j.tag || c.txt !== j.text)
+      throw new Error(`第 ${i} 张卡原型与 json 不对齐：${c.id}/${c.who}/${c.tag} vs ${j.id}/${j.who}/${j.tag}`);
     c._id = j.id;
   });
 
