@@ -63,6 +63,25 @@
   .mkt .t b{font-size:15px;font-variant-numeric:tabular-nums}
   .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
   .mbar{position:relative;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:5px}
+  /* 分时图：昨收虚线在中轴，涨红跌绿，线下淡色填充。涨停/跌停封在上下边界 */
+  .tape{position:relative;height:46px;margin-top:6px;border-radius:7px;overflow:hidden;
+    background:#fcfcfd;border:1px solid #f1f2f5}
+  .tape svg{display:block;width:100%;height:46px}
+  /* 划线动画：dasharray 由 JS 按 getTotalLength 精确设置。
+     别用 pathLength="1"+dasharray:1 的归一化写法——浏览器量长有误差，
+     会导致线画到 70% 左右就被截断（实测踩过） */
+  .tape .ln{transition:stroke-dashoffset .7s cubic-bezier(.3,.9,.3,1)}
+  .tape .ar{animation:tapeFade .55s ease-out both}
+  @keyframes tapeFade{from{opacity:0}to{opacity:1}}
+  .tape .lab{position:absolute;top:3px;right:4px;font-size:9px;line-height:1.5;padding:0 4px;border-radius:4px;
+    font-variant-numeric:tabular-nums;letter-spacing:.2px;background:rgba(255,255,255,.9)}
+  .tape .lab.up{color:#e02020}
+  .tape .lab.down{color:#0aa344}
+  .tape .lab.seal-up{color:#fff;background:#e02020}
+  .tape .lab.seal-down{color:#fff;background:#0aa344}
+  .tape .lab.halt{color:#8f959e;background:rgba(0,0,0,.045)}
+  .tape .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:var(--ink-3)}
   .mbar i{position:absolute;top:0;height:100%;transition:width .45s cubic-bezier(.4,1.2,.4,1),left .45s cubic-bezier(.4,1.2,.4,1)}
   .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-2)}
   small{font-size:10.5px}
@@ -73,6 +92,9 @@
     will-change:transform;cursor:grab;overflow:hidden}
   .card.under{transform:scale(.955) translateY(9px);opacity:.55;box-shadow:0 4px 12px rgba(31,35,41,.07)}
   .card.under2{transform:scale(.91) translateY(18px);opacity:.28}
+  /* 垫层是空白牌背：只暗示「还有牌」，不透露是哪张（预览永远不准，见 nextCard 注释） */
+  .card.back{background:#f7f8fa;border-color:#eceef1;cursor:default;
+    background-image:repeating-linear-gradient(-45deg,#f0f1f4 0 8px,transparent 8px 16px)}
   .card .who{display:flex;align-items:center;gap:8px;margin-bottom:10px}
   .card .who .av{width:31px;height:31px;border-radius:50%;background:#f4f5f7;display:flex;align-items:center;
     justify-content:center;font-size:16px}
@@ -140,6 +162,7 @@
     <div class="mkt">
       <div class="t"><b id="v-net">¥18,000</b> <small id="v-pnl" class="flat">0.0%</small></div>
       <div class="mbar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></div>
+      <div class="tape" id="tape"></div>
       <div class="d"><span>第 <b id="v-day">1</b> 天 <b id="v-det"></b></span><span id="v-tr5">近五日 —</span></div>
     </div>
 
@@ -362,6 +385,7 @@ function tick(){
   if(st.halt){
     // 停牌：价格冻结，什么都做不了
     msg.push("停牌中，价格冻结");
+    S.intra = { prev: S.index, close: S.index, day: S.day, lim: "halt" };
   }else{
     var vol = 0.042 * (1 + Math.max(0, S.day - INFL_FROM) * VOL_GROW);   // 波动随天数放大：日子越长，行情越颠
     if(st.bull)   vol *= 2.1;
@@ -377,8 +401,12 @@ function tick(){
     if(ul < pUp){ r = 0.0995; msg.push("🔥 涨停 +10%，封单排到明天"); }
     else if(ul < pUp + pDn){ r = -0.0995; msg.push("🧊 跌停 −10%，卖单砸不出门"); }
     r = Math.max(-0.0995, Math.min(0.0995, r));
+    var prevIdx = S.hist.length ? S.hist[S.hist.length - 1] : (S.index || 3000);
     S.index = (S.index || 3000) * (1 + r);
     S.hist.push(S.index); if(S.hist.length > 40) S.hist.shift();
+    // 记下今天的「昨收 → 今收」，给分时图用；r 被夹在 ±9.95% 上，够到边界就是封板
+    S.intra = { prev: prevIdx, close: S.index, day: S.day,
+                lim: r >= 0.0995 ? "up" : (r <= -0.0995 ? "down" : "") };
 
     var m = 1 + S.risk / 42;                        // 风险放大波动：1x ~ 3.4x
     var sr = r * 1.3 * m + (Math.random() - 0.5) * 0.024;
@@ -486,6 +514,67 @@ function tick(){
   return msg.join("　·　");
 }
 
+/* ============ 分时图 ============
+   每天一条：昨收（中轴虚线）→ 今收的盘中路径，涨红跌绿，线下淡色填充。
+   路径由 (day, 昨收, 今收, 是否封板) 确定性生成 —— **一个 Math.random 都不调**：
+   它纯属展示，动了随机序列就会挪动抽卡和行情，让所有仿真基线失去可比性。
+   涨停/跌停直接封在上下边界上（线爬到板就压平），一眼看得见「到板了」。 */
+var TAPE_W = 296, TAPE_H = 46;
+function tapeHTML(){
+  var it = S.intra;
+  if(!it) return '<div class="empty">开盘前</div>';
+  var W = TAPE_W, H = TAPE_H, mid = H / 2, pad = 2.5, n = 49, i, t, p, v, nz, damp;
+  var prev = it.prev || 1, close = it.close || prev, lim = it.lim || "";
+  var dev = close / prev - 1, day = it.day || 1;
+  var seed = (day % 89) * 1.37 + 0.4;
+  var knee = 0.30 + ((day * 29) % 34) / 100;          // 封板时刻 30%~63%（确定性，不用随机）
+  var pts = [], mx = 0;
+  for(i = 0; i < n; i++){
+    t = i / (n - 1);
+    if(lim === "up" || lim === "down"){
+      p = t >= knee ? 1 : t / knee;                   // 冲到板，然后一直封着
+      p = p * p * (3 - 2 * p);
+      damp = t >= knee ? 0 : Math.sin(Math.PI * Math.min(t / knee, 1));
+    }else{
+      p = t * t * (3 - 2 * t);                        // 平时走个 S 形
+      damp = Math.sin(Math.PI * t);                   // 两头收敛，中间放开噪
+    }
+    nz = Math.sin((i + 1) * 2.31 + seed) * 0.6 + Math.sin((i + 1) * 0.87 + seed * 1.9) * 0.4;
+    v = (prev + (close - prev) * p) * (1 + nz * 0.005 * damp);
+    pts[i] = v / prev - 1;
+    if(Math.abs(pts[i]) > mx) mx = Math.abs(pts[i]);
+  }
+  pts[0] = 0; pts[n - 1] = dev;                       // 两端钉死在真实收盘上
+  var band = Math.min(0.10, Math.max(0.03, mx * 1.3));   // 纵向标尺：小行情放大看，到板就是 ±10%
+  var C = lim === "halt" ? "#8f959e" : (dev >= 0 ? "#e02020" : "#0aa344");
+  var ln = "", x, y, lastY = mid;
+  for(i = 0; i < n; i++){
+    x = (i / (n - 1) * W).toFixed(1);
+    y = mid - pts[i] / band * (mid - pad);
+    ln += (i ? "L" : "M") + x + "," + y.toFixed(1);
+    if(i === n - 1) lastY = y;
+  }
+  var area = ln + "L" + W + "," + mid + "L0," + mid + "Z";
+  var dp = (dev >= 0 ? "+" : "") + (dev * 100).toFixed(1) + "%", tag, cls;
+  if(lim === "halt"){ tag = "停牌"; cls = "halt"; }
+  else if(lim === "up"){ tag = "涨停 +10%"; cls = "seal-up"; }
+  else if(lim === "down"){ tag = "跌停 −10%"; cls = "seal-down"; }
+  else { tag = "今 " + dp; cls = dev >= 0 ? "up" : "down"; }
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+      '<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + C + '" stop-opacity=".22"/>' +
+        '<stop offset="1" stop-color="' + C + '" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      '<path class="ar" d="' + area + '" fill="url(#tg)"/>' +
+      '<line x1="0" y1="' + mid + '" x2="' + W + '" y2="' + mid + '" stroke="#dcdee3" ' +
+        'stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>' +
+      '<path class="ln" d="' + ln + '" fill="none" stroke="' + C + '" stroke-width="1.6" ' +
+        'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+      '<line x1="' + (W - 2) + '" y1="' + (lastY - 3) + '" x2="' + (W - 2) + '" y2="' + (lastY + 3) +
+        '" stroke="' + C + '" stroke-width="2" vector-effect="non-scaling-stroke"/>' +
+    '</svg><span class="lab ' + cls + '">' + tag + '</span>';
+}
+
 /* ============ 渲染 ============ */
 var $ = function(id){ return document.getElementById(id); };
 function render(){
@@ -500,6 +589,14 @@ function render(){
   $("b-cash").style.width = wC + "%"; $("b-cash").style.left = "0";
   $("b-eq").style.width = wE + "%";   $("b-eq").style.left = wC + "%";
   $("b-debt").style.width = clamp(S.debt / MONEY_CAP * 100, 0, 100) + "%";
+
+  $("tape").innerHTML = tapeHTML();                    // 当日分时图
+  try{                                                 // 划线动画：先量长度再放行（桩环境没有 getTotalLength，静默跳过）
+    var lnEl = $("tape").querySelector(".ln"), tl = lnEl.getTotalLength();
+    lnEl.style.strokeDasharray = tl; lnEl.style.strokeDashoffset = tl;
+    lnEl.getBoundingClientRect();                      // 强制回流一次，transition 才会触发
+    lnEl.style.strokeDashoffset = 0;
+  }catch(_e){}
 
   var n = net();
 
@@ -617,9 +714,8 @@ function bagShuffle(){
   _bagRefills++;
 }
 
-/* 在袋里找第 skip 张「能出」的卡，返回它在袋中的下标；不取走 */
-function bagFind(skip, strict, avoidTag){
-  var hit = 0;
+/* 在袋里找第一张「能出」的卡，返回它在袋中的下标；不取走 */
+function bagFind(strict, avoidTag){
   for(var i = 0; i < _bag.length; i++){
     var k = _bag[i], c = CARDS[k];
     var cap = isChain(c) ? 1 : 2;                    // 关联卡是叙事大事件，一局只出一次
@@ -628,7 +724,6 @@ function bagFind(skip, strict, avoidTag){
     if(c.win && (S.day < c.win[0] || S.day > c.win[1])) continue;   // window:[起,止]——时机没到就不出场
     if(strict && _recent.indexOf(k) >= 0) continue;
     if(avoidTag && c.tag === avoidTag) continue;      // 不和上一张同类
-    if(hit++ < skip) continue;
     return i;
   }
   return -1;
@@ -655,9 +750,9 @@ function bagFindChain(){
 
 /* 三级让步：同类间隔 → 冷却 → 都不管 */
 function bagPick(avoidTag){
-  var i = bagFind(0, true, avoidTag);
-  if(i < 0) i = bagFind(0, true);
-  if(i < 0) i = bagFind(0, false);
+  var i = bagFind(true, avoidTag);
+  if(i < 0) i = bagFind(true);
+  if(i < 0) i = bagFind(false);
   return i;
 }
 
@@ -680,14 +775,15 @@ function pick(){
   return c;
 }
 
-/* 垫层预览：读袋子里的第 skip 张，不取走、不计数。找不到就复用顶上那张（压在下面看不见） */
-function pickPeek(skip, top){
-  var i = bagFind(skip, true, top.tag);
-  if(i < 0) i = bagFind(skip, false);
-  if(i < 0) return top;
-  var c = CARDS[_bag[i]];
-  S.seen[c._id] = 1;                                  // 压在下面的也算见过——玩家看到了它
-  return c;
+/* 牌堆垫层：下面两张只是「还有牌」的暗示，用空白牌背，不带任何内容。
+   早先这里是预读袋子里的下一张给玩家看，可那个预览天生不可能准——
+   下一张要等这次选择结算完、day 和数值都变了才抽得出来（还可能被关联卡插队），
+   于是玩家经常「看到的是这张、翻上来是另一张」。既然预读不准，就别让玩家看见。
+   连带好处：垫层不再把牌记成「见过」（S.seen），伏笔只从真出场的卡记账。 */
+function deckBack(cls){
+  var d = document.createElement("div");
+  d.className = "card " + cls + " back";
+  return d;
 }
 function build(c){
   var d = document.createElement("div"); d.className = "card";
@@ -706,7 +802,7 @@ var TUT = [
   txt:"接下来的每一天，都只问你一个问题：做，还是不做。右滑，是把事情接下来——照做、投入、认了；左滑，是把它推掉——拒绝、抽身、转身走。不信？往随便哪边滑一下试试。",
   L:{s:"← 这样推掉"},R:{s:"这样接下 →"}},
  {who:"开盘之前",av:"📊",tag:"序幕",_tut:true,
-  txt:"盯住中间那串数字：净值＝现金＋股票−欠款，它是你的总分。头顶四条命——精力、心态、社会，归零一样完蛋；风险拉满会被强制平仓。另外记住：工资每 15 天才发 6,500，生活每天都要花钱。",
+  txt:"盯住中间那串数字：净值＝现金＋股票−欠款，它是你的总分。下面那条分时线是这只票今天的走势，中间虚线是昨天的收盘——冲上顶就是涨停，砸到底就是跌停。头顶四条命归零一样完蛋；风险拉满会被强制平仓。工资每 15 天发 6,500，日子每天都花钱。",
   L:{s:"记住了"},R:{s:"开工"}}
 ];
 function nextCard(){
@@ -717,9 +813,9 @@ function nextCard(){
     var t = build(TUT[S.tut]);
     stage.appendChild(t); cur = t; bind(t); return;
   }
-  var a = build(pick()), b = build(pickPeek(1, a._c)), c = build(pickPeek(2, a._c));
-  c.className = "card under2"; b.className = "card under";
-  stage.appendChild(c); stage.appendChild(b); stage.appendChild(a);
+  var a = build(pick());
+  stage.appendChild(deckBack("under2")); stage.appendChild(deckBack("under"));
+  stage.appendChild(a);
   cur = a; bind(a);
 }
 function bind(card){

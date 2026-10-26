@@ -77,9 +77,9 @@ function run(pickFn, mode) {
 
     for (let t = 0; t < 60 && !sandbox.S.over; t++) {
       const c = pickFn();
-      // 三张牌：袋子模式读真实预览；iid 模式按旧行为再抽两张（出牌即计数）
-      const peek1 = isBag ? sandbox.pickPeek(1, c) : iidPick();
-      const peek2 = isBag ? sandbox.pickPeek(2, c) : iidPick();
+      // 三张牌：袋子模式垫层已是空白牌背（不预读，无可比）；iid 模式按旧行为再抽两张（出牌即计数）
+      const peek1 = isBag ? null : iidPick();
+      const peek2 = isBag ? null : iidPick();
 
       m.draws++;
       seq.push(c);
@@ -138,7 +138,7 @@ function run(pickFn, mode) {
   return m;
 }
 
-function report(name, m) {
+function report(name, m, mode) {
   const p = x => (x / m.draws * 100).toFixed(2) + '%';
   const pl = x => (x / Math.max(m.loanN, 1) * 100).toFixed(1) + '%';
   const pi = x => (x / Math.max(m.incN, 1) * 100).toFixed(1) + '%';
@@ -150,8 +150,12 @@ function report(name, m) {
   console.log('  同一类卡连着来        ' + p(m.tagAdj).padStart(7));
   console.log('  一局内出现重复卡      ' + (m.repeatGames / m.games * 100).toFixed(1) + '% 的局');
   console.log('  单张卡一局最多出现    ' + m.maxPerGame + ' 次');
-  console.log('  三张牌里有重复        ' + p(m.tripleDup).padStart(7));
-  console.log('  三张牌全同类          ' + p(m.tripleSameTag).padStart(7));
+  if (mode === 'bag') {
+    console.log('  三张牌里有重复        —（垫层改空白牌背，不再预览）');
+  } else {
+    console.log('  三张牌里有重复        ' + p(m.tripleDup).padStart(7));
+    console.log('  三张牌全同类          ' + p(m.tripleSameTag).padStart(7));
+  }
   console.log('  --- 借贷卡（' + m.loanN + ' 次，每局 ' + (m.loanN / m.games).toFixed(2) + '）---');
   console.log('    紧接上一张借贷卡    ' + pl(m.loanAdj).padStart(7));
   console.log('    5 步内又来借贷卡    ' + pl(m.loan5).padStart(7));
@@ -179,11 +183,11 @@ function report(name, m) {
 }
 
 const after = run(pick, 'bag');
-report('新算法 · 洗牌袋 + 同类摊开 + 冷却', after);
+report('新算法 · 洗牌袋 + 同类摊开 + 冷却', after, 'bag');
 
 if (COMPARE) {
   const before = run(iidPick, 'iid');
-  report('旧算法 · 独立等概率（iid）', before);
+  report('旧算法 · 独立等概率（iid）', before, 'iid');
   console.log('\n==== 变化（负 = 变少 = 变好）====');
   const d = (label, a, b) => {
     const x = a / before.draws * 100, y = b / after.draws * 100;
@@ -194,7 +198,7 @@ if (COMPARE) {
   d('同一张卡 5 步内', before.card5, after.card5);
   d('同一类卡连着来', before.tagAdj, after.tagAdj);
   d('同一角色连着来', before.whoAdj, after.whoAdj);
-  d('三张牌里有重复', before.tripleDup, after.tripleDup);
+  console.log('  ' + '三张牌里有重复'.padEnd(20) + (before.tripleDup / before.draws * 100).toFixed(2) + '% → 不再预览（垫层空白）');
   console.log('  ' + '一局内有重复卡'.padEnd(20) + (before.repeatGames / before.games * 100).toFixed(1) + '% → ' + (after.repeatGames / after.games * 100).toFixed(1) + '%');
   console.log('  ' + '单张卡一局最多'.padEnd(20) + before.maxPerGame + ' 次 → ' + after.maxPerGame + ' 次');
 }

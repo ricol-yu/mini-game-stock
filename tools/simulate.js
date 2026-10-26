@@ -65,10 +65,8 @@ for (let g = 0; g < RUNS; g++) {
   const uniq = {};
 
   for (let turn = 0; turn < 360 && !sandbox.S.over; turn++) {
-    // 真实抽卡：抽三张（后两张是垫层，不计数）、只打第一张
+    // 真实抽卡：抽一张打一张（下面两张垫层是空白牌背，不预读、不计数）
     const first = sandbox.pick();
-    sandbox.pickPeek(1, first);      // 垫层只预览不消耗
-    sandbox.pickPeek(2, first);
     picks[first._id] = (picks[first._id] || 0) + 1;
 
     const dir = rng() < 0.5 ? 'L' : 'R';    // 玩家随机乱滑（与原型图例 600 局口径一致）

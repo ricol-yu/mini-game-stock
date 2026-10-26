@@ -32,10 +32,7 @@ installFastWhen(sandbox);   // 对拍通过后加速 whenOK，让原型自己的
 /* 抽卡走原型自己的 pick()：洗牌袋 / 冷却 / 同类摊开只有那一份实现。
    以前这里抄过一遍，任何一次抽卡算法改动都会让「仿真结论」与「玩家体验」分叉。 */
 function nextCard(rng, S) {
-  const first = sandbox.pick();
-  sandbox.pickPeek(1, first);   // 垫层只预览，不消耗袋子
-  sandbox.pickPeek(2, first);
-  return first;
+  return sandbox.pick();   // 垫层是空白牌背：不预读、不消耗、不记「见过」
 }
 
 function effects(c) { return { L: vec(c.L && c.L.e), R: vec(c.R && c.R.e) }; }
