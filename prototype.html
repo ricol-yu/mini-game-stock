@@ -102,6 +102,9 @@
   .tape .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:10px;color:var(--ink-3)}
   .mbar i{position:absolute;top:0;height:100%;transition:width .45s cubic-bezier(.4,1.2,.4,1),left .45s cubic-bezier(.4,1.2,.4,1)}
+  /* 三段条哪段动了就闪一下（和飘字同呼吸：飘字说变了多少，这里说动的是哪段钱） */
+  .mbar i.hit{animation:barHit 1.15s ease-out both}
+  @keyframes barHit{0%{filter:brightness(1.85) saturate(1.5)}55%{filter:brightness(1.4)}100%{filter:brightness(1)}}
   .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-2)}
   small{font-size:10.5px}
 
@@ -122,6 +125,8 @@
   .card .txt{font-size:16px;line-height:1.72;color:var(--ink);flex:1;letter-spacing:.2px}
   .card .foot{border-top:1px dashed var(--line);padding-top:8px;font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between}
   .card .foot .l{color:var(--down)} .card .foot .r{color:var(--up)}
+  /* 现金不够还选花钱项时的预警：会自动卖股票、再不够就欠债——提前说，别让玩家以为钱是凭空扣的 */
+  .card .foot small{font-size:9px;font-weight:600;color:#ad4e00;margin-left:3px;white-space:nowrap}
 
   .stamp{position:absolute;top:14px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;
     letter-spacing:.5px;border:3px solid;opacity:0;pointer-events:none;background:rgba(255,255,255,.94);max-width:200px}
@@ -300,6 +305,7 @@ function spend(x){
   if(cut > 0 && !S.st.halt){
     S.cost -= S.cost * (S.equity > 0 ? cut / S.equity : 1);
     S.equity -= cut; S.mind -= 5; S.trades++; need -= cut;
+    S._autoSell = (S._autoSell || 0) + cut;         // 这笔是拿股票抵的——toast 必须说，玩家得知道钱从哪来
   }
   if(need > 0){ S.debt += need; S.social -= 3; S._autoDebt = (S._autoDebt || 0) + need; }
 }
@@ -703,6 +709,10 @@ function render(){
   $("b-cash").style.width = wC + "%"; $("b-cash").style.left = "0";
   $("b-eq").style.width = wE + "%";   $("b-eq").style.left = wC + "%";
   $("b-debt").style.width = clamp(S.debt / MONEY_CAP * 100, 0, 100) + "%";
+  // 三段条哪段动了就闪一下：飘字说「变了多少」，这里说「动的是哪段钱」——
+  // 「现金 0 还能花钱」的困惑就来自看不出扣的是股票还是欠款
+  barFlash($("b-cash"), S.cash - S._pc); barFlash($("b-eq"), S.equity - S._pe); barFlash($("b-debt"), S.debt - S._pd);
+  S._pc = S.cash; S._pe = S.equity; S._pd = S.debt;
 
   $("tape").innerHTML = tapeHTML();                    // 当日分时图
   try{                                                 // 划线动画：先量长度再放行（桩环境没有 getTotalLength，静默跳过）
@@ -779,6 +789,15 @@ function render(){
 function toast(t){
   var el = $("toast"); el.textContent = t; el.classList.add("on");
   clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove("on"); }, 2400);
+}
+
+/* 资金条闪烁：动了的段亮一下再暗回去（纯展示，桩里 className 也能空跑） */
+function barFlash(el, d){
+  if(!el || !(Math.abs(d) >= 1)) return;              // 写成 !(>=1)：把 NaN（首次 render 没基线）也拦下
+  el.className = el.className.replace(/\s*hit/g, ""); void el.offsetWidth;
+  el.className += " hit";
+  clearTimeout(el._f);
+  el._f = setTimeout(function(){ el.className = el.className.replace(/\s*hit/g, ""); }, 1150);
 }
 
 /* ============ 每天的钱变了多少（2026-10-26） ============
@@ -1010,8 +1029,15 @@ function build(c){
   d.innerHTML = '<div class="stamp L"></div><div class="stamp R"></div>' +
     '<div class="who"><div class="av">' + c.av + '</div><div class="nm">' + c.who + '</div>' +
     '<div class="tag">' + c.tag + '</div></div><div class="txt">' + c.txt + '</div>' +
-    '<div class="foot"><span class="l">← ' + c.L.s + '</span><span class="r">' + c.R.s + ' →</span></div>';
+    '<div class="foot"><span class="l">← ' + c.L.s + shortNote(c.L && c.L.e) +
+    '</span><span class="r">' + c.R.s + shortNote(c.R && c.R.e) + ' →</span></div>';
   d._c = c; return d;
+}
+/* 现金不够还选花钱项：会自动卖股票抵、再不够就记负债——选之前就说清楚（教程卡没有 e，静默跳过） */
+function shortNote(e){
+  var have = Math.max(S.cash, 0);
+  if(!e || !e.spend || e.spend <= have) return "";
+  return ' <small>' + (S.equity >= e.spend - have && !S.st.halt ? "不够，卖股票抵" : "不够，会欠债") + '</small>';
 }
 /* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片 */
 var TUT = [
@@ -1089,13 +1115,23 @@ function fly(dir){
   S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
   setTimeout(function(){
-    // 借钱分两种来路，措辞不同：主动借（卡面 borrow）vs 现金不够被动欠（spend 自动记负债）
-    if(borrowed > 0){
-      var auto = S._autoDebt || 0; S._autoDebt = 0;
-      m = (auto > 0 ? "💸 现金不够，欠下 " + money(auto) + "，已记进负债" : "💳 借到 " + money(borrowed) + "，已记进负债") + (m ? "　·　" + m : "");
-    } else if(borrowed < 0){
-      m = "✅ 还掉 " + money(-borrowed) + "，负债减少" + (m ? "　·　" + m : "");
+    /* 「这笔钱从哪来」的账（2026-10-27）：
+       ① 主动借（卡面 borrow）→ borrowed > 0；② 主动还 → borrowed < 0；
+       ③ 现金不够硬花 → 自动卖股票（_autoSell），还不够就欠债（_autoDebt）。
+       早先 auto 的提示只在 borrowed > 0 时读——没有 borrow 的卡花了钱欠了债，提示被整个吞掉，
+       _autoDebt 还残留到下一张，这就是「现金 0 还能一直花钱，钱不知道扣哪了」的体验来源。 */
+    var auto = S._autoDebt || 0; S._autoDebt = 0;
+    var sold = S._autoSell || 0; S._autoSell = 0;
+    var notes = [];
+    if(borrowed > 0) notes.push("💳 借到 " + money(borrowed) + "，已记进负债");
+    if(borrowed < 0) notes.push("✅ 还掉 " + money(-borrowed) + "，负债减少");
+    if(sold > 0 || auto > 0){
+      var parts = [];
+      if(sold > 0) parts.push("卖了 " + money(sold) + " 的股票");
+      if(auto > 0) parts.push("欠下 " + money(auto));
+      notes.push("💸 现金不够：" + parts.join("，还"));
     }
+    if(notes.length) m = notes.join("　·　") + (m ? "　·　" + m : "");
     if(m) toast(m);
   }, c.st ? 1800 : 260);
   setTimeout(function(){ busy = false; check(); if(!S.over) nextCard(); }, 340);

@@ -224,5 +224,44 @@ step('净值飘字：发薪日飘的金额 = 实际净值变化，且只有金�
     throw new Error('飘字 ' + shown + ' 与净值差 ' + (sandbox.net() - n0) + ' 对不上');
 });
 
+/* 「现金 0 还能花钱，扣的是哪里的钱」（2026-10-27）：spend 的去向 = 先卖股票、再欠债。
+   玩家必须两头都看得见：结算后 toast 说清楚（_autoSell/_autoDebt），选之前卡片上就预警（shortNote）。 */
+step('现金不够花钱：卖股票记账，没股票就欠债，两笔都进提示队列', () => {
+  sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
+  sandbox.S.cash = 500; sandbox.S.equity = 9000; sandbox.S.debt = 0;
+  sandbox.spend(3000);                               // 500 现金 + 卖 2,500 股票
+  if (sandbox.S._autoSell !== 2500) throw new Error('卖股票没记账：' + sandbox.S._autoSell);
+  if (sandbox.S.equity !== 6500) throw new Error('股票没少：' + sandbox.S.equity);
+  if (sandbox.S._autoDebt) throw new Error('明明卖得起股票，怎么还欠债：' + sandbox.S._autoDebt);
+  sandbox.S.cash = 100; sandbox.S.equity = 0; sandbox.S.debt = 0;
+  sandbox.spend(2000);                               // 没股票可卖 → 全欠
+  if (sandbox.S.debt !== 1900) throw new Error('欠债没记账：' + sandbox.S.debt);
+  if (sandbox.S._autoDebt !== 1900) throw new Error('欠债没进提示队列');
+});
+
+step('卡片预警：现金不够的花钱项在 foot 上标「不够」，不花钱的项不标', () => {
+  sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
+  sandbox.S.cash = 100; sandbox.S.equity = 9000;
+  const c = { id:'w1', who:'测试', av:'🧪', tag:'测试', txt:'x',
+              L:{ s:'花大钱', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
+  const h = sandbox.build(c).innerHTML;
+  if (h.indexOf('不够') < 0) throw new Error('花钱项没有预警：' + h.slice(-200));
+  if (h.indexOf('卖股票') < 0) throw new Error('没说会卖股票：' + h.slice(-200));
+  const rs = h.split('<span class="r">')[1] || '';
+  if (rs.indexOf('不够') >= 0) throw new Error('不花钱的选项也被预警了');
+});
+
+step('资金条闪烁：动了的段挂 hit 类，没动的段不挂', () => {
+  sandbox.S.tut = 3; sandbox.reset(); sandbox.render();   // 建立 _pc/_pe/_pd 基线
+  // 桩的 setTimeout 不执行、hit 类不会自动摘；真实浏览器里 1.15s 后已摘干净，先模拟这一点
+  ['b-cash', 'b-eq', 'b-debt'].forEach(id => { getEl(id).className = ''; });
+  const cls = id => getEl(id).className;
+  sandbox.S.cash -= 400; sandbox.render();
+  if (cls('b-cash').indexOf('hit') < 0) throw new Error('现金条动了没闪：' + cls('b-cash'));
+  if (cls('b-eq').indexOf('hit') >= 0) throw new Error('持仓没动却闪了：' + cls('b-eq'));
+  sandbox.S.debt += 900; sandbox.render();
+  if (cls('b-debt').indexOf('hit') < 0) throw new Error('负债条动了没闪：' + cls('b-debt'));
+});
+
 console.log(fail ? '\n✗ UI 冒烟失败 ' + fail + ' 项\n' : '\n✓ UI 冒烟全绿\n');
 process.exit(fail ? 1 : 0);
