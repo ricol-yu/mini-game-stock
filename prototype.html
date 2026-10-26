@@ -535,38 +535,59 @@ function tick(){
 
 /* ============ 分时图 ============
    每天一条：昨收（中轴虚线）→ 今收的盘中路径，涨红跌绿，线下淡色填充。
-   路径由 (day, 昨收, 今收, 是否封板) 确定性生成 —— **一个 Math.random 都不调**：
-   它纯属展示，动了随机序列就会挪动抽卡和行情，让所有仿真基线失去可比性。
+   路径由 (day, 昨收, 今收, 是否封板) 确定性生成 —— **全局 Math.random 一个都不许调**：
+   它纯属展示，动了全局随机序列就会挪动抽卡和行情，让所有仿真基线失去可比性。
+   噪声用本地 Lehmer 伪随机（tapeRand）自己播一串，与全局序列彻底隔离。
    涨停/跌停直接封在上下边界上（线爬到板就压平），一眼看得见「到板了」。 */
 var TAPE_W = 296, TAPE_H = 46;
+
+/* 本地确定性伪随机：只给分时线造噪声，不碰 Math.random */
+function tapeRand(s){
+  s = (Math.abs(s | 0) % 2147483646) + 1;
+  return function(){
+    s = (s * 48271) % 2147483647;
+    return (s / 2147483647) * 2 - 1;                  // −1..1
+  };
+}
+
 function tapeHTML(){
   var it = S.intra;
   if(!it) return '<div class="empty">开盘前</div>';
-  var W = TAPE_W, H = TAPE_H, mid = H / 2, pad = 2.5, n = 49, i, t, p, v, nz, damp;
+  var W = TAPE_W, H = TAPE_H, mid = H / 2, pad = 2.5, n = 96, i, t, p, v, damp, base;
   var prev = it.prev || 1, close = it.close || prev, lim = it.lim || "";
   var dev = close / prev - 1, day = it.day || 1;
-  var seed = (day % 89) * 1.37 + 0.4;
-  var knee = 0.30 + ((day * 29) % 34) / 100;          // 封板时刻 30%~63%（确定性，不用随机）
-  var pts = [], mx = 0;
+  var rnd = tapeRand(day * 7919 + 37);
+  var knee = 0.26 + ((day * 29) % 34) / 100;            // 封板/崩盘时刻 26%~59%（确定性）
+  var seal = lim === "up" || lim === "down" || lim === "crash";
+  // 纵向标尺先定（噪声幅度跟着标尺走，避免「先造噪声再定标尺」的循环）
+  var band = lim === "crash"
+      ? Math.min(0.60, Math.max(0.12, Math.abs(dev) * 1.06))   // 崩盘日按实际跌幅撑开，线贴到底不越界
+      : Math.min(0.10, Math.max(0.03, Math.abs(dev) * 1.45 + 0.008));
+
+  // 走势骨架：每天在五种里挑一种，否则天天是同一条 S 曲线
+  var hump = [0, -0.44, 0.50, -0.58, 0.30][(day * 37 + 11) % 5];   // 中段鼓包/下凹（按当日涨跌缩放）
+  var amp = lim === "halt" ? 0 : band * 0.34;            // 停牌=价格冻结：一条死平线，一点不晃
+  var w = 0, spikeAt = 6 + (day * 13) % (n - 20), pts = [];
   for(i = 0; i < n; i++){
     t = i / (n - 1);
-    if(lim === "up" || lim === "down" || lim === "crash"){
-      p = t >= knee ? 1 : t / knee;                   // 冲到板（或崩到底），然后一直封着
+    if(seal){
+      p = t >= knee ? 1 : t / knee;                      // 冲到板（或崩到底），然后一直封着
       p = p * p * (3 - 2 * p);
       damp = t >= knee ? 0 : Math.sin(Math.PI * Math.min(t / knee, 1));
     }else{
-      p = t * t * (3 - 2 * t);                        // 平时走个 S 形
-      damp = Math.sin(Math.PI * t);                   // 两头收敛，中间放开噪
+      p = t * t * (3 - 2 * t);
+      p += hump * Math.sin(Math.PI * t);                 // 骨架起伏只加在普通日，封板日要冲着板走
+      damp = Math.sin(Math.PI * t);                      // 两头收敛：开盘和收盘都不许乱
     }
-    nz = Math.sin((i + 1) * 2.31 + seed) * 0.6 + Math.sin((i + 1) * 0.87 + seed * 1.9) * 0.4;
-    v = (prev + (close - prev) * p) * (1 + nz * 0.005 * damp);
-    pts[i] = v / prev - 1;
-    if(Math.abs(pts[i]) > mx) mx = Math.abs(pts[i]);
+    base = prev + (close - prev) * p;
+    w = w * 0.76 + rnd() * 0.62;                         // AR(1)：噪声带记忆，像盘口，不是白噪声
+    v = base + prev * (w * 0.5 + (i === spikeAt ? rnd() * 2.2 : 0)) * amp * damp;
+    var pt = v / prev - 1, cap = band * 1.05;
+    if(lim === "up") pt = Math.min(pt, dev);             // 涨停日不许戳破天花板
+    else if(lim === "down" || lim === "crash") pt = Math.max(pt, dev);
+    pts[i] = Math.max(-cap, Math.min(cap, pt));
   }
-  pts[0] = 0; pts[n - 1] = dev;                       // 两端钉死在真实收盘上
-  var band = lim === "crash"
-      ? Math.min(0.60, Math.max(0.12, Math.abs(dev) * 1.12))   // 崩盘日按实际跌幅撑开标尺，否则线会跑出画布
-      : Math.min(0.10, Math.max(0.03, mx * 1.3));              // 纵向标尺：小行情放大看，到板就是 ±10%
+  pts[0] = 0; pts[n - 1] = dev;                          // 两端钉死在真实收盘上（图上写的数就是它）
   var flat = Math.abs(dev) < 0.0005;                    // 平盘：不涂红也不涂绿，免得「今 +0.0%」标成上涨
   var C = lim === "halt" || flat ? "#8f959e" : (dev >= 0 ? "#e02020" : "#0aa344");
   var ln = "", x, y, lastY = mid;
