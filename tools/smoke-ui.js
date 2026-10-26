@@ -178,10 +178,11 @@ step('HUD 账单胶囊渲染出来（含金额）', () => {
 });
 
 /* 净值飘字（2026-10-26）：玩家反馈「金钱有变动看起来不明显」。
-   规则：只在净值真的变了时飘，涨用红（up）跌用绿（down），显示的数字必须等于实际净值差。 */
+   规则：只在净值真的变了时飘，涨用红（up）跌用绿（down），显示的数字必须等于实际净值差。
+   只有金额、没有小字（跟过一版来源明细，玩家说奇怪，去掉了）。 */
 function deltaBox() { return getEl('v-delta'); }
 function shownDelta() {
-  const m = deltaBox().innerHTML.match(/<b>([+−])¥([\d,]+)<\/b>/);
+  const m = deltaBox().textContent.match(/^([+−])¥([\d,]+)$/);
   if (!m) return null;
   return (m[1] === '+' ? 1 : -1) * Number(m[2].replace(/,/g, ''));
 }
@@ -208,19 +209,17 @@ step('净值飘字：跌了飘绿字', () => {
 step('净值飘字：没变化就不飘（防止每帧重播）', () => {
   sandbox.render();
   if (deltaBox().className.indexOf('on') >= 0) throw new Error('净值没动却又播了一次');
-  if (deltaBox().innerHTML !== '') throw new Error('净值没动却留着数字：' + deltaBox().innerHTML);
+  if (deltaBox().textContent !== '') throw new Error('净值没动却留着数字：' + deltaBox().textContent);
 });
 
-step('净值飘字：发薪日飘的总数 = 实际净值变化，明细点出最大来源（工资）', () => {
+step('净值飘字：发薪日飘的金额 = 实际净值变化，且只有金额、没有多余小字', () => {
   sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
   sandbox.S.day = 5; sandbox.S.cash = 30000; sandbox.S.debt = 0;
   sandbox.render();                                  // 先把手动改现金这一下同步掉，再算「当天」的账
   const n0 = sandbox.net();
   sandbox.tick(); sandbox.render();
-  const html = deltaBox().innerHTML;
-  if (html.indexOf('工资') < 0) throw new Error('发薪日没提工资：' + html);
   const shown = shownDelta();
-  if (shown === null) throw new Error('发薪日没飘：' + html);
+  if (shown === null) throw new Error('发薪日没飘，或文案不是「±¥金额」：' + JSON.stringify(deltaBox().textContent));
   if (Math.abs(shown - (sandbox.net() - n0)) > 2)
     throw new Error('飘字 ' + shown + ' 与净值差 ' + (sandbox.net() - n0) + ' 对不上');
 });

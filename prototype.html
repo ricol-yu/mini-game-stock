@@ -61,20 +61,19 @@
     padding:6px 10px;flex:0 0 auto}
   .mkt .t{display:flex;align-items:baseline;justify-content:space-between}
   .mkt .t b{font-size:15px;font-variant-numeric:tabular-nums;display:inline-block}
-  /* 每天净值的涨跌：飘一个 ±金额（涨红跌绿），同行跟一笔小的来源说明。
+  /* 每天净值的涨跌：在净值右边飘一个 ±金额（涨红跌绿），停 2 秒多再走。
      绝对定位挂在净值右侧，不占布局——否则每天数字一变，右边的收益率就跟着抖一下。 */
   .mkt .t .amt{position:relative;display:inline-block}
-  .mkt .dlt{position:absolute;left:100%;top:1px;margin-left:7px;font-style:normal;display:flex;
-    align-items:baseline;gap:5px;max-width:165px;opacity:0;pointer-events:none;white-space:nowrap;line-height:1.3}
-  .mkt .dlt b{flex:0 0 auto;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
-  .mkt .dlt em{flex:0 1 auto;min-width:0;font-style:normal;font-size:9.5px;color:var(--ink-3);
-    overflow:hidden;text-overflow:ellipsis}
-  .mkt .dlt.on{animation:dltUp 1.3s cubic-bezier(.25,.9,.3,1) both}
+  .mkt .dlt{position:absolute;left:100%;top:1px;margin-left:8px;font-style:normal;
+    font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3;
+    white-space:nowrap;opacity:0;pointer-events:none}
+  .mkt .dlt.on{animation:dltUp 2.9s cubic-bezier(.22,.9,.3,1) both}
+  /* 前 6% 淡入，84% 才开始走——玩家读完牌抬眼还能看见这笔账 */
   @keyframes dltUp{
-    0%{opacity:0;transform:translateY(8px) scale(.92)}
-    14%{opacity:1;transform:translateY(0) scale(1)}
-    66%{opacity:1;transform:translateY(-3px)}
-    100%{opacity:0;transform:translateY(-10px)}
+    0%{opacity:0;transform:translateY(8px) scale(.94)}
+    6%{opacity:1;transform:translateY(0) scale(1)}
+    84%{opacity:1;transform:translateY(0) scale(1)}
+    100%{opacity:0;transform:translateY(-8px) scale(.99)}
   }
   /* 净值数字本身也闪一下，跟飘字同呼吸（用 transform 不改布局宽度） */
   .mkt .t b.hit-up{animation:hitUp .95s ease-out both}
@@ -417,12 +416,6 @@ function trend5(){                                  // 近 5 日涨跌幅：给�
 function tick(){
   cyc++;
   var st = S.st, msg = [], stockAt = -1;               // stockAt：今天那句「这只票…」在 msg 里的下标（泡沫破要回写）
-  /* 今天的钱都去哪儿了（2026-10-26）：逐笔记账，收盘后飘在净值旁边。
-     只记对「净值」有影响的项——月供是现金换负债、净值不变，所以不进这张表，
-     否则明细加起来跟头顶那个数字对不上，玩家会立刻发现。
-     flow 与净值的差额最后会补一条「其他」，保证账平。 */
-  var flow = [];
-  function addFlow(nm, v){ if(Math.abs(v) >= 1) flow.push({ nm: nm, v: v }); }
   // 期望略为负（大多数人赚不到钱——这就是市场）+ 小幅牛熊摆动；大事件状态再叠加
   var drift = -0.004 + Math.sin(cyc / 14) * 0.012;
   if(st.bubble) drift += 0.028;
@@ -461,7 +454,6 @@ function tick(){
     sr = Math.max(-0.0995, Math.min(0.0995, sr));
     var before = S.equity;
     if(S.equity > 0) S.equity = Math.max(0, S.equity * (1 + sr));
-    addFlow("股票", S.equity - before);
 
     if(before > 0){
       var pct = (S.equity - before) / before;
@@ -492,9 +484,7 @@ function tick(){
     if(Math.random() < p || age >= 14){
       var drop = 0.30 + Math.random() * 0.28;
       if(!S.st.halt){
-        var eqB = S.equity;
         S.equity *= (1 - drop);
-        addFlow("泡沫破了", S.equity - eqB);
         // 泡沫破是这只票自己的崩盘，行情线必须跟着崩——否则图上是红的、文字却是 −44%，
         // 玩家一眼就看出两套账。指数只用于展示，改它不影响平衡。
         S.index *= (1 - drop);
@@ -523,7 +513,7 @@ function tick(){
   if(st.bear){ st.bear = st.bear > 0 ? st.bear - 1 : -1; S.mind -= 0.4; }   // 熊市磨人
   if(st.halt){ st.halt = st.halt > 0 ? st.halt - 1 : -1; S.mind -= 0.8; }
   if(st.fired){ S.mind -= 1.1; }
-  if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; addFlow("奶粉钱", -180); }
+  if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; }
   if(st.over){ S.mind -= 0.5; S.risk = clamp(S.risk + 0.3, 0, 100); }
 
   // 精力：没有任何自然恢复——50 点开局存量，只能靠卡片回血（睡觉/早睡/不看盘）。
@@ -540,10 +530,9 @@ function tick(){
     if(S.st.halt){ S.mind -= 8; S.social -= 4; msg.push("💥 催债的电话打到了家里"); }
     else if(S.equity > 0){
       var cut = S.equity * 0.35; S.equity -= cut; S.cost -= S.cost * 0.35;
-      addFlow("被强平", -cut);
       S.mind -= 12; S.social -= 4;
       msg.push("💥 有人替你平了仓 −" + money(cut).replace("¥","¥"));
-    } else { S.mind -= 9; S.social -= 5; S.debt += 2000; addFlow("欠款又滚", -2000); msg.push("💥 欠款又滚了一圈"); }
+    } else { S.mind -= 9; S.social -= 5; S.debt += 2000; msg.push("💥 欠款又滚了一圈"); }
     S.risk = clamp(S.risk - 18, 0, 100);
   }
 
@@ -556,15 +545,14 @@ function tick(){
   if(dayOfMonth === PAYDAY - 1) msg.push("📅 明天 " + PAYDAY + " 号：发工资，房租水电也一起扣");
   if(dayOfMonth === PAYDAY){
     if(S.st.fired) msg.push("💰 别人发工资，你没有");
-    else { S.cash += SALARY; S.mind += 2; addFlow("工资", SALARY); msg.push("💰 工资到账 " + money(SALARY)); }
+    else { S.cash += SALARY; S.mind += 2; msg.push("💰 工资到账 " + money(SALARY)); }
     // 固定账单：房租 + 水电物业通讯保险。房东年年涨，这里按月折算（BILL_GROW）
     var b = billOf(S.day), bill = b.total, rent = b.rent, util = b.util;
     if(S.cash >= bill){
-      S.cash -= bill; addFlow("房租", -bill);
+      S.cash -= bill;
       msg.push("🏠 房租 " + money(rent) + " + 水电物业 " + money(util) + "，剩 " + money(S.cash));
     } else {
       var bshort = bill - S.cash; S.cash = 0; S.debt += bshort; S.mind -= 2;
-      addFlow("房租", -bill);                      // 现金清空 + 欠的那截，净值就是少了整张账单
       S._autoDebt = (S._autoDebt || 0) + bshort;
       msg.push("🏠 房租水电 " + money(bill) + " 交不上，欠了 " + money(bshort));
     }
@@ -585,13 +573,11 @@ function tick(){
   // 平时的日用：吃饭、通勤、零碎。压得低——重拳留给月初那张账单
   var burn = (S.day <= INFL_FROM ? EARLY_BURN : BURN * Math.pow(1 + INFL_RATE, S.day - INFL_FROM));
   S.cash -= burn;
-  addFlow("日用", -burn);
   if(S.day === INFL_FROM + 1) msg.push("🧾 菜价涨了，日子比前一阵贵");
   if(S.day % 10 === 0 && S.cash < 2000) msg.push("🧾 房租水电一样不少，账户快见底了");
 
   var interest = S.debt * 0.0015 * (1 + S.risk / 70);   // 风险越高，钱越贵
   S.cash -= interest;
-  addFlow("利息", -interest);
   S.risk = clamp(S.risk - 0.15, 0, 100);                      // 风险消退得很慢
   S.social = clamp(S.social - 0.25, 0, 100);                  // 人情不维护就会淡（60 天 −15）
   if(S.equity > 0 && S.equity >= (S.cash + S.equity) * 0.75)
@@ -609,7 +595,6 @@ function tick(){
   // 现金不留在负数上：负的部分就是刷了信用卡，转进负债（负债条上看得见，利息也才开始算）
   if(S.cash < 0){ S.debt += -S.cash; S.cash = 0; }
   if(interest > 0.5) msg.push("利息 −" + money(interest).replace("-¥","¥"));
-  S._flow = flow;                                     // 交给 render：收盘后把这张账单飘在净值旁边
   S.day++;
   var n = net();
   if(n > S.peak) S.peak = n;
@@ -776,9 +761,8 @@ function render(){
   var nPrev = (typeof S._netPrev === "number" ? S._netPrev : n), dNet = n - nPrev;
   S._netPrev = n;
   $("v-net").textContent = money(n);
-  if(!S.over && Math.abs(dNet) >= 1) showDelta(dNet, S._cardNet || 0, S._flow);
-  else { var db = $("v-delta"); db.className = "dlt"; db.innerHTML = ""; }   // 没变化就别留旧数字在 DOM 里
-  S._cardNet = 0; S._flow = null;                    // 一次刷新消费一次，避免同一个数被重复飘
+  if(!S.over && Math.abs(dNet) >= 1) showDelta(dNet);
+  else { var db = $("v-delta"); db.className = "dlt"; db.textContent = ""; }   // 没变化就别留旧数字在 DOM 里
   var rate = (n - INIT) / INIT * 100, p = $("v-pnl");
   p.textContent = (rate >= 0 ? "+" : "") + rate.toFixed(1) + "%";
   p.className = rate > 0.5 ? "up" : (rate < -0.5 ? "down" : "flat");
@@ -799,51 +783,22 @@ function toast(t){
 
 /* ============ 每天的钱变了多少（2026-10-26） ============
    反馈：「每次金钱有变动看起来不明显，看不出每天是多了还是少了」。
-   于是每天结算后，在净值右边飘一个 ±金额（涨红跌绿，A 股习惯），数字本身同时闪一下；
-   下面挂两笔最大的来源（工资 / 房租水电 / 股票 / 这个选择），让玩家知道钱从哪来、到哪去。
-   只飘「净值」的变化：月供、还钱是现金换负债，净值不动，所以不在这张账单里。 */
-function flowItems(cardNet, flow, dNet){
-  var out = [], sum = 0, i;
-  if(Math.abs(cardNet) >= 1){ out.push({nm:"这个选择", v:cardNet}); sum += cardNet; }
-  if(flow) for(i = 0; i < flow.length; i++){ out.push(flow[i]); sum += flow[i].v; }
-  var rest = dNet - sum;
-  if(Math.abs(rest) >= 50) out.push({nm:"其他", v:rest});     // 兜底：保证明细加起来等于头顶那个数
-  // 同名的先合并（股票可能被记两次：正常波动 + 泡沫破/被强平另算）
-  var acc = {}, order = [];
-  for(i = 0; i < out.length; i++){
-    var k = out[i].nm;
-    if(acc[k] === undefined){ acc[k] = { nm:k, v:out[i].v }; order.push(k); }
-    else acc[k].v += out[i].v;
-  }
-  var arr = [], other = null;
-  for(i = 0; i < order.length; i++){
-    var it = acc[order[i]];
-    if(Math.abs(it.v) < 1) continue;
-    if(order[i] === "其他"){ other = it; continue; }   // 「其他」永远垫底，别把真正的重点挤掉
-    arr.push(it);
-  }
-  arr.sort(function(a, b){ return Math.abs(b.v) - Math.abs(a.v); });
-  if(other) arr.push(other);
-  return arr;
-}
-function showDelta(d, cardNet, flow){
+   于是每天结算后，在净值右边飘一个 ±金额（涨红跌绿，A 股习惯），数字本身同时闪一下。
+   只飘「净值」的变化：月供、还钱是现金换负债，净值不动，所以不在里面。
+   （一度跟过一行「工资+11,000 等4笔」的来源小字，玩家说很奇怪——去掉了，
+     钱从哪来底部日志里本来就有，不缺这一行。） */
+function showDelta(d){
   var box = $("v-delta"); if(!box) return;
-  var up = d > 0, items = flowItems(cardNet, flow, d), txt = "";
-  // 右侧只挤得下一笔来源（净值到 8 万 + 收益率挤在一起会重叠），多的折成「等N笔」
-  if(items.length){
-    var x = items[0];
-    txt = x.nm + (x.v > 0 ? "+" : "−") + Math.abs(Math.round(x.v)).toLocaleString("en-US") +
-          (items.length > 1 ? " 等" + items.length + "笔" : "");
-  }
+  var up = d > 0;
   box.className = "dlt";                                        // 先摘类，逼 CSS 动画从头播
-  box.innerHTML = "<b>" + (up ? "+" : "−") + money(Math.abs(d)) + "</b>" +
-                  (txt ? "<em>" + txt + "</em>" : "");  void box.offsetWidth;
+  box.textContent = (up ? "+" : "−") + money(Math.abs(d));
+  void box.offsetWidth;
   box.className = "dlt on " + (up ? "up" : "down");
   var nb = $("v-net");
   nb.className = ""; void nb.offsetWidth;
   nb.className = up ? "hit-up" : "hit-dn";
   clearTimeout(nb._ht);
-  nb._ht = setTimeout(function(){ nb.className = ""; }, 1000);   // 闪完把颜色还给默认
+  nb._ht = setTimeout(function(){ nb.className = ""; }, 1500);   // 闪完把颜色还给默认
 }
 
 /* ============ 卡牌交互 ============ */
@@ -1122,9 +1077,8 @@ function fly(dir){
     return;
   }
 
-  var debt0 = S.debt, net0 = net();
+  var debt0 = S.debt;
   resolve(c, dir);
-  S._cardNet = net() - net0;                         // 这个选择本身让净值变了多少（飘字的第一笔）
   var borrowed = S.debt - debt0;                     // 这一选择借了多少钱（给 toast 提示用）
   // 卡牌自带状态：给玩家一个提示
   if(c.st) for(var k in c.st){
