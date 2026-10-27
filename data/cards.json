@@ -44,7 +44,7 @@
         "miss": "child"
       },
       "right": {
-        "label": "出 3,000 报名",
+        "label": "出 {} 报名",
         "effects": {
           "spend": 3000,
           "social": 7,
@@ -71,7 +71,7 @@
         "miss": "lover"
       },
       "right": {
-        "label": "说实话",
+        "label": "说实话，转 {} 给她",
         "effects": {
           "mind": 4,
           "social": 5,
@@ -98,7 +98,7 @@
         "miss": "lover"
       },
       "right": {
-        "label": "出去吃，我请",
+        "label": "出去吃，我请 {}",
         "effects": {
           "spend": 1200,
           "mind": 7,
@@ -125,7 +125,7 @@
         "miss": "lover"
       },
       "right": {
-        "label": "留着吧",
+        "label": "留着，先花 {}",
         "effects": {
           "spend": 3000,
           "mind": 15,
@@ -147,7 +147,7 @@
       "when": "did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35|miss.lover>=7; did:fam_hunli_01; day>=70",
       "alwaysStatus": null,
       "left": {
-        "label": "……好",
+        "label": "……好，再给 {}",
         "effects": {
           "mind": -14,
           "social": -20,
@@ -155,7 +155,7 @@
         }
       },
       "right": {
-        "label": "挽留，转 5,800",
+        "label": "挽留，转 {}",
         "effects": {
           "spend": 5800,
           "mind": 12,
@@ -237,7 +237,7 @@
         "miss": "fam"
       },
       "right": {
-        "label": "我出 6,500",
+        "label": "我出 {}",
         "effects": {
           "spend": 6500,
           "mind": 2,
@@ -256,7 +256,7 @@
       "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
-        "label": "妈，这个不能要",
+        "label": "不能要，{} 买补品寄家",
         "effects": {
           "mind": 6,
           "social": 5,
@@ -264,7 +264,7 @@
         }
       },
       "right": {
-        "label": "收下，投进去",
+        "label": "收下，{} 投进去",
         "effects": {
           "borrow": 12000,
           "buy": 12000,
@@ -284,7 +284,7 @@
       "when": "did:fam_hunli_01",
       "alwaysStatus": null,
       "left": {
-        "label": "您留着养老",
+        "label": "您留着养老，{} 表心意",
         "effects": {
           "mind": 5,
           "social": 5,
@@ -292,7 +292,7 @@
         }
       },
       "right": {
-        "label": "拿 20,000",
+        "label": "拿 {}",
         "effects": {
           "borrow": 20000,
           "mind": -8,
@@ -320,7 +320,7 @@
         "miss": "child"
       },
       "right": {
-        "label": "连夜去医院",
+        "label": "连夜挂急诊，{}",
         "effects": {
           "spend": 1600,
           "mind": -3,
@@ -367,7 +367,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "搬家",
+        "label": "搬家，先掏 {}",
         "effects": {
           "spend": 2100,
           "cash": 1200,
@@ -377,7 +377,7 @@
         }
       },
       "right": {
-        "label": "认了",
+        "label": "认了，先补 {}",
         "effects": {
           "spend": 800,
           "mind": -2,
@@ -407,7 +407,7 @@
         }
       },
       "right": {
-        "label": "装没听见，继续盯盘",
+        "label": "装没听见，{} 继续补",
         "effects": {
           "buy": 4000,
           "mind": -3,
@@ -429,7 +429,7 @@
         200
       ],
       "left": {
-        "label": "请部门喝奶茶",
+        "label": "{} 请部门喝奶茶",
         "effects": {
           "spend": 800,
           "social": 4,
@@ -462,7 +462,7 @@
         }
       },
       "right": {
-        "label": "理解",
+        "label": "理解，自掏 {} 认购",
         "effects": {
           "mind": -5,
           "social": 3,
@@ -577,7 +577,7 @@
         }
       },
       "right": {
-        "label": "上车 3,000",
+        "label": "上车 {}",
         "effects": {
           "buy": 3000,
           "mind": -3,
@@ -602,7 +602,7 @@
         }
       },
       "right": {
-        "label": "跟 3,000",
+        "label": "跟 {}",
         "effects": {
           "buy": 3000,
           "risk": 4,
@@ -661,7 +661,7 @@
         }
       },
       "right": {
-        "label": "投进去 5,000",
+        "label": "投进去 {}",
         "effects": {
           "cash": 6500,
           "buy": 5000,
@@ -709,7 +709,7 @@
         300
       ],
       "left": {
-        "label": "给家里买点东西",
+        "label": "{} 给家里买点东西",
         "effects": {
           "cash": 15000,
           "spend": 5200,
@@ -718,7 +718,7 @@
         }
       },
       "right": {
-        "label": "全部加仓",
+        "label": "{} 全部加仓",
         "effects": {
           "cash": 15000,
           "buy": 15000,
@@ -743,7 +743,7 @@
         }
       },
       "right": {
-        "label": "随 1,600",
+        "label": "随 {}",
         "effects": {
           "spend": 1600,
           "social": 5,
@@ -769,7 +769,7 @@
         }
       },
       "right": {
-        "label": "全借",
+        "label": "{} 全借",
         "effects": {
           "spend": 5000,
           "social": 5,
@@ -794,7 +794,7 @@
         }
       },
       "right": {
-        "label": "去，AA 也行",
+        "label": "去，AA {}",
         "effects": {
           "spend": 600,
           "social": 8,
@@ -820,7 +820,7 @@
         }
       },
       "right": {
-        "label": "随 800",
+        "label": "随 {}",
         "effects": {
           "spend": 800,
           "social": 6,
@@ -845,7 +845,7 @@
         }
       },
       "right": {
-        "label": "给 6,500",
+        "label": "给 {}",
         "effects": {
           "spend": 6500,
           "risk": 8,
@@ -892,7 +892,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "今晚不看了",
+        "label": "不看了，{} 买血压计",
         "effects": {
           "mind": 9,
           "social": 3,
@@ -969,7 +969,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "带家人出去走走",
+        "label": "花 {} 带家人走走",
         "effects": {
           "spend": 1200,
           "mind": 8,
@@ -996,7 +996,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "去挂个号",
+        "label": "去挂个号，{}",
         "effects": {
           "spend": 1600,
           "mind": 6,
@@ -1028,7 +1028,7 @@
         }
       },
       "right": {
-        "label": "给自己买点东西",
+        "label": "花 {} 给自己买点东西",
         "effects": {
           "spend": 1200,
           "mind": 5,
@@ -1054,7 +1054,7 @@
         }
       },
       "right": {
-        "label": "加仓 3,000",
+        "label": "加仓 {}",
         "effects": {
           "buy": 3000,
           "mind": -2,
@@ -1080,7 +1080,7 @@
         }
       },
       "right": {
-        "label": "抄底 2,000",
+        "label": "抄底 {}",
         "effects": {
           "buy": 2000,
           "mind": -3,
@@ -1105,7 +1105,7 @@
         }
       },
       "right": {
-        "label": "加仓 4,000",
+        "label": "加仓 {}",
         "effects": {
           "buy": 4000,
           "mind": -3,
@@ -1130,7 +1130,7 @@
         }
       },
       "right": {
-        "label": "补仓摊薄成本",
+        "label": "{} 补仓摊成本",
         "effects": {
           "buy": 2000,
           "mind": -7
@@ -1173,7 +1173,7 @@
       "when": "equity>800; equity>cost",
       "alwaysStatus": null,
       "left": {
-        "label": "落袋为安",
+        "label": "落袋，{} 犒劳自己",
         "effects": {
           "sell": 0.5,
           "mind": 4,
@@ -1249,7 +1249,7 @@
       "when": "risk>25",
       "alwaysStatus": null,
       "left": {
-        "label": "只加一半",
+        "label": "只加 {}",
         "effects": {
           "buy": 4000,
           "risk": 4,
@@ -1257,7 +1257,7 @@
         }
       },
       "right": {
-        "label": "满上",
+        "label": "{} 满上",
         "effects": {
           "buy": 8000,
           "risk": 9,
@@ -1310,7 +1310,7 @@
         }
       },
       "right": {
-        "label": "我也加点",
+        "label": "跟着加 {}",
         "effects": {
           "buy": 4000,
           "mind": -3,
@@ -1353,7 +1353,7 @@
       "when": "has:bubble; equity>1000",
       "alwaysStatus": null,
       "left": {
-        "label": "够了，走人",
+        "label": "够了，走人，{} 庆祝",
         "effects": {
           "sell": 1,
           "mind": 5,
@@ -1388,7 +1388,7 @@
         }
       },
       "right": {
-        "label": "这是抄底的机会",
+        "label": "这是机会，抄 {}",
         "effects": {
           "buy": 2500,
           "mind": -3,
@@ -1489,7 +1489,7 @@
         }
       },
       "right": {
-        "label": "先配 12,000",
+        "label": "先配 {}",
         "effects": {
           "borrow": 12000,
           "buy": 12000,
@@ -1515,7 +1515,7 @@
         }
       },
       "right": {
-        "label": "借 12,000 抄底",
+        "label": "借 {} 抄底",
         "effects": {
           "borrow": 12000,
           "buy": 12000,
@@ -1533,14 +1533,14 @@
       "when": "debt>0",
       "alwaysStatus": null,
       "left": {
-        "label": "咬牙全额还",
+        "label": "咬牙全额还 {}",
         "effects": {
           "spend": 8000,
           "mind": 5
         }
       },
       "right": {
-        "label": "还最低",
+        "label": "只还最低 {}",
         "effects": {
           "repay": 3000,
           "mind": -4
@@ -1564,7 +1564,7 @@
         }
       },
       "right": {
-        "label": "交钱",
+        "label": "交 {}",
         "effects": {
           "spend": 8888,
           "risk": 8,
@@ -1590,7 +1590,7 @@
         }
       },
       "right": {
-        "label": "跟 3,000",
+        "label": "跟 {}",
         "effects": {
           "buy": 3000,
           "risk": 5,
@@ -1616,7 +1616,7 @@
         }
       },
       "right": {
-        "label": "满仓埋伏",
+        "label": "{} 满仓埋伏",
         "effects": {
           "buy": 4000,
           "risk": 9,
@@ -1643,7 +1643,7 @@
         }
       },
       "right": {
-        "label": "再借 5,000 补上",
+        "label": "再借 {} 补上",
         "effects": {
           "borrow": 5000,
           "buy": 5000,
@@ -1668,7 +1668,7 @@
         }
       },
       "right": {
-        "label": "还 6,000",
+        "label": "还 {}",
         "effects": {
           "repay": 6000,
           "mind": 4,
@@ -1693,7 +1693,7 @@
         }
       },
       "right": {
-        "label": "每月投 2,000",
+        "label": "每月投 {}",
         "effects": {
           "buy": 2000,
           "mind": 5,
@@ -1737,14 +1737,14 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "赶紧撤单",
+        "label": "赶紧撤单，贴 {}",
         "effects": {
           "mind": -2,
           "spend": 400
         }
       },
       "right": {
-        "label": "就当长线投资",
+        "label": "就当 {} 长线投资",
         "effects": {
           "buy": 8000,
           "mind": -4
@@ -1765,7 +1765,7 @@
         120
       ],
       "left": {
-        "label": "收编",
+        "label": "收编，花 {} 置办",
         "effects": {
           "spend": 800,
           "mind": 8,
@@ -1849,7 +1849,7 @@
         "miss": "child"
       },
       "right": {
-        "label": "现在就签",
+        "label": "现在就签，{} 犒劳",
         "effects": {
           "mind": -2,
           "social": 6,
@@ -1895,7 +1895,7 @@
       "when": "did:fam_hunli_01",
       "alwaysStatus": null,
       "left": {
-        "label": "还行，还行",
+        "label": "还行还行，塞 {} 过关",
         "effects": {
           "social": 5,
           "spend": 3000,
@@ -1998,7 +1998,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "再借一笔",
+        "label": "再借 {}",
         "effects": {
           "borrow": 4000,
           "mind": -2,
@@ -2050,7 +2050,7 @@
         "bull": 15
       },
       "left": {
-        "label": "换半仓进去",
+        "label": "{} 换半仓进去",
         "effects": {
           "buy": 6000,
           "mind": 3,
@@ -2109,7 +2109,7 @@
         }
       },
       "right": {
-        "label": "互相交换代码",
+        "label": "互换代码，跟 {}",
         "effects": {
           "buy": 3000,
           "mind": 2,
@@ -2135,7 +2135,7 @@
         }
       },
       "right": {
-        "label": "小仓位试一手",
+        "label": "小仓 {} 试一手",
         "effects": {
           "buy": 3000,
           "mind": 2,
@@ -2153,7 +2153,7 @@
       "when": "has:bull",
       "alwaysStatus": null,
       "left": {
-        "label": "我去劝他",
+        "label": "我去劝，{} 买点好酒",
         "effects": {
           "spend": 600,
           "social": 5,
@@ -2179,7 +2179,7 @@
       "when": "has:bear",
       "alwaysStatus": null,
       "left": {
-        "label": "发个红包暖场",
+        "label": "{} 发红包暖场",
         "effects": {
           "spend": 200,
           "social": 6,
@@ -2229,7 +2229,7 @@
       "when": "has:bear",
       "alwaysStatus": null,
       "left": {
-        "label": "砸锅卖铁先还上",
+        "label": "砸锅卖铁先还 {}",
         "effects": {
           "spend": 3000,
           "mind": -2,
@@ -2255,7 +2255,7 @@
       "when": "has:bull|has:bear",
       "alwaysStatus": null,
       "left": {
-        "label": "跟着风向调仓",
+        "label": "跟风向，{} 调仓",
         "effects": {
           "buy": 3000,
           "risk": 5,
@@ -2290,7 +2290,7 @@
         }
       },
       "right": {
-        "label": "补一笔摊低成本",
+        "label": "{} 补一笔摊成本",
         "effects": {
           "buy": 4000,
           "mind": -3,
@@ -2308,7 +2308,7 @@
       "when": "did:mkt_bull_taxi_01.r; has:bull",
       "alwaysStatus": null,
       "left": {
-        "label": "跟一手小的",
+        "label": "跟一手小的，{}",
         "effects": {
           "buy": 3000,
           "risk": 9,
@@ -2337,7 +2337,7 @@
         300
       ],
       "left": {
-        "label": "追买回来",
+        "label": "{} 追买回来",
         "effects": {
           "buy": 6000,
           "risk": 8,
@@ -2371,7 +2371,7 @@
         }
       },
       "right": {
-        "label": "掏 5,000 试试",
+        "label": "掏 {} 试试",
         "effects": {
           "spend": 5000,
           "risk": 10,
@@ -2449,7 +2449,7 @@
         "miss": "fam"
       },
       "right": {
-        "label": "预约陪复查",
+        "label": "{} 预约陪复查",
         "effects": {
           "spend": 800,
           "social": 6,
@@ -2468,7 +2468,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "自己找人修",
+        "label": "自己找人修，{}",
         "effects": {
           "spend": 600,
           "mind": 2,
@@ -2519,7 +2519,7 @@
       "when": "did:fam_hunli_01",
       "alwaysStatus": null,
       "left": {
-        "label": "订了餐厅",
+        "label": "订了餐厅，{}",
         "effects": {
           "spend": 900,
           "social": 8,
@@ -2546,7 +2546,7 @@
       "when": "has:baby",
       "alwaysStatus": null,
       "left": {
-        "label": "续费",
+        "label": "续费，交 {}",
         "effects": {
           "spend": 4500,
           "mind": 3
@@ -2572,7 +2572,7 @@
       "when": "has:baby",
       "alwaysStatus": null,
       "left": {
-        "label": "陪她去",
+        "label": "陪她去，花 {}",
         "effects": {
           "spend": 1200,
           "social": 7,
@@ -2599,14 +2599,14 @@
       "when": "did:fam_hunli_01",
       "alwaysStatus": null,
       "left": {
-        "label": "包 6,600",
+        "label": "包 {}",
         "effects": {
           "spend": 6600,
           "social": 8
         }
       },
       "right": {
-        "label": "包 1,600",
+        "label": "包 {}",
         "effects": {
           "social": -6,
           "mind": -2,
@@ -2629,7 +2629,7 @@
         240
       ],
       "left": {
-        "label": "再订一次",
+        "label": "再订一次，{}",
         "effects": {
           "spend": 900,
           "social": 8,
@@ -2722,7 +2722,7 @@
         200
       ],
       "left": {
-        "label": "寄箱水果回去",
+        "label": "花 {} 寄箱水果",
         "effects": {
           "spend": 300,
           "social": 6,
@@ -2760,7 +2760,7 @@
         }
       },
       "right": {
-        "label": "转 2,000 买补品",
+        "label": "转 {} 买补品",
         "effects": {
           "spend": 2000,
           "social": 6,
@@ -2782,7 +2782,7 @@
         300
       ],
       "left": {
-        "label": "连夜回去垫 9,000",
+        "label": "连夜回去垫 {}",
         "effects": {
           "spend": 9000,
           "mind": -6,
@@ -2813,7 +2813,7 @@
         200
       ],
       "left": {
-        "label": "装裱起来挂客厅",
+        "label": "{} 装裱挂客厅",
         "effects": {
           "spend": 500,
           "mind": 8,
@@ -2874,7 +2874,7 @@
         240
       ],
       "left": {
-        "label": "当场保证，买亲子票",
+        "label": "保证，{} 买亲子票",
         "effects": {
           "spend": 800,
           "mind": -3,
@@ -2905,7 +2905,7 @@
         240
       ],
       "left": {
-        "label": "全家下馆子庆祝",
+        "label": "花 {} 全家下馆子",
         "effects": {
           "spend": 1500,
           "social": 8,
@@ -2936,7 +2936,7 @@
         100
       ],
       "left": {
-        "label": "陪她走一走",
+        "label": "陪她走一走，{}",
         "effects": {
           "spend": 300,
           "social": 6,
@@ -2967,7 +2967,7 @@
         80
       ],
       "left": {
-        "label": "陪她看",
+        "label": "陪她看，{} 两张票",
         "effects": {
           "spend": 400,
           "social": 6,
@@ -2998,7 +2998,7 @@
         90
       ],
       "left": {
-        "label": "回去吃饭",
+        "label": "回去吃饭，带 {}",
         "effects": {
           "spend": 200,
           "social": 7,
@@ -3029,7 +3029,7 @@
         100
       ],
       "left": {
-        "label": "认真安排",
+        "label": "认真安排，花 {}",
         "effects": {
           "spend": 800,
           "social": 7,
@@ -3038,7 +3038,7 @@
         }
       },
       "right": {
-        "label": "转个红包打发",
+        "label": "转 {} 红包打发",
         "effects": {
           "spend": 500,
           "social": -4,
@@ -3091,7 +3091,7 @@
         100
       ],
       "left": {
-        "label": "正式在一起",
+        "label": "定下来，{} 吃顿好的",
         "effects": {
           "spend": 600,
           "social": 8,
@@ -3122,7 +3122,7 @@
         120
       ],
       "left": {
-        "label": "补救一下",
+        "label": "花 {} 补救一下",
         "effects": {
           "spend": 1000,
           "mind": -4,
@@ -3153,7 +3153,7 @@
         100
       ],
       "left": {
-        "label": "备足礼数",
+        "label": "备足礼数，{}",
         "effects": {
           "spend": 1500,
           "social": 10,
@@ -3212,7 +3212,7 @@
         100
       ],
       "left": {
-        "label": "一起攒，我改",
+        "label": "一起攒，先转 {}",
         "effects": {
           "spend": 2000,
           "social": 8,
@@ -3243,7 +3243,7 @@
         100
       ],
       "left": {
-        "label": "上门道歉",
+        "label": "带上 {} 上门道歉",
         "effects": {
           "spend": 600,
           "social": 7,
@@ -3273,7 +3273,7 @@
         110
       ],
       "left": {
-        "label": "先付一半，剩下打欠条",
+        "label": "先付 {}，打欠条",
         "effects": {
           "spend": 12000,
           "borrow": 15000,
@@ -3306,7 +3306,7 @@
         150
       ],
       "left": {
-        "label": "风风光光办",
+        "label": "{} 风风光光办",
         "effects": {
           "spend": 12500,
           "social": 12,
@@ -3315,7 +3315,7 @@
         }
       },
       "right": {
-        "label": "一切从简",
+        "label": "一切从简，{}",
         "effects": {
           "spend": 2000,
           "social": -4,
@@ -3339,7 +3339,7 @@
         200
       ],
       "left": {
-        "label": "借，把首付交了",
+        "label": "借，凑 {} 交首付",
         "effects": {
           "borrow": 25000,
           "spend": 25000,
@@ -3432,7 +3432,7 @@
       ],
       "cap": 2,
       "left": {
-        "label": "多还 2,000",
+        "label": "多还 {}",
         "effects": {
           "spend": 2000,
           "repay": 2000,
@@ -3440,7 +3440,7 @@
         }
       },
       "right": {
-        "label": "先还最低 500",
+        "label": "先还最低 {}",
         "effects": {
           "repay": 500,
           "mind": -3
@@ -3461,7 +3461,7 @@
         240
       ],
       "left": {
-        "label": "下单进口的",
+        "label": "下单进口的，{}",
         "effects": {
           "spend": 300,
           "mind": 4
@@ -3490,7 +3490,7 @@
         240
       ],
       "left": {
-        "label": "打",
+        "label": "打，{}",
         "effects": {
           "spend": 1200,
           "mind": 5,
@@ -3521,7 +3521,7 @@
         240
       ],
       "left": {
-        "label": "治",
+        "label": "治，先交 {}",
         "effects": {
           "spend": 4500,
           "mind": 9,
@@ -3656,7 +3656,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "借了",
+        "label": "{} 借给他",
         "effects": {
           "spend": 5000,
           "social": 5,
@@ -3710,7 +3710,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "吃药，早睡",
+        "label": "{} 拿药，早睡",
         "effects": {
           "spend": 300,
           "mind": 2,
@@ -3762,7 +3762,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "陪她回",
+        "label": "陪她回，带上 {}",
         "effects": {
           "spend": 600,
           "social": 8,
@@ -3788,7 +3788,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "关掉账户页",
+        "label": "关掉账户页，{} 买块蛋糕",
         "effects": {
           "mind": 3,
           "risk": -2,
@@ -3814,7 +3814,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "叫师傅",
+        "label": "叫师傅，花 {}",
         "effects": {
           "spend": 200,
           "mind": 2
@@ -3838,7 +3838,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "转一半补仓",
+        "label": "转一半 {} 补仓",
         "effects": {
           "cash": 9600,
           "buy": 4800,
@@ -3940,7 +3940,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "去了",
+        "label": "去了，AA {}",
         "effects": {
           "spend": 500,
           "social": 7,
@@ -3965,7 +3965,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "借一半",
+        "label": "借一半，{}",
         "effects": {
           "spend": 10000,
           "social": 2,
@@ -4001,7 +4001,7 @@
         }
       },
       "right": {
-        "label": "去",
+        "label": "去，摊 {}",
         "effects": {
           "spend": 400,
           "social": 6,
@@ -4024,7 +4024,7 @@
         240
       ],
       "left": {
-        "label": "请组员喝奶茶",
+        "label": "{} 请组员喝奶茶",
         "effects": {
           "spend": 400,
           "social": 9,
@@ -4061,7 +4061,7 @@
         }
       },
       "right": {
-        "label": "请客庆祝",
+        "label": "花 {} 请客庆祝",
         "effects": {
           "spend": 1000,
           "social": 8,
@@ -4116,7 +4116,7 @@
         }
       },
       "right": {
-        "label": "换块屏，1,200",
+        "label": "换块屏，{}",
         "effects": {
           "spend": 1200,
           "mind": 5,
@@ -4142,7 +4142,7 @@
         }
       },
       "right": {
-        "label": "拔了，3,000",
+        "label": "拔了，{}",
         "effects": {
           "spend": 3000,
           "mind": 6,
@@ -4168,7 +4168,7 @@
         }
       },
       "right": {
-        "label": "配副新的，1,800",
+        "label": "配副新的，{}",
         "effects": {
           "spend": 1800,
           "mind": 4,
@@ -4194,7 +4194,7 @@
         }
       },
       "right": {
-        "label": "换台新的，2,400",
+        "label": "换台新的，{}",
         "effects": {
           "spend": 2400,
           "mind": 6,
@@ -4220,7 +4220,7 @@
         }
       },
       "right": {
-        "label": "补 3,400",
+        "label": "补 {}",
         "effects": {
           "spend": 3400,
           "mind": -3,
@@ -4246,7 +4246,7 @@
         }
       },
       "right": {
-        "label": "买台新的，1,600",
+        "label": "买台新的，{}",
         "effects": {
           "spend": 1600,
           "social": 9,
@@ -4276,7 +4276,7 @@
         "miss": "lover"
       },
       "right": {
-        "label": "一起去，4,800",
+        "label": "一起去，{}",
         "effects": {
           "spend": 4800,
           "mind": 12,
@@ -4303,7 +4303,7 @@
         }
       },
       "right": {
-        "label": "再买一台，2,000",
+        "label": "再买一台，{}",
         "effects": {
           "spend": 2000,
           "mind": 2,

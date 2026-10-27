@@ -270,22 +270,24 @@ step('现金不够买入：只买得起多少买多少，不卖股票，差额�
     throw new Error('买入差额没记账：想买 ' + sandbox.S._buyWant + ' 实买 ' + sandbox.S._buyGot);
 });
 
-step('滑动提示只报价格：花钱项写「花 ¥X」，买入项写「买 ¥X」，不再提欠债', () => {
+step('金额融进选项文案：{} 填真实金额，没金额的一侧不带数字，上头状态买入 ×1.35', () => {
   sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
   sandbox.S.cash = 100; sandbox.S.equity = 9000;
   const spendCard = { id:'w1', who:'测试', av:'🧪', tag:'测试', txt:'x',
-                      L:{ s:'花大钱', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
+                      L:{ s:'花大钱，{}', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
   const h1 = sandbox.build(spendCard).innerHTML;
-  if (h1.indexOf('花 ¥5,000') < 0) throw new Error('花钱项没报价：' + h1.slice(-200));
-  if (h1.indexOf('会欠着') >= 0 || h1.indexOf('卖股票') >= 0 || h1.indexOf('现金只够') >= 0)
-    throw new Error('滑动提示里混进了后果说明：' + h1.slice(-200));
-  if ((h1.split('<span class="r">')[1] || '').indexOf('<small>') >= 0)
-    throw new Error('不花钱的选项也被标价了');
+  if (h1.indexOf('花大钱，5,000') < 0) throw new Error('金额没融进文案：' + h1.slice(-200));
+  if (h1.indexOf('<small>') >= 0) throw new Error('小字还挂在选项后面：' + h1.slice(-200));
+  if ((h1.split('<span class="r">')[1] || '').indexOf('5,000') >= 0)
+    throw new Error('没金额的一侧也被填了数字');
 
   const buyCard = { id:'w2', who:'测试', av:'🧪', tag:'测试', txt:'x',
-                    L:{ s:'不买', e:{ mind: 1 } }, R:{ s:'上车', e:{ buy: 3000 } } };
+                    L:{ s:'不买', e:{ mind: 1 } }, R:{ s:'上车，{}', e:{ buy: 3000 } } };
   const h2 = sandbox.build(buyCard).innerHTML;
-  if (h2.indexOf('买 ¥3,000') < 0) throw new Error('买入项没报价：' + h2.slice(-200));
+  if (h2.indexOf('上车，3,000') < 0) throw new Error('买入项没报价：' + h2.slice(-200));
+  sandbox.S.st.over = -1;                              // 上头状态：买入多掏 35%
+  const h3 = sandbox.build(buyCard).innerHTML;
+  if (h3.indexOf('4,050') < 0) throw new Error('上头状态金额没跟着涨（应 4,050）：' + h3.slice(-200));
 });
 
 step('资金条闪烁：动了的段挂 hit 类，没动的段不挂', () => {

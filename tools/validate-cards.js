@@ -209,11 +209,28 @@ function validateCards(data) {
       }
     }
 
-    /* 6. 文案长度 */
+    /* 6. 文案长度（{} 是金额占位符，渲染后约 5-6 字宽，按 "0,000" 计） */
     if (c.text && [...c.text].length > 31) err('text-len', id, 'text', '卡面 ' + [...c.text].length + ' 字，超过 31（卡面放不下）');
     ['left', 'right'].forEach(function (s) {
-      if (c[s] && c[s].label && [...c[s].label].length > 11)
-        err('text-len', id, s + '.label', s + ' 选项 ' + [...c[s].label].length + ' 字，超过 11');
+      if (!c[s] || !c[s].label) return;
+      var effLen = [...String(c[s].label).replace(/\{\}/g, '0,000')].length;
+      if (effLen > 18) err('text-len', id, s + '.label', s + ' 选项渲染后 ' + effLen + ' 字，超过 18');
+    });
+
+    /* 6.5 金额要融进文案（2026-10-28 定，用户拍板）：带 spend/buy/borrow/repay/扣现金
+       的选项，label 里必须有 {} 占位符——原型 labelOf() 渲染时填真实金额
+       （买入上头状态 ×1.35 也照算）。反过来，写了 {} 却没有金额效果也是错。 */
+    ['left', 'right'].forEach(function (s) {
+      if (!c[s] || !c[s].label) return;
+      var lab = String(c[s].label), e = c[s].effects || {};
+      var hasAmt = 'spend' in e || 'buy' in e || 'borrow' in e || 'repay' in e ||
+                   (typeof e.cash === 'number' && e.cash < 0);
+      if (hasAmt && lab.indexOf('{}') < 0)
+        err('choice', id, s + '.label', '这一侧要花钱但文案没写 {} 占位符（金额要融进话里）');
+      if (!hasAmt && lab.indexOf('{}') >= 0)
+        err('choice', id, s + '.label', '文案里有 {} 占位符，但这一侧没有金额效果，渲染不出数字');
+      if ((lab.match(/\{\}/g) || []).length > 1)
+        err('choice', id, s + '.label', '占位符最多一个');
     });
 
     /* 8. window / weight / once / hidden */
