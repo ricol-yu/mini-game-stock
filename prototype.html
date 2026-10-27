@@ -50,6 +50,10 @@
     border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5;position:relative;cursor:help}
   .chip b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .chip.hot{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
+  /* 有欠款：交钱日变成红色提醒（还不上两次就是老赖）；老赖再加一个红标 */
+  .chip.due{background:#fff1f0;border-color:#ffa39e;color:#a8071a}
+  .chip.due b{color:#a8071a}
+  .chip .ll{background:#a8071a;color:#fff;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700}
   .chip .tip{position:absolute;top:calc(100% + 7px);left:0;transform:translateY(-4px);
     background:rgba(31,35,41,.94);color:#fff;font-size:10.5px;line-height:1.7;padding:8px 11px;border-radius:10px;
     max-width:230px;width:max-content;white-space:normal;text-align:left;opacity:0;pointer-events:none;
@@ -244,7 +248,9 @@ var S, MAX_DAY = 360, INIT = 20000, SEED_EQ = 9000, MONEY_CAP = 40000,
          · 每月 5 号发薪 9,800，同一天扣房租水电保险 4,700——一记重拳，这个月到手就少一半。
        工资刻意低于「房租 + 吃饭 + 还贷」：打工只能续命，缺口得靠市场补，补不上就往下掉。 */
     MONTH = 30, PAYDAY = 5, SALARY = 11000, RENT = 4600, UTIL = 1400, BILL_GROW = 0.10,
-    BURN = 95, DEBT_DUE_RATE = 0.12, DEBT_DUE_MIN = 700,
+    BURN = 95, DEBT_DUE_RATE = 0.12, DEBT_DUE_MIN = 500,
+    LAOLAI_GARNISH = 0.25,                          // 老赖：发薪日法院划走工资的比例
+    LAOLAI_AT = 3,                                  // 逾期攒到几笔上失信名单（1 笔逾期 or 2 笔违约）
     CARDS = [], ST = {};
 
 /* ============ 状态（Buff / Debuff）字典 ============ */
@@ -257,7 +263,8 @@ ST = {
   insider:{nm:"内线",  ic:"🕵️", tip:"你知道别人不知道的事。这本身就是风险。｜每天风险 +1.4；消息有 14% 概率是假的——被拆穿时风险 +16、心态 −10、社会 −5。"},
   bull   :{nm:"牛市",  ic:"🐂", tip:"卖菜的都在谈股票。｜趋势 +1.2pp、波动 ×2.1：暴涨暴跌随时切换，涨停概率升到 ~4%/天，持续 15 天。"},
   bear   :{nm:"熊市",  ic:"🐻", tip:"群里的红包没人抢了。｜趋势 −1.8pp、波动 ×1.8：跌多涨少，跌停概率升到 ~4%/天，持续 15 天。"},
-  over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。｜心态 ≥88 时进入：下单自动放大 ×1.35、风险每天 +0.3；心态回落到 74 以下解除。"}
+  over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。｜心态 ≥88 时进入：下单自动放大 ×1.35、风险每天 +0.3；心态回落到 74 以下解除。"},
+  laolai :{nm:"老赖",  ic:"⚖️", tip:"上了失信名单。债还清之前不会消失。｜心态每天 −1.2、社会每天 −0.2；每月 5 号工资被法院划走 25% 直接还债；只能借到一半的钱；不能坐高铁和飞机、出差只能坐绿皮。把债还清才能解除。"}
 };
 
 var _skipTut = false;                                // 重开一局不重播序幕教程（刷新页面才重播）
@@ -266,7 +273,7 @@ function reset(){
   // 现金 11,000：够撑过甜头期的卡片支出，但撑不起挥霍（通胀曲线在后面等着）
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
         mind:58, risk:0, social:56, energy:50, day:1, tut:(_skipTut ? TUT.length : 0),
-        st:{}, flags:{}, did:{}, seen:{}, miss:{fam:0,child:0,pet:0,lover:0}, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
+        st:{}, flags:{}, did:{}, seen:{}, miss:{fam:0,child:0,pet:0,lover:0}, arrears:0, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
   _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0; _lastWasChain = false;   // 新的一局：袋子、冷却、同类记忆、插队节流都重来
@@ -283,10 +290,15 @@ function billOf(day){
   var rent = Math.round(RENT * infl / 10) * 10, util = Math.round(UTIL * infl / 10) * 10;
   return { rent: rent, util: util, total: rent + util };
 }
-function daysToPayday(){
-  var dom = ((S.day - 1) % MONTH) + 1, d = PAYDAY - dom;
-  return d < 0 ? d + MONTH : d;                            // 0 = 今天
+/* 下一个「要交钱」的日子：5 号交房租+月供，20 号只还月供（2026-10-27 每月两次）。
+   没欠款时只看 5 号。返回 {in: 还有几天, kind:'rent'|'due'}。 */
+function nextPayday(){
+  var dom = ((S.day - 1) % MONTH) + 1;
+  var dRent = (PAYDAY - dom + MONTH) % MONTH, dDue = (PAYDAY + 15 - dom + MONTH) % MONTH;
+  if(S.debt > 1 && dDue < dRent) return { in: dDue, kind: "due" };
+  return { in: dRent, kind: "rent" };
 }
+function daysToPayday(){ return nextPayday().in; }
 
 /* ============ 金钱操作 ============
    一条规矩（2026-10-27 定，被玩家问出来的）：
@@ -326,8 +338,10 @@ function spend(x){
 }
 function borrow(x){
   // 借来的钱先进现金、欠账记进负债（进度条上看得见），花不花、买不买由玩家自己定
-  S.debt += x; S.cash += x;
-  S.risk = clamp(S.risk + Math.min(16, 5 + x / 1300), 0, 100);
+  var real = x;
+  if(S.st.laolai){ real = Math.round(x * 0.5); S._borrowCut = (S._borrowCut || 0) + (x - real); }
+  S.debt += real; S.cash += real;
+  S.risk = clamp(S.risk + Math.min(16, 5 + real / 1300), 0, 100);
 }
 function repay(x){
   var pay = Math.min(Math.max(S.cash,0), x, S.debt);
@@ -546,6 +560,15 @@ function tick(){
   if(st.halt){ st.halt = st.halt > 0 ? st.halt - 1 : -1; S.mind -= 0.8; }
   if(st.fired){ S.mind -= 1.1; }
   if(st.baby){ S.cash -= 180; S.mind += 1.0; S.social += 0.4; }
+  /* 老赖（2026-10-27）：不是"掉两天心态就过去"，是挂在身上直到把债还清。
+     每天扣心态和社会，发薪日工资被划走一截（见发薪段），借钱只能借到一半（见 borrow）。 */
+  if(st.laolai){
+    S.mind -= 1.2; S.social -= 0.2;
+    if(S.debt <= 1){
+      clearST("laolai"); S.arrears = 0;
+      msg.push("⚖️ 债还清了，失信名单解除。但这条记录，征信上还要背五年");
+    }
+  }
   if(st.over){ S.mind -= 0.5; S.risk = clamp(S.risk + 0.3, 0, 100); }
 
   // 精力：没有任何自然恢复——50 点开局存量，只能靠卡片回血（睡觉/早睡/不看盘）。
@@ -577,7 +600,15 @@ function tick(){
   if(dayOfMonth === PAYDAY - 1) msg.push("📅 明天 " + PAYDAY + " 号：发工资，房租水电也一起扣");
   if(dayOfMonth === PAYDAY){
     if(S.st.fired) msg.push("💰 别人发工资，你没有");
-    else { S.cash += SALARY; S.mind += 2; msg.push("💰 工资到账 " + money(SALARY)); }
+    else {
+      S.cash += SALARY; S.mind += 2;
+      if(S.st.laolai && S.debt > 1){
+        // 老赖的工资先被划走一截：法院执行，直接还债。这是失信名单最疼的地方
+        var garnish = Math.min(S.debt, Math.round(SALARY * LAOLAI_GARNISH));
+        S.cash -= garnish; S.debt -= garnish;
+        msg.push("💰 工资到账 " + money(SALARY) + "，法院直接划走 " + money(garnish) + " 还债");
+      } else msg.push("💰 工资到账 " + money(SALARY));
+    }
     // 固定账单：房租 + 水电物业通讯保险。房东年年涨，这里按月折算（BILL_GROW）
     var b = billOf(S.day), bill = b.total, rent = b.rent, util = b.util;
     if(S.cash >= bill){
@@ -588,19 +619,43 @@ function tick(){
       S._autoDebt = (S._autoDebt || 0) + bshort;
       msg.push("🏠 房租水电 " + money(bill) + " 交不上，欠了 " + money(bshort));
     }
-    // 月供：有欠款就得按月还本金。借钱不再是白拿——这才是借来的钱最真实的样子
-    if(S.debt > 1){
-      var due = Math.min(S.debt, Math.max(DEBT_DUE_MIN, S.debt * DEBT_DUE_RATE));
-      var dpay = Math.min(S.cash, due);
-      if(dpay > 0){ S.cash -= dpay; S.debt -= dpay; S.risk = clamp(S.risk - dpay / 900, 0, 100); }
-      // 没还上的部分不"滚回负债"——它本来就在负债里，没还就一直欠着。
-      // （曾经写成 debt += owed，等于还了多少又加回去多少，越还越多，纯 bug）
-      if(dpay < due - 0.5){
-        S.mind -= 2; S.social -= 2;
-        msg.push("💳 月供该还 " + money(due) + "，只凑出 " + money(dpay) + "，催收电话来了");
+  }
+
+  /* ---- 还款节点：每月 5 号和 20 号 ----
+     为什么要一个"月中"的节点（2026-10-27）：只挂 5 号的话，一局中位寿命三十几天
+     只赶上一次，玩家永远见不到"还不上"的下场。20 号那次没有工资撑腰，
+     半个月的日用在前面已经把现金磨薄了 —— 这才是真的会掏不出来的时候。
+     5 号那次少还一点（房租已经是一大笔），两次加起来仍是一个月的月供。 */
+  var dueWanted = Math.min(S.debt, Math.max(DEBT_DUE_MIN, S.debt * DEBT_DUE_RATE));
+  if((dayOfMonth === PAYDAY || dayOfMonth === PAYDAY + 15) && S.debt > 1){
+    var due = dueWanted;
+    var dpay = Math.min(S.cash, due);
+    if(dpay > 0){ S.cash -= dpay; S.debt -= dpay; S.risk = clamp(S.risk - dpay / 900, 0, 100); }
+    // 没还上的部分不"滚回负债"——它本来就在负债里，没还就一直欠着。
+    // （曾经写成 debt += owed，等于还了多少又加回去多少，越还越多，纯 bug）
+    if(dpay >= due - 0.5){
+      if(S.arrears > 0){
+        S.arrears -= 1;                              // 还清一笔，信用记录往回挪一格（不是一键归零）
+        msg.push("💳 月供 " + money(dpay) + " 全额还上，逾期记录少一笔" + (S.arrears ? "（还欠 " + money(S.debt) + "）" : ""));
       } else msg.push("💳 月供还了 " + money(dpay) + "，还欠 " + money(S.debt));
+    } else if(dpay >= due * 0.6){
+      // 还了一大半但没还满：记一笔逾期（攒够了照样上名单，只是慢一些）
+      S.arrears = (S.arrears || 0) + 1;
+      S.mind -= 2; S.social -= 2;
+      msg.push("💳 月供该还 " + money(due) + "，凑了 " + money(dpay) + "，差 " + money(due - dpay) + "——记一笔逾期");
+    } else {
+      S.arrears = (S.arrears || 0) + 2;              // 连六成都不到：一次算两笔
+      S.mind -= 4; S.social -= 4;
+      msg.push("💳 月供该还 " + money(due) + "，只凑出 " + money(dpay) + "，银行把这笔记成违约了");
+    }
+    if(S.arrears >= LAOLAI_AT && !S.st.laolai){
+      setST("laolai", -1);
+      S.mind -= 6; S.social -= 8;
+      msg.push("⚖️ 逾期攒够了，你上了失信名单——成老赖了");
     }
   }
+  if((dayOfMonth === PAYDAY + 14 || dayOfMonth === PAYDAY - 1) && S.debt > 1)
+    msg.push("📅 明天还款日：要还 " + money(dueWanted) + "，现在现金 " + money(Math.max(S.cash, 0)));
 
   // 平时的日用：吃饭、通勤、零碎。压得低——重拳留给月初那张账单
   var burn = (S.day <= INFL_FROM ? EARLY_BURN : BURN * Math.pow(1 + INFL_RATE, S.day - INFL_FROM));
@@ -762,12 +817,38 @@ function render(){
   var strip = $("strip"), html = "";
   // 账单倒计时常驻：钱是"攒着就没了"还是"攒着能买房"，取决于玩家知不知道下个月几号要交多少。
   // 早先这笔账只写在底部一行小字里（读完就忘），现在挂成状态胶囊，跟泡沫/停牌一个待遇。
-  var dPay = daysToPayday(), nb = billOf(S.day + dPay).total;
-  html += '<span class="chip hot" tabindex="0">🏠 ' + (dPay === 0 ? "今天交房租" : dPay + " 天后交房租") +
-          ' <b>' + money(nb) + '</b>' +
-          '<span class="tip"><b>🏠 每月 ' + PAYDAY + ' 号</b>工资 ' + money(SALARY) + ' 进来，房租水电 ' +
-          money(nb) + ' 当天扣掉。' + (S.debt > 1 ? "另外月供会按欠款的 " + Math.round(DEBT_DUE_RATE * 100) + "% 自动还，至少 " + money(DEBT_DUE_MIN) + "。" : "手里一直有欠款的话，每月这天还会自动还一笔。") +
+  var np = nextPayday(), dPay = np.in, isRent = np.kind === "rent";
+  var nb = isRent ? billOf(S.day + dPay).total : 0;
+  // 还款节点要一眼看得见（2026-10-27）：有欠款就把「房租 + 月供」合起来显示，
+  // 玩家才知道下一次要出去多少钱、会不会不够——还不上两次就是老赖。
+  var dueNow = S.debt > 1 ? Math.min(S.debt, Math.max(DEBT_DUE_MIN, S.debt * DEBT_DUE_RATE)) : 0;
+  var payTotal = nb + dueNow, isLaolai = !!S.st.laolai;
+  html += '<span class="chip' + (S.debt > 1 ? ' due' : '') + ' hot" tabindex="0">' +
+          (isRent ? '🏠 ' : '💳 ') +
+          (dPay === 0 ? (isRent ? "今天交钱" : "今天还月供") : dPay + " 天后" + (isRent ? "交钱" : "还月供")) +
+          ' <b>' + money(payTotal) + '</b>' +
+          (isLaolai ? ' <b class="ll">老赖</b>' : '') +
+          '<span class="tip"><b>' + (isRent ? '🏠 每月 ' + PAYDAY + ' 号' : '💳 每月 ' + (PAYDAY + 15) + ' 号') + '</b>' +
+          (isRent
+            ? '工资 ' + money(SALARY) + ' 进来，房租水电 ' + money(nb) + ' 当天扣掉。'
+            : '月中这天不发工资，只还月供——前面的日常开销已经把现金磨薄了。') +
+          (dueNow > 0
+            ? '还款日每月 ' + PAYDAY + ' 号和 ' + (PAYDAY + 15) + ' 号各一次，每次还欠款的 ' +
+              Math.round(DEBT_DUE_RATE * 100) + '%（至少 ' + money(DEBT_DUE_MIN) + '）。' +
+              (isRent ? '这一次要出去 ' + money(payTotal) + '（房租 + 月供）。' : '') +
+              (isLaolai ? '你现在是老赖：工资到手先被法院划走 ' + Math.round(LAOLAI_GARNISH * 100) + '%，债还清才会解除。'
+                        : '还不到应还额的六成就算一次违约，攒两次上失信名单。')
+            : '手里一直有欠款的话，这两个日子都会自动还一笔。') +
           '</span></span>';
+  // 逾期记录（2026-10-27）：平时看不见，欠了才亮出来——让玩家知道离老赖还有几步。
+  // 攒到 LAOLAI_AT 就上失信名单，还清了才慢慢往回挪。
+  if(S.arrears > 0 && !S.st.laolai){
+    html += '<span class="chip due" tabindex="0">⚠️ 逾期 <b>' + S.arrears + '/' + LAOLAI_AT + '</b>' +
+            '<span class="tip"><b>⚠️ 逾期记录 ' + S.arrears + ' 笔</b>还款日没还够留下的。' +
+            '攒到 ' + LAOLAI_AT + ' 笔就上失信名单（老赖）：工资被法院划走 ' +
+            Math.round(LAOLAI_GARNISH * 100) + '%、借不到全款、心态社会每天掉。' +
+            '全额还清一次能减掉一笔。</span></span>';
+  }
   for(var k in S.st){
     var left = S.st[k], info = ST[k] || {nm:k, ic:"•"};
     html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"||k==="bull"||k==="bear"?" hot":"") + '" tabindex="0">' +
@@ -1178,9 +1259,11 @@ function fly(dir){
     var auto = S._autoDebt || 0; S._autoDebt = 0;
     var buyWant = S._buyWant || 0, buyGot = S._buyGot || 0;
     S._buyWant = 0; S._buyGot = 0;
+    var bcut = S._borrowCut || 0; S._borrowCut = 0;
     var notes = [];
     if(borrowed > 0) notes.push("💳 借到 " + money(borrowed) + "，已记进负债");
     if(borrowed < 0) notes.push("✅ 还掉 " + money(-borrowed) + "，负债减少");
+    if(bcut > 0) notes.push("⚖️ 失信名单上借不到全款，少借了 " + money(bcut));
     if(auto > 0) notes.push("💸 现金不够，欠下 " + money(auto) + "（每月要还）");
     if(buyWant - buyGot >= 1 && buyWant > 0){
       notes.push(buyGot >= 1
@@ -1626,6 +1709,10 @@ CARDS = [
  {id:"fam_gone_01",who:"她",av:"🚪",tag:"伴侣",when:"miss.lover>=4; day>=38; day<60; no:did:fam_hunli_01|miss.lover>=5; day>=60; day<85; no:did:fam_hunli_01|miss.lover>=6; day>=85; no:did:fam_hunli_01",cap:1,urgent:1,fact:1,txt:"她搬走了。衣柜空了一半，钥匙放在鞋柜上。",
   st:{lovergone:-1},
   R:{s:"让她静静",e:{mind:-10,social:-12}},L:{s:"打给她",e:{mind:-10,social:-12}}},
+ {id:"debt_calls_01",who:"催收",av:"📞",tag:"风险",when:"has:laolai",cap:2,txt:"电话打到你妈那儿。她问：「你是不是在外面欠钱了？」",
+  R:{s:"说打错了，是诈骗",e:{mind:-2,social:-8}},L:{s:"跟她说了实话",e:{mind:-4,social:-2,energy:-4}}},
+ {id:"debt_limit_01",who:"出差",av:"🚄",tag:"风险",when:"has:laolai",cap:2,txt:"客户在两千公里外。名单上的人，买不了高铁和机票。",
+  R:{s:"视频会议算了，单子丢了",e:{mind:-4,social:-6}},L:{s:"坐绿皮，硬座两天",e:{energy:-30,mind:-4,social:2}}},
 ];
 $("i-b").onclick = function(){ $("intro").classList.remove("on"); };
 $("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始第一周」关闭）

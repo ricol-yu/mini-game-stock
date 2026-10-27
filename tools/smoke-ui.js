@@ -170,11 +170,32 @@ step('结局面板文案非空（why 必写，且带「为什么是这个结局�
   if (!why || why.indexOf('为什么是这个结局') < 0) throw new Error('结局面板没解释：' + why);
 });
 
-step('HUD 账单胶囊渲染出来（含金额）', () => {
+step('HUD 还款节点胶囊：无债只显示房租，有债连月供一起算进总额', () => {
   sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
-  const h = getEl('strip').innerHTML;
-  if (h.indexOf('交房租') < 0) throw new Error('strip 里没有账单胶囊：' + h.slice(0, 120));
-  if (!/¥[\d,]+/.test(h)) throw new Error('账单胶囊没有金额');
+  let h = getEl('strip').innerHTML;
+  if (h.indexOf('交钱') < 0) throw new Error('strip 里没有还款胶囊：' + h.slice(0, 160));
+  if (!/¥[\d,]+/.test(h)) throw new Error('还款胶囊没有金额');
+  // 有欠款：下一次要出去的钱 = 房租 + 月供（比例直接读沙箱常量，别写死）
+  sandbox.S.debt = 20000; sandbox.render();
+  h = getEl('strip').innerHTML;
+  const nb = sandbox.billOf(sandbox.S.day + sandbox.daysToPayday()).total;
+  const due = Math.min(sandbox.S.debt, Math.max(sandbox.DEBT_DUE_MIN, sandbox.S.debt * sandbox.DEBT_DUE_RATE));
+  const total = (nb + due).toLocaleString('en-US');
+  if (h.indexOf(total) < 0) throw new Error('有债时胶囊没把月供算进去，应该显示 ¥' + total + '：' + h.slice(0, 200));
+  if (h.indexOf('due') < 0) throw new Error('有债时胶囊没变红');
+});
+
+step('还款日：每月 5 号和 20 号各一次，20 号只还月供不交房租', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 18; sandbox.S.debt = 20000;          // 1 号起算，18 号 = 距 20 号 2 天
+  const np = sandbox.nextPayday();
+  if (np.kind !== 'due') throw new Error('18 号之后最近的是 20 号还款日，实际 ' + np.kind);
+  if (np.in !== 2) throw new Error('20 号还有 ' + np.in + ' 天，不是 2');
+  sandbox.S.day = 3;                                    // 距 5 号 2 天
+  if (sandbox.nextPayday().kind !== 'rent') throw new Error('3 号之后最近的是发薪日');
+  sandbox.S.debt = 0;                                   // 没债：不用管 20 号
+  sandbox.S.day = 18;
+  if (sandbox.nextPayday().kind !== 'rent') throw new Error('没欠款还提示还月供');
 });
 
 /* 净值飘字（2026-10-26）：玩家反馈「金钱有变动看起来不明显」。
@@ -333,6 +354,81 @@ step('清算卡渲染成「既定事实」：有那行说明、两边都不标�
   if (sandbox.build(c).className.indexOf('fact') < 0) throw new Error('既定事实卡没有 fact 类');
   const plain = sandbox.CARDS.find(x => x.id === 'fam_momcall_01');
   if (sandbox.build(plain).innerHTML.indexOf('已经这样了') >= 0) throw new Error('普通卡也被标成既定事实了');
+});
+
+/* ---------- 还款节点与老赖（2026-10-27） ----------
+   月供节点 = 每月 5 号。还不到应还额六成算一次违约，攒两次上失信名单（laolai，永久到还清）。
+   老赖的惩罚：心态/社会每天掉、发薪日工资被划走 25%、只能借到一半的钱。 */
+function payday(day, cash, debt, fired) {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = day; sandbox.S.cash = cash; sandbox.S.debt = debt;
+  sandbox.S.equity = 0; sandbox.S.risk = 0; sandbox.S.mind = 60; sandbox.S.social = 60;
+  if (fired) sandbox.S.st.fired = -1;                // 失业：5 号没有工资进来，才真的还不上
+  sandbox.tick();
+}
+
+step('还款节点：一次完全没还上记两笔，但还不到上名单的线', () => {
+  payday(35, 0, 20000, true);                        // 第 35 天 = 5 号，没工资、没现金
+  if (sandbox.S.arrears < 2) throw new Error('违约没记上：' + sandbox.S.arrears);
+  if (sandbox.S.st.laolai) throw new Error('一次违约就成老赖了，太狠');
+});
+
+step('还款节点：逾期攒够就上失信名单', () => {
+  payday(35, 0, 20000, true);
+  sandbox.S.day = 50; sandbox.S.cash = 0;            // 20 号还款日，还是没钱
+  sandbox.tick();
+  if (!sandbox.S.st.laolai) throw new Error('逾期攒到 ' + sandbox.S.arrears + ' 笔还没上名单');
+});
+
+step('还款节点：还够六成算逾期不违约，全额还清把记录清零', () => {
+  payday(35, 6000, 20000);                           // 应还 2,400，还 6,000 → 全额
+  if (sandbox.S.arrears !== 0) throw new Error('全额还清了怎么还有违约记录：' + sandbox.S.arrears);
+  // 先攒一次违约，再全额还一次，记录应该被抹掉
+  sandbox.S.arrears = 1;
+  sandbox.S.day = 65; sandbox.S.debt = 20000; sandbox.S.cash = 6000;
+  sandbox.tick();
+  if (sandbox.S.arrears !== 0) throw new Error('全额还清后逾期记录没清零：' + sandbox.S.arrears);
+});
+
+step('老赖：发薪日工资被划走 25% 直接还债', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 95; sandbox.S.debt = 30000; sandbox.S.cash = 0;
+  sandbox.S.equity = 0; sandbox.S.st.laolai = -1;
+  const m = sandbox.tick();
+  // 工资 11,000 的 25% = 2,750 先被划走（同一天后续还会因为日用/月供再欠，
+  // 所以不能拿"负债净减少"当断言，那样被后面的开支抵消掉了）
+  if (m.indexOf('法院直接划走') < 0) throw new Error('老赖的工资没被划扣：' + m);
+  if (m.indexOf('2,750') < 0) throw new Error('划扣金额不对（应是工资的 25%）：' + m);
+});
+
+step('老赖：借钱只能借到一半', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.cash = 0; sandbox.S.debt = 0;
+  sandbox.borrow(10000);
+  if (sandbox.S.cash !== 10000) throw new Error('正常状态借钱就不对：' + sandbox.S.cash);
+  sandbox.S.cash = 0; sandbox.S.debt = 0; sandbox.S.st.laolai = -1;
+  sandbox.borrow(10000);
+  if (sandbox.S.cash !== 5000) throw new Error('老赖怎么还借到了 ' + sandbox.S.cash);
+  if (sandbox.S._borrowCut !== 5000) throw new Error('少借的那截没记账');
+});
+
+step('老赖：债还清自动解除名单', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 40; sandbox.S.st.laolai = -1; sandbox.S.debt = 500; sandbox.S.cash = 0;
+  sandbox.tick();
+  sandbox.S.debt = 0;
+  sandbox.tick();
+  if (sandbox.S.st.laolai) throw new Error('债都还清了还挂在名单上');
+  if (sandbox.S.arrears !== 0) throw new Error('解除后违约计数没归零');
+});
+
+step('老赖专属卡只在老赖时出现', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 40;
+  const card = sandbox.CARDS.find(x => x.id === 'debt_limit_01');
+  if (sandbox.whenOK(card.when) !== false) throw new Error('不是老赖也能出限高卡');
+  sandbox.S.st.laolai = -1;
+  if (sandbox.whenOK(card.when) !== true) throw new Error('成了老赖却不出限高卡');
 });
 
 console.log(fail ? '\n✗ UI 冒烟失败 ' + fail + ' 项\n' : '\n✓ UI 冒烟全绿\n');

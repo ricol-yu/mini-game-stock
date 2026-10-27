@@ -4454,6 +4454,56 @@
         }
       },
       "whoId": "ta"
+    },
+    {
+      "id": "debt_calls_01",
+      "who": "催收",
+      "whoId": "cuishou",
+      "avatar": "📞",
+      "tag": "风险",
+      "text": "电话打到你妈那儿。她问：「你是不是在外面欠钱了？」",
+      "when": "has:laolai",
+      "cap": 2,
+      "left": {
+        "label": "跟她说了实话",
+        "effects": {
+          "mind": -4,
+          "social": -2,
+          "energy": -4
+        }
+      },
+      "right": {
+        "label": "说打错了，是诈骗",
+        "effects": {
+          "mind": -2,
+          "social": -8
+        }
+      }
+    },
+    {
+      "id": "debt_limit_01",
+      "who": "出差",
+      "whoId": "chucha",
+      "avatar": "🚄",
+      "tag": "风险",
+      "text": "客户在两千公里外。名单上的人，买不了高铁和机票。",
+      "when": "has:laolai",
+      "cap": 2,
+      "left": {
+        "label": "坐绿皮，硬座两天",
+        "effects": {
+          "energy": -30,
+          "mind": -4,
+          "social": 2
+        }
+      },
+      "right": {
+        "label": "视频会议算了，单子丢了",
+        "effects": {
+          "mind": -4,
+          "social": -6
+        }
+      }
     }
   ]
 }

@@ -35,7 +35,8 @@ function validateCards(data) {
 
   var TAGS = ['伴侣', '家人', '孩子', '宠物', '房子', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
   var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear',
-             'momgone', 'childgone', 'petgone', 'lovergone'];   // 后四个：欠账清算后把整条线关掉
+             'momgone', 'childgone', 'petgone', 'lovergone',
+             'laolai'];                                          // laolai：老赖（欠债违约两次，永久到还清）
   var LINES = ['fam', 'child', 'pet', 'lover'];                 // 欠账计数：父母/孩子/宠物/伴侣
   var LINE_OF_TAG = { '家人': 'fam', '孩子': 'child', '宠物': 'pet', '伴侣': 'lover' };
   var STAT_KEYS = ['cash', 'equity', 'cost', 'mind', 'risk', 'social', 'day'];
