@@ -29,7 +29,10 @@ function effStr(e) {
   return '{' + parts.join(',') + '}';
 }
 function sideStr(sd) {
-  return '{s:' + j(sd.label) + ',e:' + effStr(sd.effects || {}) + '}';
+  // m：这一选算欠这条线一笔账（fam/child/pet/lover）。引擎 resolve() 里累加 S.miss[线]，
+  // 玩家看不到次数，只会在欠够之后撞上清算卡（when 里写 miss.fam>=3）。
+  return '{s:' + j(sd.label) + ',e:' + effStr(sd.effects || {}) +
+         (sd.miss ? ',m:' + j(sd.miss) : '') + '}';
 }
 
 const lines = data.cards.map(c => {
@@ -43,9 +46,11 @@ const lines = data.cards.map(c => {
   if (c.cap) head += ',cap:' + c.cap;            // 一局最多出几次（缺省：关联卡 1、普通卡 2）
   if (c.pri) head += ',pri:' + c.pri;            // 插队优先级（数大先出），用于「婚后必须尽快来的节点卡」
   if (c.urgent) head += ',urgent:1';             // 关键卡：条件满足就插队问一句（不走袋子），如「上岸」确认
+  if (c.fact) head += ',fact:1';                 // 既定事实卡：两边效果一样，只用来告诉玩家「已经这样了」
   head += ',txt:' + j(c.text) + ',';
   let body = '';
   if (c.alwaysStatus) body += '\n  st:' + effStr(c.alwaysStatus) + ',';
+  else if (c.st) body += '\n  st:' + effStr(c.st) + ',';   // 事件自带状态（与选择无关），如欠账清算后把整条线关掉
   body += '\n  R:' + sideStr(c.right) + ',L:' + sideStr(c.left) + '},';
   return head + body;
 });

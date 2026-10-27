@@ -263,5 +263,62 @@ step('资金条闪烁：动了的段挂 hit 类，没动的段不挂', () => {
   if (cls('b-debt').indexOf('hit') < 0) throw new Error('负债条动了没闪：' + cls('b-debt'));
 });
 
+/* ---------- 欠账计数与欠账清算（2026-10-27） ---------- */
+step('欠账计数：选带标记的一侧 +1，另一侧不加（且玩家看不到次数）', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  const c = sandbox.CARDS.find(x => x.id === 'fam_momcall_01');   // 左「嗯嗯两声」=欠账，右「回厨房看她」=在场
+  sandbox.resolve(c, 'L');
+  if (sandbox.S.miss.fam !== 1) throw new Error('欠账没记上：' + JSON.stringify(sandbox.S.miss));
+  sandbox.resolve(c, 'R');
+  if (sandbox.S.miss.fam !== 1) throw new Error('不欠账的那一侧也加数了：' + JSON.stringify(sandbox.S.miss));
+  sandbox.render();
+  const strip = getEl('strip').innerHTML;
+  if (strip.indexOf('欠账') >= 0) throw new Error('HUD 里露了欠账计数：' + strip.slice(0, 120));
+});
+
+step('欠账清算：次数没到不出现，到了才来，两边效果一模一样', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 60; sandbox.S.miss.fam = 2; sandbox.S._urgentCd = 0;
+  let i = sandbox.urgentFind();
+  if (i >= 0 && sandbox.CARDS[i].id === 'fam_momgone_01') throw new Error('才欠 2 次清算卡就来了');
+  sandbox.S.miss.fam = 3;
+  i = sandbox.urgentFind();
+  if (i < 0 || sandbox.CARDS[i].id !== 'fam_momgone_01') throw new Error('欠够 3 次清算卡没来');
+  const c = sandbox.CARDS[i];
+  if (!c.fact) throw new Error('清算卡没标 fact');
+  if (JSON.stringify(c.L.e) !== JSON.stringify(c.R.e))
+    throw new Error('清算卡两边效果不一致，变成了假选择：' + JSON.stringify([c.L.e, c.R.e]));
+});
+
+step('清算之后这条线就关了：爸妈日常卡不再出现、整条分类从袋子里撤掉', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  const c = sandbox.CARDS.find(x => x.id === 'fam_momgone_01');
+  sandbox.resolve(c, 'L');
+  if (!sandbox.S.st.momgone) throw new Error('清算卡没关掉这条线');
+  const mom = sandbox.CARDS.find(x => x.id === 'fam_momcall_01');
+  if (sandbox.whenOK(mom.when)) throw new Error('老妈的日常卡还能出现：' + mom.when);
+  sandbox.S.st.petgone = -1;
+  sandbox.bagShuffle();
+  const left = sandbox._bag.map(k => sandbox.CARDS[k]).filter(x => x.tag === '宠物');
+  if (left.length) throw new Error('猫送走了，宠物卡还在袋子里：' + left.map(x => x.id).join(','));
+});
+
+step('伴侣清算卡只在婚前出现（婚后走离婚卡那条路）', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 60; sandbox.S.miss.lover = 9; sandbox.S._urgentCd = 0;
+  sandbox.S.did.fam_hunli_01 = 'l';
+  const i = sandbox.urgentFind();
+  if (i >= 0 && sandbox.CARDS[i].id === 'fam_gone_01') throw new Error('结过婚了还出「她搬走了」');
+});
+
+step('清算卡渲染成「既定事实」：有那行说明、两边都不标红绿', () => {
+  const c = sandbox.CARDS.find(x => x.id === 'fam_momgone_01');
+  const h = sandbox.build(c).innerHTML;
+  if (h.indexOf('已经这样了') < 0) throw new Error('既定事实卡没有说明行：' + h.slice(-160));
+  if (sandbox.build(c).className.indexOf('fact') < 0) throw new Error('既定事实卡没有 fact 类');
+  const plain = sandbox.CARDS.find(x => x.id === 'fam_momcall_01');
+  if (sandbox.build(plain).innerHTML.indexOf('已经这样了') >= 0) throw new Error('普通卡也被标成既定事实了');
+});
+
 console.log(fail ? '\n✗ UI 冒烟失败 ' + fail + ' 项\n' : '\n✓ UI 冒烟全绿\n');
 process.exit(fail ? 1 : 0);

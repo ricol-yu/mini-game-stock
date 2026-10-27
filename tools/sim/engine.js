@@ -106,8 +106,21 @@ function parseCond(t) {
   if (m) { const id = m[1]; return S => !(S.did && S.did[id]); }
   m = t.match(/^no:seen:([\w]+)$/i);
   if (m) { const id = m[1]; return S => !(S.seen && S.seen[id]); }
+  m = t.match(/^no:has:(\w+)$/);
+  if (m) { const k = m[1]; return S => !(S.st && S.st[k]); }
   m = t.match(/^(has|no):(\w+)$/);
   if (m) { const want = m[1] === 'has', k = m[2]; return S => !!(S.st && S.st[k]) === want; }
+  m = t.match(/^miss\.(\w+)\s*(<=|>=|<|>)\s*(\d+)$/);
+  if (m) {
+    const line = m[1], op = m[2], v = parseInt(m[3], 10);
+    return S => {
+      const n = (S.miss && S.miss[line]) || 0;
+      if (op === '<') return n < v;
+      if (op === '>') return n > v;
+      if (op === '<=') return n <= v;
+      return n >= v;
+    };
+  }
   m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);
   if (m) {
     const attr = m[1], op = m[2], rx = m[3].trim();
@@ -157,10 +170,12 @@ function verifyWhenEquivalence(sandbox, CARDS) {
       if (rnd() < 0.5) did[c.id] = rnd() < 0.5 ? 'l' : 'r';
       else seen[c.id] = 1;
     }
+    const miss = {};                                  // 欠账计数也要参与对拍，否则 miss.* 条件测不到
+    ['fam', 'child', 'pet', 'lover'].forEach(k => { miss[k] = Math.floor(rnd() * 7); });
     return {
       mind: Math.round(rnd() * 100), social: Math.round(rnd() * 100), risk: Math.round(rnd() * 100),
       day: 1 + Math.floor(rnd() * 70), cash: Math.round(rnd() * 50000),
-      equity: Math.round(rnd() * 60000), cost, debt: Math.round(rnd() * 30000), st, did, seen,
+      equity: Math.round(rnd() * 60000), cost, debt: Math.round(rnd() * 30000), st, did, seen, miss,
     };
   }
   const states = [];

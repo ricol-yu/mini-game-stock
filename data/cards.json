@@ -40,7 +40,8 @@
         "effects": {
           "mind": -4,
           "social": -6
-        }
+        },
+        "miss": "child"
       },
       "right": {
         "label": "出 3,000 报名",
@@ -66,7 +67,8 @@
           "mind": -5,
           "social": -6,
           "risk": 3
-        }
+        },
+        "miss": "lover"
       },
       "right": {
         "label": "说实话",
@@ -92,7 +94,8 @@
         "effects": {
           "mind": -3,
           "social": -7
-        }
+        },
+        "miss": "lover"
       },
       "right": {
         "label": "出去吃，我请",
@@ -118,7 +121,8 @@
         "effects": {
           "mind": -12,
           "social": -14
-        }
+        },
+        "miss": "lover"
       },
       "right": {
         "label": "留着吧",
@@ -140,7 +144,7 @@
       "avatar": "💍",
       "tag": "伴侣",
       "text": "这日子没法过了。离婚吧。",
-      "when": "did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35",
+      "when": "did:fam_hunli_01; did:fam_shoufu_01.r; mind<35|did:fam_hunli_01; did:fam_lengzhan_01.r; mind<35|miss.lover>=7; did:fam_hunli_01; day>=70",
       "alwaysStatus": null,
       "left": {
         "label": "……好",
@@ -183,7 +187,8 @@
           "mind": -4,
           "social": -4,
           "risk": -3
-        }
+        },
+        "miss": "child"
       }
     },
     {
@@ -201,7 +206,8 @@
           "social": -7,
           "mind": -3,
           "cash": 900
-        }
+        },
+        "miss": "child"
       },
       "right": {
         "label": "我去",
@@ -220,14 +226,15 @@
       "avatar": "👵",
       "tag": "家人",
       "text": "你爸住院了，要先垫 6,500。",
-      "when": null,
+      "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
         "label": "让弟弟先垫",
         "effects": {
           "mind": -7,
           "social": -11
-        }
+        },
+        "miss": "fam"
       },
       "right": {
         "label": "我出 6,500",
@@ -246,7 +253,7 @@
       "avatar": "👵",
       "tag": "家人",
       "text": "我这有二十万养老钱，你拿去做，赚了都是你的。",
-      "when": null,
+      "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
         "label": "妈，这个不能要",
@@ -263,7 +270,8 @@
           "buy": 12000,
           "mind": -9,
           "social": -6
-        }
+        },
+        "miss": "fam"
       }
     },
     {
@@ -289,7 +297,8 @@
           "borrow": 20000,
           "mind": -8,
           "social": -5
-        }
+        },
+        "miss": "fam"
       }
     },
     {
@@ -307,7 +316,8 @@
           "mind": -7,
           "social": -8,
           "energy": -16
-        }
+        },
+        "miss": "child"
       },
       "right": {
         "label": "连夜去医院",
@@ -343,7 +353,8 @@
           "mind": -4,
           "social": -5,
           "risk": -4
-        }
+        },
+        "miss": "child"
       }
     },
     {
@@ -1834,7 +1845,8 @@
           "mind": 1,
           "social": -8,
           "risk": 3
-        }
+        },
+        "miss": "child"
       },
       "right": {
         "label": "现在就签",
@@ -1860,7 +1872,8 @@
           "mind": 1,
           "social": -6,
           "risk": 3
-        }
+        },
+        "miss": "lover"
       },
       "right": {
         "label": "放下手机问她",
@@ -2397,7 +2410,7 @@
       "avatar": "📞",
       "tag": "家人",
       "text": "老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
-      "when": null,
+      "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
         "label": "嗯嗯两声",
@@ -2405,7 +2418,8 @@
           "social": -5,
           "mind": 1,
           "risk": 3
-        }
+        },
+        "miss": "fam"
       },
       "right": {
         "label": "回厨房看她",
@@ -2424,14 +2438,15 @@
       "avatar": "📞",
       "tag": "家人",
       "text": "老妈拍来一张体检单：她血压也高了。",
-      "when": null,
+      "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
         "label": "让她别操心",
         "effects": {
           "mind": -4,
           "social": -4
-        }
+        },
+        "miss": "fam"
       },
       "right": {
         "label": "预约陪复查",
@@ -2482,7 +2497,8 @@
         "effects": {
           "social": -5,
           "mind": -2
-        }
+        },
+        "miss": "child"
       },
       "right": {
         "label": "当晚陪作业",
@@ -2516,7 +2532,8 @@
         "effects": {
           "social": -10,
           "mind": 2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2533,7 +2550,8 @@
         "effects": {
           "spend": 4500,
           "mind": 3
-        }
+        },
+        "miss": "child"
       },
       "right": {
         "label": "退班，陪他玩",
@@ -2567,7 +2585,8 @@
         "effects": {
           "social": -8,
           "mind": 1
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2592,7 +2611,8 @@
           "social": -6,
           "mind": -2,
           "spend": 1600
-        }
+        },
+        "miss": "fam"
       }
     },
     {
@@ -2622,7 +2642,8 @@
         "effects": {
           "social": -7,
           "mind": -4
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2652,7 +2673,8 @@
         "effects": {
           "social": -9,
           "mind": -5
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2682,7 +2704,8 @@
         "effects": {
           "social": -8,
           "mind": -3
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2692,7 +2715,7 @@
       "avatar": "📞",
       "tag": "家人",
       "text": "邻居说在菜市场听见你妈叹气。",
-      "when": "did:fam_momcall_01.l",
+      "when": "no:has:momgone; did:fam_momcall_01.l",
       "alwaysStatus": null,
       "window": [
         12,
@@ -2711,7 +2734,8 @@
         "effects": {
           "social": -7,
           "mind": -4
-        }
+        },
+        "miss": "fam"
       }
     },
     {
@@ -2721,7 +2745,7 @@
       "avatar": "📞",
       "tag": "家人",
       "text": "复查稳住了。她把一罐腌笋塞进你后备箱。",
-      "when": "did:fam_momhealth_01.r",
+      "when": "no:has:momgone; did:fam_momhealth_01.r",
       "alwaysStatus": null,
       "window": [
         15,
@@ -2751,7 +2775,7 @@
       "avatar": "🧑‍🦳",
       "tag": "家人",
       "text": "爸住院了。这回，是你自己没接那个电话。",
-      "when": "did:fam_momcall_01.l; did:fam_momhealth_01.l",
+      "when": "no:has:momgone; did:fam_momcall_01.l; did:fam_momhealth_01.l",
       "alwaysStatus": null,
       "window": [
         40,
@@ -2771,7 +2795,8 @@
         "effects": {
           "mind": -10,
           "social": -13
-        }
+        },
+        "miss": "fam"
       }
     },
     {
@@ -2800,7 +2825,8 @@
         "effects": {
           "mind": -5,
           "social": -6
-        }
+        },
+        "miss": "child"
       }
     },
     {
@@ -2830,7 +2856,8 @@
         "effects": {
           "social": -8,
           "mind": -6
-        }
+        },
+        "miss": "child"
       }
     },
     {
@@ -2860,7 +2887,8 @@
         "effects": {
           "social": -12,
           "mind": -8
-        }
+        },
+        "miss": "child"
       }
     },
     {
@@ -2921,7 +2949,8 @@
         "effects": {
           "social": -5,
           "mind": -2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2951,7 +2980,8 @@
         "effects": {
           "social": -5,
           "mind": -2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -2981,7 +3011,8 @@
         "effects": {
           "social": -6,
           "mind": -3
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3012,7 +3043,8 @@
           "spend": 500,
           "social": -4,
           "mind": -2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3041,7 +3073,8 @@
         "effects": {
           "social": -6,
           "mind": -2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3071,7 +3104,8 @@
         "effects": {
           "social": -8,
           "mind": -4
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3101,7 +3135,8 @@
         "effects": {
           "social": -10,
           "mind": -5
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3131,7 +3166,8 @@
         "effects": {
           "social": -9,
           "mind": 2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3189,7 +3225,8 @@
           "risk": 8,
           "social": -5,
           "mind": 2
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3218,7 +3255,8 @@
         "effects": {
           "social": -8,
           "mind": -3
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3249,7 +3287,8 @@
         "effects": {
           "social": -10,
           "mind": -2
-        }
+        },
+        "miss": "lover"
       },
       "cap": 2
     },
@@ -3282,7 +3321,8 @@
           "social": -4,
           "mind": 3,
           "energy": -10
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3313,7 +3353,8 @@
         "effects": {
           "social": -5,
           "mind": -3
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3372,7 +3413,8 @@
           "energy": -6,
           "mind": -2,
           "risk": -4
-        }
+        },
+        "miss": "lover"
       }
     },
     {
@@ -3430,7 +3472,8 @@
         "effects": {
           "mind": -5,
           "social": -2
-        }
+        },
+        "miss": "pet"
       }
     },
     {
@@ -3460,7 +3503,8 @@
         "effects": {
           "risk": 3,
           "mind": -3
-        }
+        },
+        "miss": "pet"
       }
     },
     {
@@ -3489,7 +3533,8 @@
         "effects": {
           "mind": -13,
           "social": -7
-        }
+        },
+        "miss": "pet"
       }
     },
     {
@@ -4190,7 +4235,7 @@
       "avatar": "👵",
       "tag": "家人",
       "text": "我妈说手机卡得打不开视频了。说了两遍。",
-      "when": null,
+      "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
         "label": "教她清内存",
@@ -4227,7 +4272,8 @@
         "effects": {
           "mind": -6,
           "social": -9
-        }
+        },
+        "miss": "lover"
       },
       "right": {
         "label": "一起去，4,800",
@@ -4292,6 +4338,122 @@
           "energy": -8
         }
       }
+    },
+    {
+      "id": "fam_momgone_01",
+      "who": "老妈",
+      "avatar": "📵",
+      "tag": "家人",
+      "text": "这个月她一个电话都没打。你打回去，响到自动挂断。",
+      "when": "miss.fam>=3; day>=45; day<65|miss.fam>=4; day>=65; day<95|miss.fam>=5; day>=95",
+      "cap": 1,
+      "urgent": true,
+      "fact": true,
+      "st": {
+        "momgone": -1
+      },
+      "left": {
+        "label": "再打一次",
+        "effects": {
+          "mind": -14,
+          "social": -13
+        }
+      },
+      "right": {
+        "label": "明天再说吧",
+        "effects": {
+          "mind": -14,
+          "social": -13
+        }
+      },
+      "whoId": "laoma"
+    },
+    {
+      "id": "fam_childgone_01",
+      "who": "孩子",
+      "avatar": "🎓",
+      "tag": "孩子",
+      "text": "毕业照寄到了。他站在中间，旁边是他妈。你从头看到尾，没有自己。",
+      "when": "miss.child>=3; day>=45; day<70|miss.child>=4; day>=70; day<100|miss.child>=5; day>=100",
+      "cap": 1,
+      "urgent": true,
+      "fact": true,
+      "st": {
+        "childgone": -1
+      },
+      "left": {
+        "label": "收进抽屉",
+        "effects": {
+          "mind": -11,
+          "social": -11
+        }
+      },
+      "right": {
+        "label": "摆在桌上",
+        "effects": {
+          "mind": -11,
+          "social": -11
+        }
+      },
+      "whoId": "haizi"
+    },
+    {
+      "id": "pet_gone_01",
+      "who": "你妈",
+      "avatar": "🐈",
+      "tag": "宠物",
+      "text": "猫被送到你妈家了。她说，它在你家总是一个人蹲在门口。",
+      "when": "miss.pet>=2; day>=38; day<60|miss.pet>=3; day>=60; day<85|miss.pet>=4; day>=85",
+      "cap": 1,
+      "urgent": true,
+      "fact": true,
+      "st": {
+        "petgone": -1
+      },
+      "left": {
+        "label": "周末去看它",
+        "effects": {
+          "mind": -8,
+          "social": -4
+        }
+      },
+      "right": {
+        "label": "先这样吧",
+        "effects": {
+          "mind": -8,
+          "social": -4
+        }
+      },
+      "whoId": "nima"
+    },
+    {
+      "id": "fam_gone_01",
+      "who": "她",
+      "avatar": "🚪",
+      "tag": "伴侣",
+      "text": "她搬走了。衣柜空了一半，钥匙放在鞋柜上。",
+      "when": "miss.lover>=4; day>=38; day<60; no:did:fam_hunli_01|miss.lover>=5; day>=60; day<85; no:did:fam_hunli_01|miss.lover>=6; day>=85; no:did:fam_hunli_01",
+      "cap": 1,
+      "urgent": true,
+      "fact": true,
+      "st": {
+        "lovergone": -1
+      },
+      "left": {
+        "label": "打给她",
+        "effects": {
+          "mind": -10,
+          "social": -12
+        }
+      },
+      "right": {
+        "label": "让她静静",
+        "effects": {
+          "mind": -10,
+          "social": -12
+        }
+      },
+      "whoId": "ta"
     }
   ]
 }

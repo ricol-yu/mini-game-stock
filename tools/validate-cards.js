@@ -34,7 +34,10 @@ function validateCards(data) {
   function warn(rule, id, field, msg) { ISSUES.push({ rule: rule, id: id, field: field, msg: msg, level: 'warn' }); }
 
   var TAGS = ['伴侣', '家人', '孩子', '宠物', '房子', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
-  var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear'];
+  var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear',
+             'momgone', 'childgone', 'petgone', 'lovergone'];   // 后四个：欠账清算后把整条线关掉
+  var LINES = ['fam', 'child', 'pet', 'lover'];                 // 欠账计数：父母/孩子/宠物/伴侣
+  var LINE_OF_TAG = { '家人': 'fam', '孩子': 'child', '宠物': 'pet', '伴侣': 'lover' };
   var STAT_KEYS = ['cash', 'equity', 'cost', 'mind', 'risk', 'social', 'day'];
   var WHEN_VARS = ['mind', 'social', 'risk', 'day', 'equity', 'cash', 'debt', 'cost', 'energy'];
   var MONEY_KEYS = ['spend', 'buy', 'sell', 'borrow', 'repay', 'cash', 'equity', 'cost'];
@@ -52,6 +55,11 @@ function validateCards(data) {
       orGroup.split(/[;&]/).forEach(function (raw) {
         var t = raw.trim();
         if (!t) return;
+        var m = t.match(/^no:has:(\w+)$/);        // 反向状态：这条线还没关（欠账清算后日常卡停出）
+        if (m) {
+          if (STS.indexOf(m[1]) < 0) problems.push('未知状态「' + m[1] + '」（可用：' + STS.join('/') + '）');
+          return;
+        }
         var m = t.match(/^(has|no):(\w+)$/);
         if (m) {
           if (STS.indexOf(m[2]) < 0) problems.push('未知状态「' + m[2] + '」（可用：' + STS.join('/') + '）');
@@ -69,6 +77,9 @@ function validateCards(data) {
         if (m) { if (!ids[m[1]]) problems.push('no:seen: 引用的卡「' + m[1] + '」不存在'); return; }
         m = t.match(/^(pick):([a-z]+)\s*(<=|>=|<|>)\s*(\d+)$/);
         if (m) { if (TAGS.indexOf(m[2]) < 0) problems.push('pick: 的 tag「' + m[2] + '」不在分类表里'); return; }
+        /* 欠账计数比较：miss.fam>=3。故意不做显性显示，玩家看不到次数 */
+        m = t.match(/^miss\.(\w+)\s*(<=|>=|<|>)\s*(\d+)$/);
+        if (m) { if (LINES.indexOf(m[1]) < 0) problems.push('miss. 的线「' + m[1] + '」不在 ' + LINES.join('/') + ' 里'); return; }
         m = t.match(/^(\w+)\s*(<=|>=|<|>)\s*(.+)$/);
         if (m) {
           if (WHEN_VARS.indexOf(m[1]) < 0) { problems.push('未知属性「' + m[1] + '」（可用：' + WHEN_VARS.join(' ') + '）'); return; }
@@ -210,8 +221,48 @@ function validateCards(data) {
       if (!c.when) err('window', id, 'when', 'urgent 卡必须带 when——它不走袋子，没有条件就会天天插队');
       if (!c.cap) warn('window', id, 'cap', 'urgent 卡建议设 cap（一局最多问几次），否则会反复插队');
     }
-    /* 9. choice 决策质量（L1 写作规则，2026-10-21 加）
-          ① 正文不得包含选项原文（正文替玩家做选择 = 剧透，选择张力归零）
+    /* miss（2026-10-27 加）：选项级欠账标记——选它就欠这条线一笔，引擎悄悄累加，
+       玩家看不到次数。分类和线必须对得上，否则会出现「陪宠物却记了父母账」这种脏数据。 */
+    ['left', 'right'].forEach(function (s) {
+      var sd = c[s];
+      if (!sd || sd.miss === undefined) return;
+      if (LINES.indexOf(sd.miss) < 0)
+        err('miss', id, s + '.miss', 'miss 只能是 ' + LINES.join('/') + '，当前「' + sd.miss + '」');
+      else if (LINE_OF_TAG[c.tag] !== sd.miss)
+        err('miss', id, s + '.miss', '分类「' + c.tag + '」不该记 ' + sd.miss + ' 的账（这张卡只能记 ' + (LINE_OF_TAG[c.tag] || '无') + '）');
+    });
+    if (c.left && c.right && c.left.miss && c.right.miss)
+      err('miss', id, 'left/right.miss', '两边都记了欠账：这张卡没有「在场」的选法，不该算陪伴题');
+
+    /* 事件自带状态：键必须在状态表里，天数为 -1（永久）或 1..30 */
+    if (c.st !== undefined) {
+      if (typeof c.st !== 'object' || Array.isArray(c.st)) err('effect-key', id, 'st', 'st 必须是 {状态:天数} 对象');
+      else for (var sk in c.st) {
+        if (STS.indexOf(sk) < 0) err('effect-key', id, 'st.' + sk, '未知状态「' + sk + '」');
+        var sv = c.st[sk];
+        if (typeof sv !== 'number' || (sv !== -1 && (sv < 1 || sv > 30)))
+          err('effect-range', id, 'st.' + sk, '状态天数应为 1..30 或 -1（永久），当前 ' + sv);
+      }
+    }
+
+    /* fact（2026-10-27 加）：既定事实卡——两边效果必须一模一样，作用只是告诉玩家
+       「这事已经这样了」。所以它天然是伪选择，这里明令豁免，同时用规则保证两边真的相等，
+       免得以后有人偷偷把一边改成「还有救」，把既定事实又变回一个假选择。 */
+    if (c.fact !== undefined) {
+      if (typeof c.fact !== 'boolean') err('fact', id, 'fact', 'fact 应为布尔值');
+      if (!c.urgent) err('fact', id, 'urgent', 'fact 卡必须 urgent——条件够了就该自己插队出现');
+      if (c.cap !== 1) err('fact', id, 'cap', 'fact 卡必须 cap:1——既定事实只说一次');
+      if (!c.when) err('fact', id, 'when', 'fact 卡必须带 when，否则一局从头说到尾');
+      if (c.left && c.right) {
+        var la = c.left.effects || {}, ra = c.right.effects || {};
+        var keys = Object.keys(la).concat(Object.keys(ra)).filter(function (k, i, arr) { return arr.indexOf(k) === i; });
+        var diff = keys.filter(function (k) { return (la[k] || 0) !== (ra[k] || 0); });
+        if (diff.length) err('fact', id, 'left/right', 'fact 卡两边效果必须完全相同（既定事实，没有选择），不一致的字段：' + diff.join(','));
+        if (c.left.miss || c.right.miss) err('fact', id, 'left.miss', 'fact 卡不该标 miss——它不是在场的取舍');
+      }
+    }
+
+    /* 9. choice 决策质量（L1 写作规则，2026-10-21 加）          ① 正文不得包含选项原文（正文替玩家做选择 = 剧透，选择张力归零）
           ② 每个选项至少触及 2 条数值（只碰心态/社会 = 金钱风险全程缺席）
           ③ 每个选项至少 1 条下降（禁止「全赚不赔」）
           ④ 两选项不得互相支配，也不得完全相同（滑哪边都一样 = 伪选择）
@@ -241,6 +292,7 @@ function validateCards(data) {
     (function () {
       var L = c.left && c.left.effects, R = c.right && c.right.effects;
       if (!L || !R) return;
+      if (c.fact) return;                       // 既定事实卡两边本来就一样，见上面 fact 规则
       var txn = ['buy', 'sell', 'borrow', 'repay'].some(function (k) { return L[k] !== undefined || R[k] !== undefined; });
       if (txn || L.addst || R.addst || L.unst || R.unst) return;
       var vec = function (e) {

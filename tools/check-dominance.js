@@ -78,7 +78,7 @@ const rows = cards.map(function (c) {
   const traded = ['buy', 'sell', 'borrow', 'repay', 'cash'].some(function (k) {
     return (L[k] !== undefined) || (R[k] !== undefined);
   });
-  const stated = !!(L.addst || R.addst || c.alwaysStatus);
+  const stated = !!(L.addst || R.addst || c.alwaysStatus || c.fact);   // fact：既定事实卡，两边本来一样
   const touched = new Set(Object.keys(L).concat(Object.keys(R)));
   return {
     id: c.id, who: c.who, tag: c.tag, text: c.text,
