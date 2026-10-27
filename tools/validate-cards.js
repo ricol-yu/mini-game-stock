@@ -184,6 +184,18 @@ function validateCards(data) {
       err('effect-key', id, 'when', '卡面含 repay（还钱），但 when 没有负债条件（如 debt>0）——零负债玩家会抽到无法执行的还钱卡');
     }
 
+    /* 4.6 同一侧不许既"买入"又"花钱"（2026-10-27 线上反馈）
+       buy 只用现金、spend 现金不够就记账——写在同一侧，玩家读不出钱到底变成股票还是花掉了。
+       「阿姨让你投五千」当初就写成纯 spend，于是系统卖股票凑钱，变成"卖股票买股票"。 */
+    ['left', 'right'].forEach(function (s) {
+      var e = c[s] && c[s].effects;
+      if (!e || !e.buy) return;
+      if (e.spend || e.repay) {
+        err('effect-key', id, s, '同一侧既有 buy（买入）又有 ' + (e.spend ? 'spend（花钱）' : 'repay（还钱）') +
+          '——钱到底是变成股票还是花掉了，玩家分不清。要买入就只写 buy，要花钱就只写 spend');
+      }
+    });
+
     /* alwaysStatus */
     if (c.alwaysStatus) {
       var as = c.alwaysStatus;

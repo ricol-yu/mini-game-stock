@@ -224,31 +224,46 @@ step('净值飘字：发薪日飘的金额 = 实际净值变化，且只有金�
     throw new Error('飘字 ' + shown + ' 与净值差 ' + (sandbox.net() - n0) + ' 对不上');
 });
 
-/* 「现金 0 还能花钱，扣的是哪里的钱」（2026-10-27）：spend 的去向 = 先卖股票、再欠债。
-   玩家必须两头都看得见：结算后 toast 说清楚（_autoSell/_autoDebt），选之前卡片上就预警（shortNote）。 */
-step('现金不够花钱：卖股票记账，没股票就欠债，两笔都进提示队列', () => {
+/* 「现金 0 还能花钱，扣的是哪里的钱」（2026-10-27 首版 → 当晚重写）
+   旧逻辑：现金不够先砍仓抵账，再不够才欠债。玩家反馈这样会出现
+   「阿姨让你投五千买股 → 系统卖掉你的股票付这五千」，账说不通。
+   新逻辑：**系统永不替玩家卖股票**——支出超额只记账（负债），买入只用现金、买不起就少买。 */
+step('现金不够花钱：不砍仓，差额全额记负债，并进提示队列', () => {
   sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
   sandbox.S.cash = 500; sandbox.S.equity = 9000; sandbox.S.debt = 0;
-  sandbox.spend(3000);                               // 500 现金 + 卖 2,500 股票
-  if (sandbox.S._autoSell !== 2500) throw new Error('卖股票没记账：' + sandbox.S._autoSell);
-  if (sandbox.S.equity !== 6500) throw new Error('股票没少：' + sandbox.S.equity);
-  if (sandbox.S._autoDebt) throw new Error('明明卖得起股票，怎么还欠债：' + sandbox.S._autoDebt);
-  sandbox.S.cash = 100; sandbox.S.equity = 0; sandbox.S.debt = 0;
-  sandbox.spend(2000);                               // 没股票可卖 → 全欠
-  if (sandbox.S.debt !== 1900) throw new Error('欠债没记账：' + sandbox.S.debt);
-  if (sandbox.S._autoDebt !== 1900) throw new Error('欠债没进提示队列');
+  sandbox.spend(3000);
+  if (sandbox.S.equity !== 9000) throw new Error('系统偷偷卖了股票：持仓 ' + sandbox.S.equity);
+  if (sandbox.S.debt !== 2500) throw new Error('差额没记负债：' + sandbox.S.debt);
+  if (sandbox.S.cash !== 0) throw new Error('现金没清零：' + sandbox.S.cash);
+  if (sandbox.S._autoDebt !== 2500) throw new Error('欠债没进提示队列：' + sandbox.S._autoDebt);
 });
 
-step('卡片预警：现金不够的花钱项在 foot 上标「不够」，不花钱的项不标', () => {
+step('现金不够买入：只买得起多少买多少，不卖股票，差额记账', () => {
+  sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
+  sandbox.S.cash = 800; sandbox.S.equity = 9000; sandbox.S.debt = 0;
+  sandbox.buy(3000);
+  if (sandbox.S.equity !== 9800) throw new Error('没买进：持仓 ' + sandbox.S.equity);
+  if (sandbox.S.cash !== 0) throw new Error('现金没扣干净：' + sandbox.S.cash);
+  if (sandbox.S.debt !== 0) throw new Error('买股票怎么买出负债了：' + sandbox.S.debt);
+  if (sandbox.S._buyWant !== 3000 || sandbox.S._buyGot !== 800)
+    throw new Error('买入差额没记账：想买 ' + sandbox.S._buyWant + ' 实买 ' + sandbox.S._buyGot);
+});
+
+step('卡片预警：支出超额说「会欠着」，买入超额说「现金只够买」', () => {
   sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
   sandbox.S.cash = 100; sandbox.S.equity = 9000;
-  const c = { id:'w1', who:'测试', av:'🧪', tag:'测试', txt:'x',
-              L:{ s:'花大钱', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
-  const h = sandbox.build(c).innerHTML;
-  if (h.indexOf('不够') < 0) throw new Error('花钱项没有预警：' + h.slice(-200));
-  if (h.indexOf('卖股票') < 0) throw new Error('没说会卖股票：' + h.slice(-200));
-  const rs = h.split('<span class="r">')[1] || '';
-  if (rs.indexOf('不够') >= 0) throw new Error('不花钱的选项也被预警了');
+  const spendCard = { id:'w1', who:'测试', av:'🧪', tag:'测试', txt:'x',
+                      L:{ s:'花大钱', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
+  const h1 = sandbox.build(spendCard).innerHTML;
+  if (h1.indexOf('会欠着') < 0) throw new Error('花钱项没有欠债预警：' + h1.slice(-200));
+  if (h1.indexOf('卖股票') >= 0) throw new Error('还在说要卖股票：' + h1.slice(-200));
+  if ((h1.split('<span class="r">')[1] || '').indexOf('会欠着') >= 0)
+    throw new Error('不花钱的选项也被预警了');
+
+  const buyCard = { id:'w2', who:'测试', av:'🧪', tag:'测试', txt:'x',
+                    L:{ s:'不买', e:{ mind: 1 } }, R:{ s:'上车 3,000', e:{ buy: 3000 } } };
+  const h2 = sandbox.build(buyCard).innerHTML;
+  if (h2.indexOf('现金只够买') < 0) throw new Error('买入项没有预警：' + h2.slice(-200));
 });
 
 step('资金条闪烁：动了的段挂 hit 类，没动的段不挂', () => {

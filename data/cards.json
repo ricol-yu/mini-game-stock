@@ -845,7 +845,7 @@
         }
       },
       "right": {
-        "label": "投 6,500",
+        "label": "给 6,500",
         "effects": {
           "spend": 6500,
           "risk": 8,
@@ -2359,7 +2359,7 @@
       "whoId": "zhangayi",
       "avatar": "🧶",
       "tag": "人情",
-      "text": "张阿姨拉住你：「有个内部渠道，稳得很。」",
+      "text": "张阿姨拉住你：「有个内部渠道，稳得很。」钱得先给。",
       "when": null,
       "alwaysStatus": null,
       "left": {
@@ -2371,7 +2371,7 @@
         }
       },
       "right": {
-        "label": "投五千试试",
+        "label": "掏 5,000 试试",
         "effects": {
           "spend": 5000,
           "risk": 10,

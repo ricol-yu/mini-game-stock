@@ -288,10 +288,22 @@ function daysToPayday(){
   return d < 0 ? d + MONTH : d;                            // 0 = 今天
 }
 
-/* ============ 金钱操作 ============ */
+/* ============ 金钱操作 ============
+   一条规矩（2026-10-27 定，被玩家问出来的）：
+   **系统永远不替玩家买卖股票。** 持仓是资产，不是钱包。
+   早先 spend() 现金不够会自动砍仓抵账，于是出现「阿姨让你投五千买股 →
+   系统卖掉你手里的股票来付这五千 → 又买回股票」这种账，谁也说不通。
+   现在：
+     · buy  只用现金，买不起就少买，差多少明说；
+     · spend 现金不够就欠着（负债），慢慢还月供；
+     · 想卖股票换现金，只能玩家自己卖（卡片上的「卖出/减仓」选项）。
+   HUD 上「持仓」和「现金」本来就是两条柱子，行为上也得分开。 */
 function buy(x){
-  var amt = Math.min(Math.max(S.cash,0), x * (S.st.over ? 1.35 : 1));
-  if(amt <= 0) return;
+  var want = x * (S.st.over ? 1.35 : 1);           // 上头状态会追高，想买的比计划多
+  var amt = Math.min(Math.max(S.cash, 0), want);
+  S._buyWant = (S._buyWant || 0) + want;
+  S._buyGot  = (S._buyGot  || 0) + amt;
+  if(amt <= 0) return;                             // 一分现金都没有：什么都买不到，但仍要跟玩家说
   S.cash -= amt; S.equity += amt; S.cost += amt; S.trades++; S.neverBought = false;
 }
 function sell(r){
@@ -303,15 +315,14 @@ function sell(r){
   S.risk = clamp(S.risk - amt / 1400, 0, 100);      // 减仓 = 降低风险
 }
 function spend(x){
+  if(x <= 0) return;
   if(S.cash >= x){ S.cash -= x; return; }
-  var need = x - S.cash; S.cash = 0;
-  var cut = Math.min(S.equity, need);
-  if(cut > 0 && !S.st.halt){
-    S.cost -= S.cost * (S.equity > 0 ? cut / S.equity : 1);
-    S.equity -= cut; S.mind -= 5; S.trades++; need -= cut;
-    S._autoSell = (S._autoSell || 0) + cut;         // 这笔是拿股票抵的——toast 必须说，玩家得知道钱从哪来
-  }
-  if(need > 0){ S.debt += need; S.social -= 3; S._autoDebt = (S._autoDebt || 0) + need; }
+  // 现金不够 → 现金清零，差额记进负债（刷信用卡/先欠着）。
+  // 不砍仓、不卖股票：卖资产这一步必须玩家自己按，系统代劳过一次就够了。
+  var need = x - S.cash;
+  S.cash = 0;
+  S.debt += need; S.social -= 3;
+  S._autoDebt = (S._autoDebt || 0) + need;
 }
 function borrow(x){
   // 借来的钱先进现金、欠账记进负债（进度条上看得见），花不花、买不买由玩家自己定
@@ -1067,10 +1078,20 @@ function build(c){
   d._c = c; return d;
 }
 /* 现金不够还选花钱项：会自动卖股票抵、再不够就记负债——选之前就说清楚（教程卡没有 e，静默跳过） */
+/* 选之前先让玩家心里有数（2026-10-27 重写）：
+   支出（spend）超现金 → 会欠债，说清欠多少；
+   买入（buy）超现金 → 买不起全部，说清只够买多少。
+   以前一律说「不够，卖股票抵」——但买股票的卡这么写，等于「卖掉股票去买股票」。 */
 function shortNote(e){
+  if(!e) return "";
   var have = Math.max(S.cash, 0);
-  if(!e || !e.spend || e.spend <= have) return "";
-  return ' <small>' + (S.equity >= e.spend - have && !S.st.halt ? "不够，卖股票抵" : "不够，会欠债") + '</small>';
+  if(e.spend && e.spend > have)
+    return ' <small>差 ' + money(e.spend - have) + '，会欠着</small>';
+  if(e.buy){
+    var want = e.buy * (S.st.over ? 1.35 : 1);
+    if(want > have + 0.5) return ' <small>现金只够买 ' + money(have) + '</small>';
+  }
+  return "";
 }
 /* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片 */
 var TUT = [
@@ -1148,21 +1169,23 @@ function fly(dir){
   S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
   setTimeout(function(){
-    /* 「这笔钱从哪来」的账（2026-10-27）：
+    /* 「这笔钱从哪来、到哪去」的账（2026-10-27 重写）：
        ① 主动借（卡面 borrow）→ borrowed > 0；② 主动还 → borrowed < 0；
-       ③ 现金不够硬花 → 自动卖股票（_autoSell），还不够就欠债（_autoDebt）。
+       ③ 现金不够花 → 差额记负债（_autoDebt），不卖股票；
+       ④ 现金不够买 → 少买（_buyWant / _buyGot），差多少明说。
        早先 auto 的提示只在 borrowed > 0 时读——没有 borrow 的卡花了钱欠了债，提示被整个吞掉，
        _autoDebt 还残留到下一张，这就是「现金 0 还能一直花钱，钱不知道扣哪了」的体验来源。 */
     var auto = S._autoDebt || 0; S._autoDebt = 0;
-    var sold = S._autoSell || 0; S._autoSell = 0;
+    var buyWant = S._buyWant || 0, buyGot = S._buyGot || 0;
+    S._buyWant = 0; S._buyGot = 0;
     var notes = [];
     if(borrowed > 0) notes.push("💳 借到 " + money(borrowed) + "，已记进负债");
     if(borrowed < 0) notes.push("✅ 还掉 " + money(-borrowed) + "，负债减少");
-    if(sold > 0 || auto > 0){
-      var parts = [];
-      if(sold > 0) parts.push("卖了 " + money(sold) + " 的股票");
-      if(auto > 0) parts.push("欠下 " + money(auto));
-      notes.push("💸 现金不够：" + parts.join("，还"));
+    if(auto > 0) notes.push("💸 现金不够，欠下 " + money(auto) + "（每月要还）");
+    if(buyWant - buyGot >= 1 && buyWant > 0){
+      notes.push(buyGot >= 1
+        ? "💵 现金只够买 " + money(buyGot) + "，还剩 " + money(buyWant - buyGot) + " 没买上"
+        : "💵 现金不够，这一笔没买成");
     }
     if(notes.length) m = notes.join("　·　") + (m ? "　·　" + m : "");
     if(m) toast(m);
@@ -1329,7 +1352,7 @@ CARDS = [
  {id:"soc_banquet_01",who:"张阿姨",av:"🏘",tag:"人情",txt:"楼下办寿宴，整栋楼都去了。",
   R:{s:"随 800",e:{spend:800,social:6,energy:-12}},L:{s:"装不在家",e:{social:-6,mind:-2}}},
  {id:"soc_scam_01",who:"老同学",av:"🤳",tag:"人情",when:"social>48",txt:"有个项目，稳赚，就是得先投点钱。",
-  R:{s:"投 6,500",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
+  R:{s:"给 6,500",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
  {id:"soc_whisper_01",who:"饭局",av:"🥢",tag:"人情",when:"no:insider; social>45",txt:"饭局上有人凑过来，压低声音：「有只票，下周必涨。」",
   R:{s:"记住这个消息",e:{mind:-3,risk:8,addst:{"insider":6},social:3}},L:{s:"当没听见",e:{mind:4,social:-5}}},
  {id:"self_checkup_01",who:"体检报告",av:"🏥",tag:"自己",txt:"血压偏高，熬夜太多。医生让你少盯屏幕。",
@@ -1451,8 +1474,8 @@ CARDS = [
   R:{s:"祝你好运",e:{mind:3,social:-3}},L:{s:"跟一手小的",e:{buy:3000,risk:9,mind:-2}}},
  {id:"mkt_chase_01",who:"自己",av:"🙋",tag:"市场",when:"did:mkt_bear_cut_01.l",win:[8,300],txt:"割肉那天起，指数悄悄涨回了 8%。",
   R:{s:"截图发群，摩拳擦掌",e:{social:5,mind:3,risk:5}},L:{s:"追买回来",e:{buy:6000,risk:8,mind:-3}}},
- {id:"soc_insider_01",who:"张阿姨",av:"🧶",tag:"人情",txt:"张阿姨拉住你：「有个内部渠道，稳得很。」",
-  R:{s:"投五千试试",e:{spend:5000,risk:10,social:4}},L:{s:"婉拒了",e:{social:-4,risk:-2,mind:1}}},
+ {id:"soc_insider_01",who:"张阿姨",av:"🧶",tag:"人情",txt:"张阿姨拉住你：「有个内部渠道，稳得很。」钱得先给。",
+  R:{s:"掏 5,000 试试",e:{spend:5000,risk:10,social:4}},L:{s:"婉拒了",e:{social:-4,risk:-2,mind:1}}},
  {id:"self_mirror_02",who:"镜子",av:"🪞",tag:"自己",when:"mind<45",txt:"镜子里的人眼下乌青，像在问：还来吗？",
   R:{s:"笑了笑，没说话",e:{mind:-2,risk:-4}},L:{s:"再战一次",e:{mind:4,risk:6}}},
  {id:"fam_momcall_01",who:"老妈",av:"📞",tag:"家人",when:"no:has:momgone",txt:"老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
