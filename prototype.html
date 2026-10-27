@@ -50,7 +50,7 @@
     border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5;position:relative;cursor:help}
   .chip b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .chip.hot{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
-  /* 有欠款：交钱日变成红色提醒（还不上两次就是老赖）；老赖再加一个红标 */
+  /* 有欠款：交钱日变成红色提醒（还不上一次就是老赖）；老赖再加一个红标 */
   .chip.due{background:#fff1f0;border-color:#ffa39e;color:#a8071a}
   .chip.due b{color:#a8071a}
   .chip .ll{background:#a8071a;color:#fff;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700}
@@ -250,7 +250,6 @@ var S, MAX_DAY = 360, INIT = 20000, SEED_EQ = 9000, MONEY_CAP = 40000,
     MONTH = 30, PAYDAY = 5, SALARY = 11000, RENT = 4600, UTIL = 1400, BILL_GROW = 0.10,
     BURN = 95, DEBT_DUE_RATE = 0.12, DEBT_DUE_MIN = 500,
     LAOLAI_GARNISH = 0.25,                          // 老赖：发薪日法院划走工资的比例
-    LAOLAI_AT = 3,                                  // 逾期攒到几笔上失信名单（1 笔逾期 or 2 笔违约）
     CARDS = [], ST = {};
 
 /* ============ 状态（Buff / Debuff）字典 ============ */
@@ -634,24 +633,21 @@ function tick(){
     // 没还上的部分不"滚回负债"——它本来就在负债里，没还就一直欠着。
     // （曾经写成 debt += owed，等于还了多少又加回去多少，越还越多，纯 bug）
     if(dpay >= due - 0.5){
-      if(S.arrears > 0){
-        S.arrears -= 1;                              // 还清一笔，信用记录往回挪一格（不是一键归零）
-        msg.push("💳 月供 " + money(dpay) + " 全额还上，逾期记录少一笔" + (S.arrears ? "（还欠 " + money(S.debt) + "）" : ""));
-      } else msg.push("💳 月供还了 " + money(dpay) + "，还欠 " + money(S.debt));
-    } else if(dpay >= due * 0.6){
-      // 还了一大半但没还满：记一笔逾期（攒够了照样上名单，只是慢一些）
-      S.arrears = (S.arrears || 0) + 1;
-      S.mind -= 2; S.social -= 2;
-      msg.push("💳 月供该还 " + money(due) + "，凑了 " + money(dpay) + "，差 " + money(due - dpay) + "——记一笔逾期");
+      S.arrears = 0;                                 // 这期全额还上，逾期记录翻篇
+      msg.push("💳 月供 " + money(dpay) + " 全额还上" + (S.debt > 1 ? "，还欠 " + money(S.debt) : "，债清了"));
     } else {
-      S.arrears = (S.arrears || 0) + 2;              // 连六成都不到：一次算两笔
-      S.mind -= 4; S.social -= 4;
-      msg.push("💳 月供该还 " + money(due) + "，只凑出 " + money(dpay) + "，银行把这笔记成违约了");
-    }
-    if(S.arrears >= LAOLAI_AT && !S.st.laolai){
-      setST("laolai", -1);
-      S.mind -= 6; S.social -= 8;
-      msg.push("⚖️ 逾期攒够了，你上了失信名单——成老赖了");
+      // 还不上（2026-10-28 改）：一次就上失信名单，不再攒次数。
+      // 欠的是明账，第一期就赖的人银行不会给第二次机会；解除只有一条路——把债还清。
+      S.arrears = (S.arrears || 0) + 1;
+      S.mind -= 3; S.social -= 3;
+      if(!S.st.laolai){
+        setST("laolai", -1);
+        S.mind -= 6; S.social -= 8;
+        msg.push("💳 月供该还 " + money(due) + "，只凑出 " + money(dpay) + "，差 " + money(due - dpay) +
+                 "——还不上，上了失信名单，成老赖了");
+      } else {
+        msg.push("💳 月供该还 " + money(due) + "，只凑出 " + money(dpay) + "，又没还上，老赖继续挂着");
+      }
     }
   }
   if((dayOfMonth === PAYDAY + 14 || dayOfMonth === PAYDAY - 1) && S.debt > 1)
@@ -820,7 +816,7 @@ function render(){
   var np = nextPayday(), dPay = np.in, isRent = np.kind === "rent";
   var nb = isRent ? billOf(S.day + dPay).total : 0;
   // 还款节点要一眼看得见（2026-10-27）：有欠款就把「房租 + 月供」合起来显示，
-  // 玩家才知道下一次要出去多少钱、会不会不够——还不上两次就是老赖。
+  // 玩家才知道下一次要出去多少钱、会不会不够——还不上一次就是老赖。
   var dueNow = S.debt > 1 ? Math.min(S.debt, Math.max(DEBT_DUE_MIN, S.debt * DEBT_DUE_RATE)) : 0;
   var payTotal = nb + dueNow, isLaolai = !!S.st.laolai;
   html += '<span class="chip' + (S.debt > 1 ? ' due' : '') + ' hot" tabindex="0">' +
@@ -836,19 +832,12 @@ function render(){
             ? '还款日每月 ' + PAYDAY + ' 号和 ' + (PAYDAY + 15) + ' 号各一次，每次还欠款的 ' +
               Math.round(DEBT_DUE_RATE * 100) + '%（至少 ' + money(DEBT_DUE_MIN) + '）。' +
               (isRent ? '这一次要出去 ' + money(payTotal) + '（房租 + 月供）。' : '') +
-              (isLaolai ? '你现在是老赖：工资到手先被法院划走 ' + Math.round(LAOLAI_GARNISH * 100) + '%，债还清才会解除。'
-                        : '还不到应还额的六成就算一次违约，攒两次上失信名单。')
+              (isLaolai ? '你现在是老赖：工资到手先被法院划走 ' + Math.round(LAOLAI_GARNISH * 100) + '%，把债还清才会解除。'
+                        : '还不上一次就上失信名单（老赖）。')
             : '手里一直有欠款的话，这两个日子都会自动还一笔。') +
           '</span></span>';
-  // 逾期记录（2026-10-27）：平时看不见，欠了才亮出来——让玩家知道离老赖还有几步。
-  // 攒到 LAOLAI_AT 就上失信名单，还清了才慢慢往回挪。
-  if(S.arrears > 0 && !S.st.laolai){
-    html += '<span class="chip due" tabindex="0">⚠️ 逾期 <b>' + S.arrears + '/' + LAOLAI_AT + '</b>' +
-            '<span class="tip"><b>⚠️ 逾期记录 ' + S.arrears + ' 笔</b>还款日没还够留下的。' +
-            '攒到 ' + LAOLAI_AT + ' 笔就上失信名单（老赖）：工资被法院划走 ' +
-            Math.round(LAOLAI_GARNISH * 100) + '%、借不到全款、心态社会每天掉。' +
-            '全额还清一次能减掉一笔。</span></span>';
-  }
+  // 逾期计数（2026-10-28）：一次还不上就成老赖，「攒 N 笔」没有意义了，
+  // HUD 不再显示进度——成没成老赖看红标就够，arrears 只留在后台当统计用。
   for(var k in S.st){
     var left = S.st[k], info = ST[k] || {nm:k, ic:"•"};
     html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"||k==="bull"||k==="bear"?" hot":"") + '" tabindex="0">' +
@@ -1158,20 +1147,14 @@ function build(c){
     '</span><span class="r">' + c.R.s + shortNote(c.R && c.R.e) + ' →</span></div>';
   d._c = c; return d;
 }
-/* 现金不够还选花钱项：会自动卖股票抵、再不够就记负债——选之前就说清楚（教程卡没有 e，静默跳过） */
-/* 选之前先让玩家心里有数（2026-10-27 重写）：
-   支出（spend）超现金 → 会欠债，说清欠多少；
-   买入（buy）超现金 → 买不起全部，说清只够买多少。
-   以前一律说「不够，卖股票抵」——但买股票的卡这么写，等于「卖掉股票去买股票」。 */
+/* 左右滑动的提示（2026-10-28 改）：只报这一项要花多少钱，别的不多说。
+   「差 X 会欠着」「现金只够买 X」这类预警搬来搬去都别扭——滑动提示管报价，
+   结算弹出的提示管后果（现金不够会明说「欠下多少」）。教程卡没有 e，静默跳过。 */
 function shortNote(e){
   if(!e) return "";
-  var have = Math.max(S.cash, 0);
-  if(e.spend && e.spend > have)
-    return ' <small>差 ' + money(e.spend - have) + '，会欠着</small>';
-  if(e.buy){
-    var want = e.buy * (S.st.over ? 1.35 : 1);
-    if(want > have + 0.5) return ' <small>现金只够买 ' + money(have) + '</small>';
-  }
+  if(e.spend) return ' <small>花 ' + money(e.spend) + '</small>';
+  if(e.buy)   return ' <small>买 ' + money(e.buy * (S.st.over ? 1.35 : 1)) + '</small>';
+  if(e.cash != null && e.cash < 0) return ' <small>花 ' + money(-e.cash) + '</small>';
   return "";
 }
 /* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片 */

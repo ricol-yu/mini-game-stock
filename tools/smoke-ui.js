@@ -270,21 +270,22 @@ step('现金不够买入：只买得起多少买多少，不卖股票，差额�
     throw new Error('买入差额没记账：想买 ' + sandbox.S._buyWant + ' 实买 ' + sandbox.S._buyGot);
 });
 
-step('卡片预警：支出超额说「会欠着」，买入超额说「现金只够买」', () => {
+step('滑动提示只报价格：花钱项写「花 ¥X」，买入项写「买 ¥X」，不再提欠债', () => {
   sandbox.S.tut = 3; sandbox.reset(); sandbox.render();
   sandbox.S.cash = 100; sandbox.S.equity = 9000;
   const spendCard = { id:'w1', who:'测试', av:'🧪', tag:'测试', txt:'x',
                       L:{ s:'花大钱', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
   const h1 = sandbox.build(spendCard).innerHTML;
-  if (h1.indexOf('会欠着') < 0) throw new Error('花钱项没有欠债预警：' + h1.slice(-200));
-  if (h1.indexOf('卖股票') >= 0) throw new Error('还在说要卖股票：' + h1.slice(-200));
-  if ((h1.split('<span class="r">')[1] || '').indexOf('会欠着') >= 0)
-    throw new Error('不花钱的选项也被预警了');
+  if (h1.indexOf('花 ¥5,000') < 0) throw new Error('花钱项没报价：' + h1.slice(-200));
+  if (h1.indexOf('会欠着') >= 0 || h1.indexOf('卖股票') >= 0 || h1.indexOf('现金只够') >= 0)
+    throw new Error('滑动提示里混进了后果说明：' + h1.slice(-200));
+  if ((h1.split('<span class="r">')[1] || '').indexOf('<small>') >= 0)
+    throw new Error('不花钱的选项也被标价了');
 
   const buyCard = { id:'w2', who:'测试', av:'🧪', tag:'测试', txt:'x',
-                    L:{ s:'不买', e:{ mind: 1 } }, R:{ s:'上车 3,000', e:{ buy: 3000 } } };
+                    L:{ s:'不买', e:{ mind: 1 } }, R:{ s:'上车', e:{ buy: 3000 } } };
   const h2 = sandbox.build(buyCard).innerHTML;
-  if (h2.indexOf('现金只够买') < 0) throw new Error('买入项没有预警：' + h2.slice(-200));
+  if (h2.indexOf('买 ¥3,000') < 0) throw new Error('买入项没报价：' + h2.slice(-200));
 });
 
 step('资金条闪烁：动了的段挂 hit 类，没动的段不挂', () => {
@@ -356,31 +357,34 @@ step('清算卡渲染成「既定事实」：有那行说明、两边都不标�
   if (sandbox.build(plain).innerHTML.indexOf('已经这样了') >= 0) throw new Error('普通卡也被标成既定事实了');
 });
 
-/* ---------- 还款节点与老赖（2026-10-27） ----------
-   月供节点 = 每月 5 号。还不到应还额六成算一次违约，攒两次上失信名单（laolai，永久到还清）。
-   老赖的惩罚：心态/社会每天掉、发薪日工资被划走 25%、只能借到一半的钱。 */
+/* ---------- 还款节点与老赖（2026-10-28 改规则） ----------
+   月供节点 = 每月 5 号和 20 号。只要没全额还上（哪怕还了一大半），一次就上失信名单
+   （laolai，debuff 挂到债还清为止）。老赖的惩罚：心态/社会每天掉、
+   发薪日工资被划走 25%、只能借到一半的钱。 */
 function payday(day, cash, debt, fired) {
   sandbox.S.tut = 3; sandbox.reset();
   sandbox.S.day = day; sandbox.S.cash = cash; sandbox.S.debt = debt;
   sandbox.S.equity = 0; sandbox.S.risk = 0; sandbox.S.mind = 60; sandbox.S.social = 60;
   if (fired) sandbox.S.st.fired = -1;                // 失业：5 号没有工资进来，才真的还不上
-  sandbox.tick();
+  return sandbox.tick();                             // 返回结算文案，供断言"只凑出多少"
 }
 
-step('还款节点：一次完全没还上记两笔，但还不到上名单的线', () => {
+step('还款节点：一次没还上，直接上失信名单', () => {
   payday(35, 0, 20000, true);                        // 第 35 天 = 5 号，没工资、没现金
-  if (sandbox.S.arrears < 2) throw new Error('违约没记上：' + sandbox.S.arrears);
-  if (sandbox.S.st.laolai) throw new Error('一次违约就成老赖了，太狠');
+  if (sandbox.S.arrears !== 1) throw new Error('逾期没记上：' + sandbox.S.arrears);
+  if (!sandbox.S.st.laolai) throw new Error('一次还不上居然没成老赖');
 });
 
-step('还款节点：逾期攒够就上失信名单', () => {
-  payday(35, 0, 20000, true);
-  sandbox.S.day = 50; sandbox.S.cash = 0;            // 20 号还款日，还是没钱
-  sandbox.tick();
-  if (!sandbox.S.st.laolai) throw new Error('逾期攒到 ' + sandbox.S.arrears + ' 笔还没上名单');
+step('还款节点：还了一大半但没还满，一样成老赖', () => {
+  // 房租 6,600 先扣，剩 1,400 → 月供应还 2,400 只凑得出 1,400（不是 0，是真"还了一部分"）
+  const m = payday(35, 8000, 20000, true);
+  if (m.indexOf('只凑出') < 0 || m.indexOf('只凑出 ¥0') >= 0)
+    throw new Error('没造出「还了一部分」的场景：' + m);
+  if (!sandbox.S.st.laolai) throw new Error('还大半没还满居然放过他了');
+  if (sandbox.S.arrears !== 1) throw new Error('逾期没记上：' + sandbox.S.arrears);
 });
 
-step('还款节点：还够六成算逾期不违约，全额还清把记录清零', () => {
+step('还款节点：全额还清不记逾期，记录翻篇', () => {
   payday(35, 6000, 20000);                           // 应还 2,400，还 6,000 → 全额
   if (sandbox.S.arrears !== 0) throw new Error('全额还清了怎么还有违约记录：' + sandbox.S.arrears);
   // 先攒一次违约，再全额还一次，记录应该被抹掉
