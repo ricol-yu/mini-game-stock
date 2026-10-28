@@ -20,6 +20,18 @@
 
   .phone{width:344px;height:700px;background:var(--panel);border-radius:30px;position:relative;
     box-shadow:var(--shadow);overflow:hidden;border:1px solid #e9eaee;display:flex;flex-direction:column}
+
+  /* 干净模式（clean=1 或微信 webview 自动识别）：只留游戏本体，全屏铺满。
+     桌面上手机框外的标题/说明是给人看的开发包装，上小程序时不存在这些东西——
+     小程序页面就是 .phone 里的内容本身。 */
+  html.clean,body.clean{width:100%;height:100%;overflow:hidden}
+  html.clean .wrap{padding:0;justify-content:stretch}
+  html.clean .head{display:none}
+  html.clean .phone{width:100%;max-width:none;height:100vh;border:none;border-radius:0;
+    box-shadow:none}
+  @media (max-width:420px){
+    html.clean .phone{width:100%;max-width:none}
+  }
   .nav{height:66px;padding:22px 14px 0;display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 auto}
   .nav .title{font-size:15.5px;font-weight:700;letter-spacing:3px}
   .capsule{position:absolute;right:12px;top:26px;width:78px;height:29px;border-radius:15px;border:1px solid var(--line);
@@ -1187,6 +1199,14 @@ function deckBack(cls){
    ART_ON：默认关（不发明知 404 的请求）。素材放进 assets/char/ 后打开它，
    或者临时用 prototype.html?art=1 预览。 */
 var ART_ON = typeof location !== "undefined" && /[?&]art=1/.test(location.search);
+/* 干净模式开关：?clean=1 强制开；微信小程序 webview 的 UA 带 miniProgram，自动开。
+   开了之后手机框外的开发包装（标题/说明）不渲染，游戏全屏——
+   小程序页面里本来就是只有游戏，那层包装只活在浏览器里。 */
+if (typeof document !== "undefined" && document.documentElement) {
+  var _clean = typeof location !== "undefined" &&
+    (/[?&]clean=1/.test(location.search) || /miniProgram/i.test(navigator.userAgent));
+  if (_clean) document.documentElement.className += " clean";
+}
 function artHTML(c){
   var ph = c.av || "🖼";
   if(!ART_ON || !c.wid) return '<div class="art" data-ph="' + ph + '"><span class="ph">' + ph + '</span></div>';
