@@ -78,7 +78,8 @@
           "spend": 3000,
           "energy": -6
         }
-      }
+      },
+      "emo": "angry"
     },
     {
       "id": "fam_dinner_01",
@@ -105,7 +106,8 @@
           "social": 8,
           "energy": -12
         }
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_pregnant_01",
@@ -161,7 +163,8 @@
           "mind": 12,
           "social": 8
         }
-      }
+      },
+      "emo": "cry"
     },
     {
       "id": "fam_child_01",
@@ -2534,7 +2537,8 @@
           "mind": 2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_kidsfee_01",

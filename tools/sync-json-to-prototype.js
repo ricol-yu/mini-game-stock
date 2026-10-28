@@ -40,7 +40,10 @@ const lines = data.cards.map(c => {
   // 早先这里没写 id → 浏览器里 S.did[undefined] 全是同一个键，
   // 所有 did:/seen: 条件永远不成立，整条家庭线（彩礼→婚礼→首付→房贷）在玩家手里根本不会出现。
   // 仿真当时看不出来，是因为 sim/engine.js 会按 json 顺序补 _id。
-  let head = ' {id:' + j(c.id) + ',who:' + j(c.who) + ',av:' + j(c.avatar) + ',tag:' + j(c.tag);
+  // wid：素材文件名直接用 whoId（assets/char/<wid>.png），代码里零映射表。
+  // emo：可选表情差分，只对「标了的卡」拼 <wid>_<emo>.png，没标就用底图。
+  let head = ' {id:' + j(c.id) + ',who:' + j(c.who) + ',wid:' + j(c.whoId) + ',av:' + j(c.avatar) + ',tag:' + j(c.tag);
+  if (c.emo) head += ',emo:' + j(c.emo);
   if (c.when) head += ',when:' + j(c.when);
   if (c.window) head += ',win:' + j(c.window);   // [起,止]：关联卡/时机卡的出场窗口
   if (c.cap) head += ',cap:' + c.cap;            // 一局最多出几次（缺省：关联卡 1、普通卡 2）
