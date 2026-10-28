@@ -24,7 +24,8 @@
           "energy": -4
         }
       },
-      "cap": 1
+      "cap": 1,
+      "emo": "worry"
     },
     {
       "id": "fam_tutor_01",
@@ -50,7 +51,8 @@
           "social": 7,
           "mind": 3
         }
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_confess_01",
@@ -137,7 +139,8 @@
           }
         }
       },
-      "pri": 9
+      "pri": 9,
+      "emo": "happy"
     },
     {
       "id": "fam_divorce_01",
@@ -2170,7 +2173,8 @@
           "social": 3,
           "risk": 4
         }
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "mkt_bear_group_01",
@@ -2591,7 +2595,8 @@
           "mind": 1
         },
         "miss": "lover"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_inlaws_03",
@@ -2648,7 +2653,8 @@
           "mind": -4
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_dinner_02",
@@ -2679,7 +2685,8 @@
           "mind": -5
         },
         "miss": "lover"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_confess_02",
@@ -2710,7 +2717,8 @@
           "mind": -3
         },
         "miss": "lover"
-      }
+      },
+      "emo": "angry"
     },
     {
       "id": "fam_momcall_02",
@@ -2862,7 +2870,8 @@
           "mind": -6
         },
         "miss": "child"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_teacher_02",
@@ -2955,7 +2964,8 @@
           "mind": -2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_zhaohu_01",
@@ -2986,7 +2996,8 @@
           "mind": -2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_zhoumo_01",
@@ -3017,7 +3028,8 @@
           "mind": -3
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_shengri_01",
@@ -3049,7 +3061,8 @@
           "mind": -2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_liehen_01",
@@ -3079,7 +3092,8 @@
           "mind": -2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "angry"
     },
     {
       "id": "fam_queding_01",
@@ -3141,7 +3155,8 @@
           "mind": -5
         },
         "miss": "lover"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_jiazhang_01",
@@ -3172,7 +3187,8 @@
           "mind": 2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_shitan_01",
@@ -3200,7 +3216,8 @@
           "social": 4,
           "risk": 6
         }
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_zanqian_01",
@@ -3231,7 +3248,8 @@
           "mind": 2
         },
         "miss": "lover"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_lengzhan_01",
@@ -3261,7 +3279,8 @@
           "mind": -3
         },
         "miss": "lover"
-      }
+      },
+      "emo": "angry"
     },
     {
       "id": "fam_caili_01",
@@ -3294,7 +3313,8 @@
         },
         "miss": "lover"
       },
-      "cap": 2
+      "cap": 2,
+      "emo": "worry"
     },
     {
       "id": "fam_hunli_01",
@@ -3327,7 +3347,8 @@
           "energy": -10
         },
         "miss": "lover"
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "fam_shoufu_01",
@@ -3359,7 +3380,8 @@
           "mind": -3
         },
         "miss": "lover"
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "fam_anwei_01",
@@ -3390,7 +3412,8 @@
           "social": 3,
           "risk": 2
         }
-      }
+      },
+      "emo": "happy"
     },
     {
       "id": "love_night_01",
@@ -3449,7 +3472,8 @@
           "repay": 500,
           "mind": -3
         }
-      }
+      },
+      "emo": "worry"
     },
     {
       "id": "pet_food_01",
