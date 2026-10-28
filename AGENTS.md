@@ -60,6 +60,7 @@
 
 > 改完卡池必须跑：`node tools/validate-cards.js`（硬门禁）
 > → `node tools/check-dominance.js`（单卡还有没有得想）
+> → `node tools/check-payoff.js`（花钱那侧换不换得到东西）
 > → `node tools/check-policy.js policy --runs 3000`（决策值不值钱）
 
 ## 文档索引
@@ -76,6 +77,8 @@
 | `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
 | `tools/validate-cards.js` | **校验器**：`node tools/validate-cards.js`，9 类检查（含决策质量），退出码非 0 = 不许提交 |
 | `tools/check-dominance.js` | 单卡「还需不需要想」：伪选择 / 全赚不赔 / 只碰 1–2 条数值 |
+| `tools/check-payoff.js` | **花钱性价比**：掏钱那侧换成的东西折成钱，和「另一侧」比。差得太多 = 这侧没人会点 |
+| `tools/sim/leak-policy.js` | **消息卡体检**：同一套玩法下「全买消息 / 全不买 / 自己判断」三组对照，全买明显赢就说明参数给多了 |
 | `tools/check-policy.js` | 玩法体检：`policy` 五种玩法对照，`scan` 扫 512 种站队玩法 |
 | `tools/check-repeat.js` | **抽卡体检**：同卡重复 / 同类扎堆 / 借贷卡成串。`--compare` 可跑旧算法对照 |
 | `tools/simulate.js` | **无头仿真器**：`node tools/simulate.js --runs 10000`，跑的是 prototype.html 的真实代码 |
@@ -204,6 +207,21 @@
   等于把"没钱能借钱续命"又改回了"没钱就死"。欠债的代价只落钱（利息 0.0028/天 + 月供 24%），
   不落命。改完用 `node tools/sim/credit-check.js` 验收：归零后中位还能活 6 天、
   老赖触发率约 26%。
+- **掏钱的选项必须换得到东西**（10-28 定，玩家原话：「老师说交 8888 学费…一点收益没有，
+  这种卡只可能选另外一边」）：
+  一侧只有 `spend` 加一堆扣分，那就不是选择，是提示。两类必须给足回报——
+  ① 情绪/人情（陪、给、借）：`mind`/`social` 按约 ¥250/点兑付，掏 1,000 至少换回 4 点；
+  ② 买消息（老师带单、内部渠道、饭局上的"必涨"）：**不是给个 promise，是真把股价拉起来**，
+     用 `leak` 效果（见下）。验收：`node tools/check-payoff.js` 的「明显更差」必须是 0。
+  这条不是"数值调高一点"就能糊过去的——花钱买来的东西，在引擎里必须真的存在。
+- **消息（leak）是引擎里的真实对象**（10-28 新）：
+  `leak:{n,p,run}` = n 天内以 p 的概率兑现，兑现那天起连拉 run 个一字板；
+  n 天过去没动静就是假消息（risk +14 / mind −8 / social −4，钱白花）。
+  定价逻辑：`p × (1.0995^run − 1) × 持仓` 要和 `spend` 同量级，否则这侧永远没人点。
+  所以便宜的消息只能"低概率"（免费小道 p=0.42），贵一点的消息才"更靠谱"（0.66~0.72）——
+  「信息是要花钱买的」这句话在数值上成立，而不是靠文案自吹。
+  持仓小的玩家买消息是纯亏，这不算 bug：消息只对敢下重注的人有价值。
+  验收：`node tools/sim/leak-policy.js`，「全买」不能赢过「全不买」（否则无脑点就赚了）。
 - **系统永远不替玩家买卖股票**（10-27 定，玩家问出来的）：
   `buy` 只用现金、买不起就少买；`spend` 现金不够只记账（负债），**绝不自动砍仓**。
   早先 spend 会先卖股票抵账，配上「投五千试试」这种写成 spend 的买入卡，

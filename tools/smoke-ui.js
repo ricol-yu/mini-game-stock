@@ -475,5 +475,42 @@ step('老赖专属卡只在老赖时出现', () => {
   if (sandbox.whenOK(card.when) !== true) throw new Error('成了老赖却不出限高卡');
 });
 
+/* ---------- 消息（leak）：花钱买的内部渠道必须是真东西 ---------- */
+step('消息：卡面上的 leak 能通过 resolve 挂到 S.leak', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.cash = 50000;
+  const card = sandbox.CARDS.find(x => x.id === 'risk_scam_01');
+  sandbox.resolve(card, 'R');
+  if (!sandbox.S.leak) throw new Error('交了会费却没挂上消息');
+  if (sandbox.S.leak.total !== 4) throw new Error('连板数没有带过来：' + JSON.stringify(sandbox.S.leak));
+});
+
+step('消息：兑现时真的连拉涨停（不是一句空话）', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.st = {}; sandbox.S.cash = 50000; sandbox.S.debt = 0;
+  sandbox.S.leak = { left: 6, p: 0.5, total: 3, run: 0 };      // p=0.5：一半真一半假，两种结局都合法
+  let ups = 0;
+  for (let i = 0; i < 10 && sandbox.S.leak; i++) {
+    sandbox.S.day++; sandbox.tick();
+    if (sandbox.S.intra.lim === 'up') ups++;
+  }
+  // p=0.5 的消息：要么兑现（连板），要么判假，不会悬着不结案
+  if (sandbox.S.leak) throw new Error('10 天过去消息还挂着，没有结案');
+  if (ups > 0 && ups !== 3) throw new Error('兑现了但连板数不对：' + ups);
+});
+
+step('消息：到期没兑现 = 假消息，风险与心态要付代价', () => {
+  let settled = 0;
+  for (let k = 0; k < 40; k++) {
+    sandbox.S.tut = 3; sandbox.reset();
+    sandbox.S.st = {}; sandbox.S.cash = 50000; sandbox.S.debt = 0;
+    sandbox.S.leak = { left: 1, p: 0.999, total: 1, run: 0 };  // 99.9% 判假
+    const r0 = sandbox.S.risk;
+    sandbox.S.day++; sandbox.tick();
+    if (!sandbox.S.leak && sandbox.S.risk >= r0 + 13) settled++;
+  }
+  if (settled < 36) throw new Error('假消息分支没正确结算：40 次只有 ' + settled + ' 次扣了风险');
+});
+
 console.log(fail ? '\n✗ UI 冒烟失败 ' + fail + ' 项\n' : '\n✓ UI 冒烟全绿\n');
 process.exit(fail ? 1 : 0);

@@ -284,6 +284,7 @@ ST = {
   baby   :{nm:"添丁",  ic:"👶", tip:"每天都在花钱。奇怪的是，你并不后悔。｜每天现金 −180，心态 +1、社会 +0.4。"},
   fired  :{nm:"失业",  ic:"📦", tip:"没有工资进来了。｜发薪日不再到账，心态每天 −1.1。"},
   insider:{nm:"内线",  ic:"🕵️", tip:"你知道别人不知道的事。这本身就是风险。｜每天风险 +1.4；消息有 14% 概率是假的——被拆穿时风险 +16、心态 −10、社会 −5。"},
+  leak   :{nm:"消息",  ic:"📨", tip:"手上有一条花钱买来的消息。｜剩下的天数是「再等几天见分晓」：可能某天直接一字板，也可能到期什么都没发生——那就是假的，风险 +14、心态 −8、社会 −4。"},
   bull   :{nm:"牛市",  ic:"🐂", tip:"卖菜的都在谈股票。｜趋势 +1.2pp、波动 ×2.1：暴涨暴跌随时切换，涨停概率升到 ~4%/天，持续 15 天。"},
   bear   :{nm:"熊市",  ic:"🐻", tip:"群里的红包没人抢了。｜趋势 −1.8pp、波动 ×1.8：跌多涨少，跌停概率升到 ~4%/天，持续 15 天。"},
   over   :{nm:"上头",  ic:"🎈", tip:"你觉得这次稳了。下单的手比脑子快。｜心态 ≥88 时进入：下单自动放大 ×1.35、风险每天 +0.3；心态回落到 74 以下解除。"},
@@ -297,6 +298,7 @@ function reset(){
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
         mind:58, risk:0, social:56, energy:50, day:1, tut:(_skipTut ? TUT.length : 0),
         st:{}, flags:{}, did:{}, seen:{}, miss:{fam:0,child:0,pet:0,lover:0}, arrears:0, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
+        leak:null,                                    // 手里的那条消息（见 apply 的 leak / tick 的兑现）
         index:3000, hist:[3000] };
   CARDS.forEach(function(c){ c._used = 0; });
   _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0; _lastWasChain = false;   // 新的一局：袋子、冷却、同类记忆、插队节流都重来
@@ -401,6 +403,12 @@ function apply(e){
   }
   if(e.addst) for(var k in e.addst) setST(k, e.addst[k]);
   if(e.unst)  e.unst.forEach(clearST);
+  /* 消息（2026-10-28 玩家反馈）：花钱买的"内部渠道/老师带单"不能只是一句空话——
+     花钱那侧没有任何回报，玩家永远点另一边，那就不叫选择。
+     现在它是一个真实存在的东西：n 天内以 p 的概率兑现，兑现那天开始连拉 run 个涨停。
+     n 天过去还没动静 = 假消息，钱白花（见 tick）。 */
+  if(e.leak) S.leak = { left:e.leak.n, p:e.leak.p, total:e.leak.run, run:0 };
+  if(e.leak) setST("leak", e.leak.n);              // 状态栏要看得见"我手里还有条消息"
 }
 /* ============ 声明式 when 条件解析器 ============
    语法：; 或 & = 且    | = 或
@@ -512,12 +520,36 @@ function tick(){
     if(st.crisis) vol *= 1.7;
     var r = drift + (Math.random() - 0.5) * vol;
     if(st.insider) r += 0.014;                      // 提前知道消息，确实是赚得快
+    /* 消息兑现（2026-10-28）：每天命中的概率按「n 天内兑现的总概率 = p」反推，
+       所以 p 直接就是"这条消息最后是不是真的"。兑现后连拉 run 个一字板；
+       n 天都没动静 = 假消息，钱白花、心态还得自己消化。 */
+    var leakFire = false;
+    if(S.leak){
+      if(S.leak.run > 0){                           // 连板中：消息正在兑现
+        S.leak.run--; leakFire = true;
+        msg.push(S.leak.run > 0 ? "🚀 又是一字板，封单还挂着" : "🚀 最后一个板——这钱赚得你手抖");
+        if(S.leak.run <= 0) S.leak = null;
+      }else{
+        var lp = 1 - Math.pow(S.leak.p, 1 / Math.max(1, S.leak.left));
+        if(Math.random() < lp){
+          S.leak.run = S.leak.total - 1; leakFire = true;
+          msg.push("🚀 消息兑现，直接一字板");
+          if(S.leak.run <= 0) S.leak = null;
+        }else if(--S.leak.left <= 0){
+          S.risk = clamp(S.risk + 14, 0, 100); S.mind -= 8; S.social -= 4;
+          msg.push("📨 那条消息没了下文。问谁都说「再看看」");
+          S.leak = null;
+        }
+      }
+      if(S.leak) st.leak = S.leak.left; else if(st.leak) clearST("leak");   // 状态栏天数跟着走
+    }
     // 涨跌停：大行情日。牛市/泡沫易涨停，熊市/冬天易跌停；命中的直接打到 ±10%
     var pUp = 0.012 + (st.bull ? 0.030 : 0) + (st.bubble ? 0.022 : 0);
     var pDn = 0.012 + (st.bear ? 0.030 : 0) + (st.crisis ? 0.022 : 0);
     var ul = Math.random();
     if(ul < pUp){ r = 0.0995; msg.push("🔥 涨停 +10%，封单排到明天"); }
     else if(ul < pUp + pDn){ r = -0.0995; msg.push("🧊 跌停 −10%，卖单砸不出门"); }
+    if(leakFire) r = 0.0995;                        // 消息兑现优先于当天的随机行情
     r = Math.max(-0.0995, Math.min(0.0995, r));
     var prevIdx = S.hist.length ? S.hist[S.hist.length - 1] : (S.index || 3000);
     S.index = (S.index || 3000) * (1 + r);
@@ -1494,7 +1526,7 @@ $("o-b").onclick = function(){ $("over").classList.remove("on"); _skipTut = true
 ========================================= */
 CARDS = [
  {id:"fam_mortgage_01",who:"老婆",wid:"laopo",av:"💍",tag:"伴侣",emo:"worry",when:"did:fam_shoufu_01.l",cap:1,txt:"房贷批了。以后每月 5 号，自动扣 3,000。",
-  R:{s:"总算有个家",e:{mind:6,social:6,energy:-4}},L:{s:"早知道就不买了",e:{mind:-4,social:-3}}},
+  R:{s:"总算有个家",e:{mind:6,social:6,energy:-4,risk:2}},L:{s:"早知道就不买了",e:{mind:-4,social:-3}}},
  {id:"fam_tutor_01",who:"老婆",wid:"laopo",av:"💍",tag:"孩子",emo:"worry",when:"did:fam_hunli_01; has:baby",txt:"孩子要上补习班，一年六千。先交这学期 3,000。",
   R:{s:"出 {} 报名",e:{spend:3000,social:7,mind:3}},L:{s:"太贵了，不报",e:{mind:-4,social:-6},m:"child"}},
  {id:"fam_confess_01",who:"老婆",wid:"laopo",av:"💍",tag:"伴侣",emo:"angry",when:"did:fam_hunli_01",txt:"你到底亏了多少？我要听实话。",
@@ -1526,7 +1558,7 @@ CARDS = [
  {id:"work_layoff_02",who:"老板",wid:"laoban",av:"😅",tag:"职场",when:"no:fired;did:work_layoff_01.l",win:[30,200],txt:"名单公布，上面没有你。但工区少了三个人。",
   R:{s:"只敢在心里松口气",e:{mind:3,social:-2,risk:2}},L:{s:"{} 请部门喝奶茶",e:{spend:800,social:4,mind:1}}},
  {id:"work_options_01",who:"老板",wid:"laoban",av:"😰",tag:"职场",txt:"今年年终奖取消，改成期权。大家体谅一下。",
-  R:{s:"理解，自掏 {} 认购",e:{mind:-5,social:3,spend:2500}},L:{s:"我不理解",e:{mind:-2,social:-7}}},
+  R:{s:"理解，自掏 {} 认购",e:{buy:2500,social:5,mind:-5}},L:{s:"我不理解",e:{mind:-2,social:-7}}},
  {id:"work_fired_01",who:"HR",wid:"hr",av:"📦",tag:"职场",when:"no:fired;did:work_layoff_01.r",win:[30,200],txt:"HR 找你聊了十分钟。工位上的东西，你可以明天来收拾。",
   st:{fired:-1},
   R:{s:"再给我一次机会",e:{cash:9000,mind:-6,social:-5}},L:{s:"我早就不想干了",e:{cash:5000,mind:2,social:-3}}},
@@ -1549,15 +1581,15 @@ CARDS = [
  {id:"soc_wedding_01",who:"朋友",wid:"pengyou",av:"💌",tag:"人情",txt:"我下个月结婚，喜帖给你留着呢。",
   R:{s:"随 {}",e:{spend:1600,social:5,mind:-1,energy:-14}},L:{s:"装没看见",e:{social:-5,mind:-3}}},
  {id:"soc_lend_01",who:"朋友",wid:"pengyou",av:"💌",tag:"人情",txt:"借我五千周转一下，下个月一定还。",
-  R:{s:"{} 全借",e:{spend:5000,social:5,mind:-2}},L:{s:"说自己也紧",e:{social:-5,mind:-3}}},
+  R:{s:"{} 全借",e:{spend:5000,social:12,mind:2}},L:{s:"说自己也紧",e:{social:-5,mind:-3}}},
  {id:"soc_reunion_01",who:"同学",wid:"tongxue",av:"🍻",tag:"人情",txt:"老同学聚会，人均 600。听说你最近在做投资？",
   R:{s:"去，AA {}",e:{spend:600,social:8,mind:4,energy:-14}},L:{s:"不去",e:{social:-5,mind:-3}}},
  {id:"soc_banquet_01",who:"张阿姨",wid:"zhangayi",av:"🏘",tag:"人情",txt:"楼下办寿宴，整栋楼都去了。",
   R:{s:"随 {}",e:{spend:800,social:6,energy:-12}},L:{s:"装不在家",e:{social:-6,mind:-2}}},
  {id:"soc_scam_01",who:"老同学",wid:"laotongxue",av:"🤳",tag:"人情",when:"social>48",txt:"有个项目，稳赚，就是得先投点钱。",
-  R:{s:"给 {}",e:{spend:6500,risk:8,mind:-5,social:3}},L:{s:"算了",e:{social:-4,mind:2}}},
- {id:"soc_whisper_01",who:"饭局",wid:"fanju",av:"🥢",tag:"人情",when:"no:insider; social>45",txt:"饭局上有人凑过来，压低声音：「有只票，下周必涨。」",
-  R:{s:"记住这个消息",e:{mind:-3,risk:8,addst:{"insider":6},social:3}},L:{s:"当没听见",e:{mind:4,social:-5}}},
+  R:{s:"给 {}",e:{spend:3000,risk:4,mind:3,social:10}},L:{s:"算了",e:{social:-4,mind:2}}},
+ {id:"soc_whisper_01",who:"饭局",wid:"fanju",av:"🥢",tag:"人情",when:"no:leak; social>45",txt:"饭局上有人凑过来，压低声音：「有只票，下周必涨。」",
+  R:{s:"记住这个消息",e:{mind:-3,risk:8,social:3,leak:{"n":7,"p":0.42,"run":2}}},L:{s:"当没听见",e:{mind:4,social:-5}}},
  {id:"self_checkup_01",who:"体检报告",wid:"tijian",av:"🏥",tag:"自己",txt:"血压偏高，熬夜太多。医生让你少盯屏幕。",
   R:{s:"没事，我扛得住",e:{mind:-6,social:-3,cash:900}},L:{s:"不看了，{} 买血压计",e:{mind:9,social:3,spend:600,energy:18}}},
  {id:"self_night_01",who:"凌晨三点",wid:"lingsan",av:"🌙",tag:"自己",txt:"还没睡。屏幕上的行情曲线一跳一跳，你盯得眼睛发干。",
@@ -1613,8 +1645,8 @@ CARDS = [
   R:{s:"借 {} 抄底",e:{borrow:12000,buy:12000,mind:-9}},L:{s:"关掉",e:{mind:4,social:-3}}},
  {id:"risk_card_01",who:"信用卡",wid:"xinyongka",av:"💳",tag:"风险",when:"debt>0",txt:"账单 8,000。这个月怎么处理？",
   R:{s:"只还最低 {}",e:{repay:3000,mind:-4}},L:{s:"咬牙全额还 {}",e:{spend:8000,mind:5}}},
- {id:"risk_scam_01",who:"荐股群",wid:"jianguqun",av:"🎯",tag:"风险",txt:"老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
-  R:{s:"交 {}",e:{spend:8888,risk:8,mind:-6,social:4}},L:{s:"这就是骗局",e:{mind:5,social:-4}}},
+ {id:"risk_scam_01",who:"荐股群",wid:"jianguqun",av:"🎯",tag:"风险",txt:"老师说跟着操作一年十倍，先交 1,888 会员费，名额有限。",
+  R:{s:"交 {} 进群",e:{spend:1888,risk:6,mind:-4,social:4,leak:{"n":8,"p":0.68,"run":4}}},L:{s:"这就是骗局",e:{mind:5,social:-4}}},
  {id:"risk_influencer_01",who:"大 V",wid:"dawei",av:"⭐",tag:"风险",txt:"十万粉丝的大 V 深夜发文：这是十年一遇的机会，闭眼买。",
   R:{s:"跟 {}",e:{buy:3000,risk:5,mind:-3,social:3}},L:{s:"大 V 也亏钱",e:{mind:4,social:-3}}},
  {id:"risk_leak_01",who:"微信群",wid:"weixinqun",av:"👥",tag:"风险",txt:"群里有人说，这只票下周要有大动作，内部消息。",
@@ -1678,7 +1710,7 @@ CARDS = [
  {id:"mkt_chase_01",who:"自己",wid:"ziji",av:"🙋",tag:"市场",when:"did:mkt_bear_cut_01.l",win:[8,300],txt:"割肉那天起，指数悄悄涨回了 8%。",
   R:{s:"截图发群，摩拳擦掌",e:{social:5,mind:3,risk:5}},L:{s:"{} 追买回来",e:{buy:6000,risk:8,mind:-3}}},
  {id:"soc_insider_01",who:"张阿姨",wid:"zhangayi",av:"🧶",tag:"人情",txt:"张阿姨拉住你：「有个内部渠道，稳得很。」钱得先给。",
-  R:{s:"掏 {} 试试",e:{spend:5000,risk:10,social:4}},L:{s:"婉拒了",e:{social:-4,risk:-2,mind:1}}},
+  R:{s:"掏 {} 试试",e:{spend:3000,risk:8,social:4,leak:{"n":6,"p":0.72,"run":3}}},L:{s:"婉拒了",e:{social:-4,risk:-2,mind:1}}},
  {id:"self_mirror_02",who:"镜子",wid:"jingzi",av:"🪞",tag:"自己",when:"mind<45",txt:"镜子里的人眼下乌青，像在问：还来吗？",
   R:{s:"笑了笑，没说话",e:{mind:-2,risk:-4}},L:{s:"再战一次",e:{mind:4,risk:6}}},
  {id:"fam_momcall_01",who:"老妈",wid:"laoma",av:"📞",tag:"家人",when:"no:has:momgone",txt:"老妈来电话，问吃了没。听筒贴在耳朵上，眼睛没离开盘面。",
@@ -1692,7 +1724,7 @@ CARDS = [
  {id:"fam_anniv_01",who:"老婆",wid:"laopo",av:"💍",tag:"伴侣",emo:"happy",when:"did:fam_hunli_01",txt:"日历提醒：结婚纪念日。同一天，晚上八点半，非农。",
   R:{s:"说明年补",e:{social:-10,mind:2},m:"lover"},L:{s:"订了餐厅，{}",e:{spend:900,social:8,mind:-3,energy:-12}}},
  {id:"fam_kidsfee_01",who:"孩子",wid:"haizi",av:"🧒",tag:"孩子",when:"has:baby",txt:"兴趣班该交钱了，4,500。他说，其实不想去了。",
-  R:{s:"退班，陪他玩",e:{social:5,mind:-2,energy:-15}},L:{s:"续费，交 {}",e:{spend:4500,mind:3},m:"child"}},
+  R:{s:"退班，陪他玩",e:{social:5,mind:-2,energy:-15}},L:{s:"续费，交 {}",e:{spend:4500,mind:9,social:6,risk:-3},m:"child"}},
  {id:"fam_prenatal_01",who:"老婆",wid:"laopo",av:"💍",tag:"伴侣",emo:"worry",when:"has:baby",txt:"产检约在周四上午。她说：你来吧。",
   R:{s:"让她妈陪",e:{social:-8,mind:1},m:"lover"},L:{s:"陪她去，花 {}",e:{spend:1200,social:7,mind:-2,energy:-16}}},
  {id:"fam_inlaws_03",who:"丈母娘",wid:"zhangmuniang",av:"👵",tag:"家人",when:"did:fam_hunli_01",txt:"丈母娘生日。红包行情，你研究了一晚上。",
@@ -1706,9 +1738,9 @@ CARDS = [
  {id:"fam_momcall_02",who:"老妈",wid:"laoma",av:"📞",tag:"家人",when:"no:has:momgone; did:fam_momcall_01.l",win:[12,200],txt:"邻居说在菜市场听见你妈叹气。",
   R:{s:"下次再打吧",e:{social:-7,mind:-4},m:"fam"},L:{s:"花 {} 寄箱水果",e:{spend:300,social:6,mind:2}}},
  {id:"fam_momhealth_02",who:"老妈",wid:"laoma",av:"📞",tag:"家人",when:"no:has:momgone; did:fam_momhealth_01.r",win:[15,200],txt:"复查稳住了。她把一罐腌笋塞进你后备箱。",
-  R:{s:"转 {} 买补品",e:{spend:2000,social:6,mind:3}},L:{s:"收下，报喜不报忧",e:{mind:6,social:3,risk:3}}},
+  R:{s:"转 {} 买补品",e:{spend:2000,social:13,mind:6}},L:{s:"收下，报喜不报忧",e:{mind:6,social:3,risk:3}}},
  {id:"fam_hospital_02",who:"老爸",wid:"laoma",av:"🧑‍🦳",tag:"家人",when:"no:has:momgone; did:fam_momcall_01.l; did:fam_momhealth_01.l",win:[40,300],txt:"爸住院了。这回，是你自己没接那个电话。",
-  R:{s:"让弟弟先顶着",e:{mind:-10,social:-13},m:"fam"},L:{s:"连夜回去垫 {}",e:{spend:9000,mind:-6,social:6,energy:-26}}},
+  R:{s:"让弟弟先顶着",e:{mind:-10,social:-13},m:"fam"},L:{s:"连夜回去垫 {}",e:{spend:9000,mind:4,social:18,energy:-26}}},
  {id:"fam_child_02",who:"孩子",wid:"haizi",av:"🧒",tag:"孩子",when:"did:fam_child_01.l",win:[15,200],txt:"她画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
   R:{s:"真棒，忙完看",e:{mind:-5,social:-6},m:"child"},L:{s:"{} 装裱挂客厅",e:{spend:500,mind:8,social:5}}},
  {id:"fam_child_03",who:"老婆",wid:"laopo",av:"💍",tag:"孩子",emo:"worry",when:"did:fam_child_01.r",win:[20,200],txt:"孩子说，爸爸的手机长在手上。",
@@ -1716,7 +1748,7 @@ CARDS = [
  {id:"fam_teacher_02",who:"老师",wid:"laoshi",av:"🎓",tag:"孩子",when:"did:fam_child_01.r; did:fam_teacher_01.l",win:[30,240],txt:"家长会点名：作文《我的爸爸》全篇写手机。",
   R:{s:"做投资也是为了他",e:{social:-12,mind:-8},m:"child"},L:{s:"保证，{} 买亲子票",e:{spend:800,mind:-3,social:7,energy:-10}}},
  {id:"fam_reportcard_02",who:"孩子",wid:"haizi",av:"🧒",tag:"孩子",when:"did:fam_teacher_01.r; did:fam_child_01.l",win:[30,240],txt:"奖状背面：谢谢爸爸陪我写作业。",
-  R:{s:"拍照发朋友圈",e:{mind:6,social:4,risk:3}},L:{s:"花 {} 全家下馆子",e:{spend:1500,social:8,mind:8,energy:-14}}},
+  R:{s:"拍照发朋友圈",e:{mind:6,social:4,risk:3}},L:{s:"花 {} 全家下馆子",e:{spend:1500,social:8,mind:8,energy:-10}}},
  {id:"fam_yuehui_01",who:"女友",wid:"laopo",av:"💐",tag:"伴侣",emo:"happy",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[1,100],txt:"周末有空吗？想去江边走走。",
   R:{s:"这周行情要紧",e:{social:-5,mind:-2},m:"lover"},L:{s:"陪她走一走，{}",e:{spend:300,social:6,mind:4,energy:-8}}},
  {id:"fam_zhaohu_01",who:"女友",wid:"laopo",av:"🎬",tag:"伴侣",emo:"happy",when:"no:did:fam_queding_01; no:did:fam_hunli_01",win:[1,80],txt:"她发来消息：新上的电影，一起？",
@@ -1765,8 +1797,8 @@ CARDS = [
   R:{s:"聊聊看",e:{mind:4,risk:6}},L:{s:"回绝了",e:{mind:-2,social:3}}},
  {id:"work_ref_01",who:"老同事",wid:"laotongshi",av:"🤝",tag:"职场",txt:"老同事内推：他那边在招人，问你要不要投。",
   R:{s:"没投",e:{mind:-3,social:2}},L:{s:"投了简历",e:{mind:4,social:-3,risk:3}}},
- {id:"work_xiaowang_02",who:"同事小王",wid:"tongshi_xiaowang",av:"👔",tag:"职场",txt:"小王开口：借 5,000 补仓，下个月一定还。",
-  R:{s:"拒绝了",e:{social:-6,mind:-1}},L:{s:"{} 借给他",e:{spend:5000,social:5,risk:4}}},
+ {id:"work_xiaowang_02",who:"同事小王",wid:"tongshi_xiaowang",av:"👔",tag:"职场",txt:"小王开口：借 3,000 补仓，下个月一定还。",
+  R:{s:"拒绝了",e:{social:-6,mind:-1}},L:{s:"{} 借给他",e:{spend:3000,social:9,mind:2,risk:4}}},
  {id:"work_screen_01",who:"项目",wid:"xiangmu",av:"📊",tag:"职场",when:"no:fired",win:[4,240],txt:"项目明早上线。今晚你却分着心，在偷偷改股票的「到价卖出」线。",
   R:{s:"专心上线",e:{mind:-4,social:5,risk:3}},L:{s:"改完再说",e:{social:-7,mind:3}}},
  {id:"self_checkup_02",who:"体检报告",wid:"tijian",av:"🩺",tag:"自己",txt:"复查单出来了。血压，还是高。",
@@ -1790,7 +1822,7 @@ CARDS = [
  {id:"soc_oldmate_01",who:"老同学",wid:"laotongxue",av:"🍺",tag:"人情",txt:"老同学组局。AA 每人 500。你怕聊起股票。",
   R:{s:"没去",e:{social:-5,mind:1}},L:{s:"去了，AA {}",e:{spend:500,social:7,mind:-2}}},
  {id:"soc_lend_02",who:"朋友",wid:"pengyou",av:"🤝",tag:"人情",txt:"朋友开口：借两万。他说，这次一定还。",
-  R:{s:"婉拒了",e:{social:-8,mind:-2}},L:{s:"借一半，{}",e:{spend:10000,social:2,risk:3}}},
+  R:{s:"婉拒了",e:{social:-8,mind:-2}},L:{s:"先给 {} 应应急",e:{spend:4000,social:10,mind:2,risk:3}}},
  {id:"work_tuanjian_01",who:"团建",wid:"tuangjian",av:"🍺",tag:"职场",when:"no:fired",win:[8,240],txt:"部门团建，火锅局。你知道他们想聊年终评。",
   R:{s:"去，摊 {}",e:{spend:400,social:6,mind:-3,risk:3}},L:{s:"不去",e:{mind:3,social:-6}}},
  {id:"work_focus_02",who:"老板",wid:"laoban",av:"📋",tag:"职场",when:"did:work_screen_01.r",win:[10,240],txt:"项目上线零事故，老板当众点了你的名。",
@@ -1816,7 +1848,7 @@ CARDS = [
  {id:"life_ebike_01",who:"你自己",wid:"ziji",av:"🛵",tag:"房子",txt:"楼下电动车的锁被剪断了。",
   R:{s:"再买一台，{}",e:{spend:2000,mind:2,energy:-5}},L:{s:"以后挤地铁",e:{mind:-4,energy:-12,social:-2}}},
  {id:"self_exit_01",who:"你自己",wid:"ziji",av:"🌅",tag:"决策",when:"equity<1; debt<1; cash>30000",cap:4,urgent:1,txt:"账上全是现金，一分没欠。今晚它又涨了。",
-  R:{s:"收手，删掉 App",e:{mind:5,social:5,energy:-8}},L:{s:"再玩两天",e:{mind:4,risk:6,energy:-2}}},
+  R:{s:"收手，删掉 App",e:{mind:5,social:5,energy:-8,risk:2}},L:{s:"再玩两天",e:{mind:4,risk:6,energy:-2}}},
  {id:"fam_momgone_01",who:"老妈",wid:"laoma",av:"📵",tag:"家人",when:"miss.fam>=3; day>=45; day<65|miss.fam>=4; day>=65; day<95|miss.fam>=5; day>=95",cap:1,urgent:1,fact:1,txt:"这个月她一个电话都没打。你打回去，响到自动挂断。",
   st:{momgone:-1},
   R:{s:"明天再说吧",e:{mind:-14,social:-13}},L:{s:"再打一次",e:{mind:-14,social:-13}}},
@@ -1832,7 +1864,7 @@ CARDS = [
  {id:"debt_calls_01",who:"催收",wid:"cuishou",av:"📞",tag:"风险",when:"has:laolai",cap:2,txt:"电话打到你妈那儿。她问：「你是不是在外面欠钱了？」",
   R:{s:"说打错了，是诈骗",e:{mind:-2,social:-8}},L:{s:"跟她说了实话",e:{mind:-4,social:-2,energy:-4}}},
  {id:"debt_limit_01",who:"出差",wid:"chucha",av:"🚄",tag:"风险",when:"has:laolai",cap:2,txt:"客户在两千公里外。名单上的人，买不了高铁和机票。",
-  R:{s:"视频会议算了，单子丢了",e:{mind:-4,social:-6}},L:{s:"坐绿皮，硬座两天",e:{energy:-30,mind:-4,social:2}}},
+  R:{s:"视频会议算了，单子丢了",e:{mind:-4,social:-6}},L:{s:"坐绿皮，硬座两天",e:{energy:-30,mind:-6,social:2}}},
 ];
 $("i-b").onclick = function(){ $("intro").classList.remove("on"); };
 $("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始第一周」关闭）

@@ -21,7 +21,8 @@
         "effects": {
           "mind": 6,
           "social": 6,
-          "energy": -4
+          "energy": -4,
+          "risk": 2
         }
       },
       "cap": 1,
@@ -470,9 +471,9 @@
       "right": {
         "label": "理解，自掏 {} 认购",
         "effects": {
-          "mind": -5,
-          "social": 3,
-          "spend": 2500
+          "buy": 2500,
+          "social": 5,
+          "mind": -5
         }
       }
     },
@@ -778,8 +779,8 @@
         "label": "{} 全借",
         "effects": {
           "spend": 5000,
-          "social": 5,
-          "mind": -2
+          "social": 12,
+          "mind": 2
         }
       }
     },
@@ -853,10 +854,10 @@
       "right": {
         "label": "给 {}",
         "effects": {
-          "spend": 6500,
-          "risk": 8,
-          "mind": -5,
-          "social": 3
+          "spend": 3000,
+          "risk": 4,
+          "mind": 3,
+          "social": 10
         }
       }
     },
@@ -867,7 +868,7 @@
       "avatar": "🥢",
       "tag": "人情",
       "text": "饭局上有人凑过来，压低声音：「有只票，下周必涨。」",
-      "when": "no:insider; social>45",
+      "when": "no:leak; social>45",
       "alwaysStatus": null,
       "left": {
         "label": "当没听见",
@@ -881,10 +882,12 @@
         "effects": {
           "mind": -3,
           "risk": 8,
-          "addst": {
-            "insider": 6
-          },
-          "social": 3
+          "social": 3,
+          "leak": {
+            "n": 7,
+            "p": 0.42,
+            "run": 2
+          }
         }
       }
     },
@@ -1559,7 +1562,7 @@
       "whoId": "jianguqun",
       "avatar": "🎯",
       "tag": "风险",
-      "text": "老师说跟着操作一年十倍，先交 8,888 会员费，名额有限。",
+      "text": "老师说跟着操作一年十倍，先交 1,888 会员费，名额有限。",
       "when": null,
       "alwaysStatus": null,
       "left": {
@@ -1570,12 +1573,17 @@
         }
       },
       "right": {
-        "label": "交 {}",
+        "label": "交 {} 进群",
         "effects": {
-          "spend": 8888,
-          "risk": 8,
-          "mind": -6,
-          "social": 4
+          "spend": 1888,
+          "risk": 6,
+          "mind": -4,
+          "social": 4,
+          "leak": {
+            "n": 8,
+            "p": 0.68,
+            "run": 4
+          }
         }
       }
     },
@@ -2380,9 +2388,14 @@
       "right": {
         "label": "掏 {} 试试",
         "effects": {
-          "spend": 5000,
-          "risk": 10,
-          "social": 4
+          "spend": 3000,
+          "risk": 8,
+          "social": 4,
+          "leak": {
+            "n": 6,
+            "p": 0.72,
+            "run": 3
+          }
         }
       }
     },
@@ -2557,7 +2570,9 @@
         "label": "续费，交 {}",
         "effects": {
           "spend": 4500,
-          "mind": 3
+          "mind": 9,
+          "social": 6,
+          "risk": -3
         },
         "miss": "child"
       },
@@ -2775,8 +2790,8 @@
         "label": "转 {} 买补品",
         "effects": {
           "spend": 2000,
-          "social": 6,
-          "mind": 3
+          "social": 13,
+          "mind": 6
         }
       }
     },
@@ -2797,8 +2812,8 @@
         "label": "连夜回去垫 {}",
         "effects": {
           "spend": 9000,
-          "mind": -6,
-          "social": 6,
+          "mind": 4,
+          "social": 18,
           "energy": -26
         }
       },
@@ -2923,7 +2938,7 @@
           "spend": 1500,
           "social": 8,
           "mind": 8,
-          "energy": -14
+          "energy": -10
         }
       },
       "right": {
@@ -3679,14 +3694,15 @@
       "whoId": "tongshi_xiaowang",
       "avatar": "👔",
       "tag": "职场",
-      "text": "小王开口：借 5,000 补仓，下个月一定还。",
+      "text": "小王开口：借 3,000 补仓，下个月一定还。",
       "when": null,
       "alwaysStatus": null,
       "left": {
         "label": "{} 借给他",
         "effects": {
-          "spend": 5000,
-          "social": 5,
+          "spend": 3000,
+          "social": 9,
+          "mind": 2,
           "risk": 4
         }
       },
@@ -3993,10 +4009,11 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "借一半，{}",
+        "label": "先给 {} 应应急",
         "effects": {
-          "spend": 10000,
-          "social": 2,
+          "spend": 4000,
+          "social": 10,
+          "mind": 2,
           "risk": 3
         }
       },
@@ -4363,7 +4380,8 @@
         "effects": {
           "mind": 5,
           "social": 5,
-          "energy": -8
+          "energy": -8,
+          "risk": 2
         }
       }
     },
@@ -4521,7 +4539,7 @@
         "label": "坐绿皮，硬座两天",
         "effects": {
           "energy": -30,
-          "mind": -4,
+          "mind": -6,
           "social": 2
         }
       },

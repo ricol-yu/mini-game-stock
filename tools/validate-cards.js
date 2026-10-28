@@ -36,7 +36,8 @@ function validateCards(data) {
   var TAGS = ['伴侣', '家人', '孩子', '宠物', '房子', '职场', '收入', '人情', '自己', '市场', '决策', '风险', '意外'];
   var STS = ['bubble', 'crisis', 'halt', 'baby', 'fired', 'insider', 'over', 'bull', 'bear',
              'momgone', 'childgone', 'petgone', 'lovergone',
-             'laolai'];                                          // laolai：老赖（一次还不上月供就上名单，debuff 到还清为止）
+             'laolai',                                           // laolai：老赖（一次还不上月供就上名单，debuff 到还清为止）
+             'leak'];                                            // leak：手上有一条花钱买来的消息（见 effect leak）
   var LINES = ['fam', 'child', 'pet', 'lover'];                 // 欠账计数：父母/孩子/宠物/伴侣
   var LINE_OF_TAG = { '家人': 'fam', '孩子': 'child', '宠物': 'pet', '伴侣': 'lover' };
   var STAT_KEYS = ['cash', 'equity', 'cost', 'mind', 'risk', 'social', 'day'];
@@ -116,6 +117,22 @@ function validateCards(data) {
       if (k === 'unst') {
         if (!Array.isArray(v)) { err('effect-key', ruleId, side + '.unst', 'unst 必须是状态名数组'); continue; }
         v.forEach(function (s) { if (STS.indexOf(s) < 0) err('effect-key', ruleId, side + '.unst', '未知状态「' + s + '」'); });
+        continue;
+      }
+      /* leak（2026-10-28）：花钱买来的消息。
+         n   观察天数（几天内见分晓）
+         p   这条消息最后是真的概率（0~1）
+         run 兑现后连拉几个涨停
+         花钱那侧必须有真实回报，否则玩家永远点另一边——这条规则就是为它开的门。 */
+      if (k === 'leak') {
+        if (typeof v !== 'object' || Array.isArray(v)) { err('effect-key', ruleId, side + '.leak', 'leak 必须是 {n,p,run} 对象'); continue; }
+        var lk = ['n', 'p', 'run'];
+        for (var li = 0; li < lk.length; li++) {
+          if (typeof v[lk[li]] !== 'number') err('effect-key', ruleId, side + '.leak.' + lk[li], 'leak 缺少数值字段「' + lk[li] + '」');
+        }
+        if (v.n < 1 || v.n > 15) err('effect-range', ruleId, side + '.leak.n', '观察天数应在 1..15，当前 ' + v.n);
+        if (!(v.p > 0.2 && v.p < 0.95)) err('effect-range', ruleId, side + '.leak.p', '真消息概率应在 (0.2,0.95)——太低是纯坑，太高是白送，当前 ' + v.p);
+        if (v.run < 1 || v.run > 5) err('effect-range', ruleId, side + '.leak.run', '连板数应在 1..5，当前 ' + v.run);
         continue;
       }
       if (MONEY_KEYS.indexOf(k) < 0 && ['mind', 'risk', 'social', 'energy'].indexOf(k) < 0) {
