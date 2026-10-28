@@ -1210,7 +1210,7 @@ if (typeof document !== "undefined" && document.documentElement) {
 function artHTML(c){
   var ph = c.av || "🖼";
   if(!ART_ON || !c.wid) return '<div class="art" data-ph="' + ph + '"><span class="ph">' + ph + '</span></div>';
-  var file = c.wid + (c.emo ? "_" + c.emo : "") + ".png";
+  var file = c.wid + (c.emo ? "_" + c.emo : "") + ".webp";   // 素材规范：WebP（单张 ≤45KB 预算内）
   return '<div class="art" data-ph="' + ph + '">' +
          '<img src="assets/char/' + file + '" alt="" onerror="this.parentNode.classList.add(\'gone\')"></div>';
 }
