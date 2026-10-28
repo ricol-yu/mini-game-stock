@@ -275,19 +275,24 @@ step('金额融进选项文案：{} 填真实金额，没金额的一侧不带�
   sandbox.S.cash = 100; sandbox.S.equity = 9000;
   const spendCard = { id:'w1', who:'测试', av:'🧪', tag:'测试', txt:'x',
                       L:{ s:'花大钱，{}', e:{ spend: 5000 } }, R:{ s:'不花', e:{ mind: 1 } } };
-  const h1 = sandbox.build(spendCard).innerHTML;
-  if (h1.indexOf('花大钱，5,000') < 0) throw new Error('金额没融进文案：' + h1.slice(-200));
-  if (h1.indexOf('<small>') >= 0) throw new Error('小字还挂在选项后面：' + h1.slice(-200));
-  if ((h1.split('<span class="r">')[1] || '').indexOf('5,000') >= 0)
-    throw new Error('没金额的一侧也被填了数字');
+  // 王权式：选项不常驻在卡面上，拖动时才填进印章（stamp）——所以直接验证 labelOf 和拖动填充
+  if (sandbox.labelOf(spendCard.L).indexOf('花大钱，5,000') < 0)
+    throw new Error('金额没融进文案：' + sandbox.labelOf(spendCard.L));
+  if (sandbox.labelOf(spendCard.R).indexOf('不花') < 0 || sandbox.labelOf(spendCard.R).indexOf('5,000') >= 0)
+    throw new Error('没金额的一侧也被填了数字：' + sandbox.labelOf(spendCard.R));
 
   const buyCard = { id:'w2', who:'测试', av:'🧪', tag:'测试', txt:'x',
                     L:{ s:'不买', e:{ mind: 1 } }, R:{ s:'上车，{}', e:{ buy: 3000 } } };
-  const h2 = sandbox.build(buyCard).innerHTML;
-  if (h2.indexOf('上车，3,000') < 0) throw new Error('买入项没报价：' + h2.slice(-200));
+  if (sandbox.labelOf(buyCard.R).indexOf('上车，3,000') < 0)
+    throw new Error('买入项没报价：' + sandbox.labelOf(buyCard.R));
   sandbox.S.st.over = -1;                              // 上头状态：买入多掏 35%
-  const h3 = sandbox.build(buyCard).innerHTML;
-  if (h3.indexOf('4,050') < 0) throw new Error('上头状态金额没跟着涨（应 4,050）：' + h3.slice(-200));
+  if (sandbox.labelOf(buyCard.R).indexOf('4,050') < 0)
+    throw new Error('上头状态金额没跟着涨（应 4,050）：' + sandbox.labelOf(buyCard.R));
+  sandbox.S.st.over = 0;
+  // 拖动时印章被填充：模拟 pointermove 里那段逻辑依赖的 build 产物结构
+  const d = sandbox.build(buyCard);
+  if (d.querySelectorAll('.stamp').length !== 2) throw new Error('印章结构丢了');
+  if (d.innerHTML.indexOf('上车') >= 0) throw new Error('静止卡面不该出现选项文字（王权式：拖动才浮现）');
 });
 
 step('资金条闪烁：动了的段挂 hit 类，没动的段不挂', () => {

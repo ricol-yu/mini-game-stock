@@ -118,11 +118,6 @@
   /* 垫层是空白牌背：只暗示「还有牌」，不透露是哪张（预览永远不准，见 nextCard 注释） */
   .card.back{background:#f7f8fa;border-color:#eceef1;cursor:default;
     background-image:repeating-linear-gradient(-45deg,#f0f1f4 0 8px,transparent 8px 16px)}
-  .card .who{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-  .card .who .av{width:31px;height:31px;border-radius:50%;background:#f4f5f7;display:flex;align-items:center;
-    justify-content:center;font-size:16px}
-  .card .who .nm{font-size:12.5px;color:var(--ink-2)}
-  .card .who .tag{margin-left:auto;font-size:10px;color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
   /* 人物位（2026-10-28）：卡面上半部留给人像/场景图，素材没到位时用 emoji 占位。
      实测（375 屏）：卡内宽 274、文字只占两行 55px，文字区本来就有 190px 是空的——
      所以这块地本来就该放图，不是我硬塞进去的。
@@ -141,21 +136,19 @@
   /* 有人物位时文字改成自然高度，剩余空间全给图 */
   .card .art ~ .txt{flex:0 0 auto}
   .card .txt{font-size:16px;line-height:1.72;color:var(--ink);flex:1;letter-spacing:.2px}
-  .card .foot{border-top:1px dashed var(--line);padding-top:8px;font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between}
-  .card .foot .l{color:var(--down)} .card .foot .r{color:var(--up)}
   /* 既定事实卡（欠账清算）：两边结果一样，所以不给红绿提示、只留一行"已经这样了"——
      这不是一道选择题，是账单。 */
   .card .fn{margin-top:7px;text-align:center;font-size:10.5px;letter-spacing:.14em;color:var(--ink-3)}
-  .card.fact .foot .l,.card.fact .foot .r{color:var(--ink-3)}
-  /* 现金不够还选花钱项时的预警：会自动卖股票、再不够就欠债——提前说，别让玩家以为钱是凭空扣的 */
-  .card .foot small{font-size:9px;font-weight:600;color:#ad4e00;margin-left:3px;white-space:nowrap}
 
-  .stamp{position:absolute;top:14px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;
-    letter-spacing:.5px;border:3px solid;opacity:0;pointer-events:none;background:rgba(255,255,255,.94);max-width:200px}
-  .stamp.L{left:13px;color:var(--down);border-color:var(--down);transform:rotate(-11deg)}
-  .stamp.R{right:13px;color:var(--up);border-color:var(--up);transform:rotate(11deg)}
+  /* 选项印章（王权式）：平时看不见，拖动时对应侧浮现出来——拖左亮左选项、拖右亮右选项，
+     透明度跟拖动距离走，出牌瞬间定格在卡上飞出去。位置在画面中下、离边 20px（拖动时也在屏内），
+     z-index 必须压过 .art（人物位是定位元素且靠后，不加层级会把它盖住）。 */
+  .stamp{position:absolute;top:52%;z-index:5;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;
+    letter-spacing:.5px;border:3px solid;opacity:0;pointer-events:none;background:rgba(255,255,255,.94);max-width:200px;
+    transition:opacity .12s}
+  .stamp.L{left:22%;color:var(--down);border-color:var(--down);transform:rotate(-11deg)}
+  .stamp.R{right:22%;color:var(--up);border-color:var(--up);transform:rotate(11deg)}
 
-  .tips{padding:0 16px 10px;text-align:center;font-size:10.5px;color:var(--ink-3);flex:0 0 auto;line-height:1.6}
   .toast{position:absolute;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);background:rgba(31,35,41,.92);
     color:#fff;font-size:11.5px;padding:7px 13px;border-radius:14px;opacity:0;transition:.28s;pointer-events:none;
     max-width:300px;text-align:center;line-height:1.6;z-index:30}
@@ -204,7 +197,6 @@
     </div>
 
     <div class="stage" id="stage"></div>
-    <div class="tips">← 左滑：减仓 / 抽身 / 拒绝　　右滑 →：加仓 / 投入 / 认了</div>
     <div class="toast" id="toast"></div>
 
     <div class="over intro" id="intro">
@@ -1185,13 +1177,14 @@ function artHTML(c){
 function build(c){
   var d = document.createElement("div");
   d.className = c.fact ? "card fact" : "card";       // fact：既定事实卡，两边一样，只用来告诉玩家"已经这样了"
+  /* 王权式（2026-10-28）：卡面只有画面＋文案＋选项印章。
+     ① 顶部的「谁在说话」行删了——是谁说的话，读内容就知道；
+     ② 选项不常驻：平时看不见，拖动时对应侧的印章浮现出来（见 bind 的 pointermove），
+        底部常驻操作说明（.tips）一并删掉，序幕第二张卡已经教过怎么滑。 */
   d.innerHTML = '<div class="stamp L"></div><div class="stamp R"></div>' +
-    '<div class="who"><div class="av">' + c.av + '</div><div class="nm">' + c.who + '</div>' +
-    '<div class="tag">' + c.tag + '</div></div>' + artHTML(c) +
+    artHTML(c) +
     '<div class="txt">' + c.txt + '</div>' +
-    (c.fact ? '<div class="fn">已经这样了</div>' : '') +
-    '<div class="foot"><span class="l">← ' + labelOf(c.L) +
-    '</span><span class="r">' + labelOf(c.R) + ' →</span></div>';
+    (c.fact ? '<div class="fn">已经这样了</div>' : '');
   d._c = c; return d;
 }
 /* 选项文案：金额直接融进话里（2026-10-28，用户拍板）。
@@ -1251,6 +1244,10 @@ function bind(card){
     var dy = (e.clientY - y0) * 0.25;
     card.style.transform = "translate(" + dx + "px," + dy + "px) rotate(" + (dx * 0.045) + "deg)";
     var t = clamp(Math.abs(dx) / 90, 0, 1);
+    var c = card._c;
+    // 拖到哪边，哪边的选项印章就浮现（王权式）：文字提前填好，opacity 跟着拖动距离走
+    card.querySelector(".stamp.L").textContent = labelOf(c.L);
+    card.querySelector(".stamp.R").textContent = labelOf(c.R);
     card.querySelector(".stamp.L").style.opacity = dx < 0 ? t : 0;
     card.querySelector(".stamp.R").style.opacity = dx > 0 ? t : 0;
   });
