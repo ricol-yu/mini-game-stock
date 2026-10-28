@@ -66,7 +66,7 @@ whoId 一律沿用 `data/cards.json` 的 `whoId`，**不新造命名**——代�
 
 | 文件 | 内容 | 备注 |
 |---|---|---|
-| char/laopo.png | 老婆半身，normal（560×640 竖版） | **32 张卡**，全卡池出场最密 |
+| char/laopo.webp | 老婆全身，normal（560×640 竖版，**已完成**） | **32 张卡**，全卡池出场最密 |
 | char/laopo_happy.png | 差分：纪念日/婚礼 | 与底图同构图 |
 | char/laopo_angry.png | 差分：质问亏损/冷战 | |
 | char/laopo_cry.png | 差分：离婚/清算 | |
