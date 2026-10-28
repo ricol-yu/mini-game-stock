@@ -28,20 +28,17 @@
   .capsule i::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--ink-3);border-radius:50%;top:-2.5px;left:-2.5px}
   .capsule .dot{width:14px;height:14px;border:1px solid var(--ink-3);border-radius:50%}
 
-  .hud{padding:0 14px 2px;flex:0 0 auto}
-  .row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-  .row .nm{font-size:11px;color:var(--ink-2);width:28px;flex:0 0 auto}
-  .bar{flex:1;height:8px;border-radius:4px;background:#eef0f3;overflow:hidden;position:relative}
-  .bar i{position:absolute;top:0;height:100%;transition:width .45s cubic-bezier(.4,1.2,.4,1),left .45s cubic-bezier(.4,1.2,.4,1)}
-  .row .vl{font-size:11px;width:62px;text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .hud{padding:0 10px;flex:0 0 auto}
+  /* 四条命（2026-10-28 王权式）：图标即进度条——图标形状当裁剪框，矩形从底往上填，
+     填多少＝数值多少，满格实心、空了只剩轮廓。具体数值挪进悬停 tip，
+     HUD 从四行压成一行，省下的高度全给卡面人物位。 */
+  .vit{display:flex;justify-content:space-around;align-items:flex-end;padding:3px 4px 8px}
+  .vit-i{position:relative;width:44px;height:40px;display:flex;align-items:center;justify-content:center;cursor:default}
+  .vit-i svg{display:block;filter:drop-shadow(0 1px 1px rgba(31,35,41,.08))}
+  .vit-i.warn svg{animation:bl .9s infinite}
   .s-cash{background:linear-gradient(90deg,#ffc07a,#f79c1e);left:0}
   .s-eq{background:linear-gradient(90deg,#ff8a8a,#e02020)}
   .s-debt{background:repeating-linear-gradient(-45deg,#d93025 0 3px,#ffb3ab 3px 6px);right:0;opacity:.95}
-  .f-energy i{background:linear-gradient(90deg,#7ce7d8,#0d9488);left:0}
-  .f-mind i{background:linear-gradient(90deg,#9fc0ff,#1a6dff);left:0}
-  .f-risk i{background:linear-gradient(90deg,#ffd666,#d4380d);left:0}
-  .f-soc i{background:linear-gradient(90deg,#95de64,#237804);left:0}
-  .warn i{animation:bl .9s infinite}
   @keyframes bl{50%{opacity:.35}}
 
   .strip{padding:3px 14px 0;display:flex;gap:5px;flex-wrap:wrap;min-height:0;flex:0 0 auto}
@@ -54,12 +51,12 @@
   .chip.due{background:#fff1f0;border-color:#ffa39e;color:#a8071a}
   .chip.due b{color:#a8071a}
   .chip .ll{background:#a8071a;color:#fff;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700}
-  .chip .tip{position:absolute;top:calc(100% + 7px);left:0;transform:translateY(-4px);
+  .chip .tip,.vit-i .tip{position:absolute;top:calc(100% + 7px);left:0;transform:translateY(-4px);
     background:rgba(31,35,41,.94);color:#fff;font-size:10.5px;line-height:1.7;padding:8px 11px;border-radius:10px;
     max-width:230px;width:max-content;white-space:normal;text-align:left;opacity:0;pointer-events:none;
     transition:opacity .16s,transform .16s;z-index:18}
-  .chip .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
-  .chip:hover .tip,.chip:focus .tip{opacity:1;transform:translateY(0)}
+  .chip .tip b,.vit-i .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
+  .chip:hover .tip,.chip:focus .tip,.vit-i:hover .tip,.vit-i:focus .tip{opacity:1;transform:translateY(0)}
 
   .mkt{margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
     padding:6px 10px;flex:0 0 auto}
@@ -131,8 +128,11 @@
      所以这块地本来就该放图，不是我硬塞进去的。
      尺寸规矩：文字优先。.txt 自然高度、.art 吃剩余空间，图再大也压不到字，
      图多出来的部分 object-fit:cover 自动裁掉（见 AGENTS「卡面版式」）。 */
-  .card .art{flex:1 1 auto;min-height:64px;margin:0 -17px 12px;position:relative;overflow:hidden;
-    background:linear-gradient(180deg,#f6f7f9,#eef0f4);display:flex;align-items:center;justify-content:center}
+  /* 人物位（2026-10-28 第二版）：王权式——图是卡内一块圆角方块，占卡面大头。
+     规矩不变：文字优先。.txt 自然高度、.art 吃剩余空间，文字变长图自动缩、永远挤不掉字。
+     HUD 压成一行图标后，图区比上一版高约 60px（三档机型实测，见 art-asset-spec）。 */
+  .card .art{flex:1 1 auto;min-height:170px;margin:0 0 10px;position:relative;overflow:hidden;
+    border-radius:12px;background:linear-gradient(180deg,#f6f7f9,#eef0f4);display:flex;align-items:center;justify-content:center}
   .card .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
   .card .art .ph{font-size:46px;opacity:.42;filter:saturate(.55)}
   /* 图 404 时自己塌回占位，不能留一个破图标 */
@@ -192,16 +192,7 @@
     <div class="nav"><div class="title">韭菜之王</div>
       <div class="capsule"><i></i><span class="dot"></span></div></div>
 
-    <div class="hud">
-      <div class="row f-energy" id="r-energy"><span class="nm">精力</span>
-        <span class="bar"><i id="b-energy"></i></span><span class="vl" id="v-energy"></span></div>
-      <div class="row f-mind" id="r-mind"><span class="nm">心态</span>
-        <span class="bar"><i id="b-mind"></i></span><span class="vl" id="v-mind"></span></div>
-      <div class="row f-risk" id="r-risk"><span class="nm">风险</span>
-        <span class="bar"><i id="b-risk"></i></span><span class="vl" id="v-risk"></span></div>
-      <div class="row f-soc" id="r-soc"><span class="nm">社会</span>
-        <span class="bar"><i id="b-soc"></i></span><span class="vl" id="v-soc"></span></div>
-    </div>
+    <div class="hud"><div class="vit" id="vit"></div></div>
 
     <div class="strip" id="strip"></div>
 
@@ -788,11 +779,47 @@ function tapeHTML(){
 
 /* ============ 渲染 ============ */
 var $ = function(id){ return document.getElementById(id); };
+/* 四条命图标（2026-10-28 王权式）：图标形状当 clipPath，一个矩形从底往上填，
+   填多少＝数值多少，满格实心、空了只剩灰槽加轮廓。数值不常驻（王权也没有），
+   悬停 tip 里看——信息没丢，只是不再占一整行。 */
+var VITS = [
+ {k:"energy", nm:"精力", col:"#0d9488",
+  shape:"M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z",
+  tip:function(){ return "精力 " + Math.round(S.energy) + "/100 · 干活社交都耗它，睡觉回血，见底先进医院。"; }},
+ {k:"mind", nm:"心态", col:"#1a6dff",
+  shape:"M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z",
+  tip:function(){ return "心态 " + Math.round(S.mind) + "/100 · 太低抑郁出局，太高（88+）会上头——买入多掏 35%。"; }},
+ {k:"risk", nm:"风险", col:"#d4380d",
+  shape:"M12 2.6 L21.8 20 H2.2 Z",
+  tip:function(){ return "风险 " + Math.round(S.risk) + "/100 · 高于 68 危险，拉满会被券商强制平仓、一把清空持仓。"; }},
+ {k:"soc", nm:"社会", col:"#237804",
+  shape:"M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z",
+  tip:function(){ return "社会 " + Math.round(S.social) + "/100 · 人脉信用，见底众叛亲离。欠下的人情账最后会一起算。"; }}
+];
+function vitHTML(){
+  var vals = {energy:S.energy, mind:S.mind, risk:S.risk, soc:S.social};
+  var warns = { energy:S.energy < 25, mind:(S.mind < 22 || S.mind > 88),
+                risk:S.risk > 68, soc:S.social < 22 };
+  return VITS.map(function(v, i){
+    var val = Math.max(0, Math.min(100, vals[v.k]));
+    var warn = !!warns[v.k];
+    var col = warn ? "#d4380d" : v.col;
+    var h = (val * 0.24).toFixed(1);
+    return '<span class="vit-i' + (warn ? ' warn' : '') + '" id="r-' + v.k + '" tabindex="0">' +
+      '<svg viewBox="0 0 24 24" width="30" height="30" role="img" aria-label="' + v.nm + '">' +
+      '<defs><clipPath id="vcp' + i + '"><path d="' + v.shape + '"/></clipPath></defs>' +
+      '<path d="' + v.shape + '" fill="#eef0f3"/>' +
+      '<rect x="0" y="' + (24 - val * 0.24).toFixed(1) + '" width="24" height="' + h +
+        '" fill="' + col + '" clip-path="url(#vcp' + i + ')"/>' +
+      '<path d="' + v.shape + '" fill="none" stroke="#3a3f46" stroke-width="1.6" stroke-linejoin="round"/>' +
+      (v.k === "risk" ? '<path d="M12 8.4 v5.2" stroke="#3a3f46" stroke-width="1.8" stroke-linecap="round" fill="none"/>' +
+                        '<circle cx="12" cy="16.8" r="1.05" fill="#3a3f46"/>' : '') +
+      '</svg>' +
+      '<span class="tip"><b>' + v.nm + '</b>' + v.tip() + '</span></span>';
+  }).join("");
+}
 function render(){
-  // 精力条（HUD 四属性之一）
-  $("b-energy").style.width = S.energy + "%";
-  $("v-energy").textContent = Math.round(S.energy);
-  $("r-energy").classList.toggle("warn", S.energy < 25);
+  $("vit").innerHTML = vitHTML();                      // 四条命：一行图标（王权式）
 
   // 金钱三段条（现金/持仓/负债）住在中间行情区
   var wC = clamp(S.cash / MONEY_CAP * 100, 0, 100), wE = clamp(S.equity / MONEY_CAP * 100, 0, 100);
@@ -814,15 +841,6 @@ function render(){
   }catch(_e){}
 
   var n = net();
-
-  $("b-mind").style.width = S.mind + "%";  $("v-mind").textContent = Math.round(S.mind);
-  $("r-mind").classList.toggle("warn", S.mind < 22 || S.mind > 88);
-
-  $("b-risk").style.width = S.risk + "%";  $("v-risk").textContent = Math.round(S.risk);
-  $("r-risk").classList.toggle("warn", S.risk > 68);
-
-  $("b-soc").style.width = S.social + "%"; $("v-soc").textContent = Math.round(S.social);
-  $("r-soc").classList.toggle("warn", S.social < 22);
 
   var strip = $("strip"), html = "";
   // 账单倒计时常驻：钱是"攒着就没了"还是"攒着能买房"，取决于玩家知不知道下个月几号要交多少。
@@ -1193,16 +1211,19 @@ function labelOf(o){
   if(!amt) return s;
   return s.replace("{}", money(Math.round(amt)).replace("¥", ""));
 }
-/* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片 */
+/* 序幕教程卡（王权式）：不发牌堆、不结算，滑完才进正片。
+   2026-10-28 精简：文案压到两行内（原来最长 160 字三大段），
+   中间整块留给画面（占位先顶上，素材名预留 tut_*，见 art-asset-spec 第三批）——
+   教学要点的完整版都挂在 HUD 图标和胶囊的悬停 tip 里，不用一次倒给玩家。 */
 var TUT = [
- {who:"深夜的出租屋",av:"🌙",tag:"序幕",_tut:true,
-  txt:"屏幕亮着，里面是你全部身家：20,000 元，一半已经换成了股票。行情天天在动，日子天天花钱——而且日子会越过越贵。你要做的，是带着更多的钱、和还没散架的生活，活得尽量久一点。",
+ {who:"深夜的出租屋",wid:"tut_night",av:"🌙",tag:"序幕",_tut:true,
+  txt:"这是你的全部身家：20,000，一半已是股票。日子天天花钱、越过越贵——活得久一点。",
   L:{s:"……然后呢"},R:{s:"说下去"}},
- {who:"你自己",av:"🫵",tag:"序幕",_tut:true,
-  txt:"接下来的每一天，都只问你一个问题：做，还是不做。右滑，是把事情接下来——照做、投入、认了；左滑，是把它推掉——拒绝、抽身、转身走。不信？往随便哪边滑一下试试。",
+ {who:"你自己",wid:"tut_you",av:"🫵",tag:"序幕",_tut:true,
+  txt:"每天只问一件事：做，还是不做。右滑接下，左滑推掉——不信就滑一下试试。",
   L:{s:"← 这样推掉"},R:{s:"这样接下 →"}},
- {who:"开盘之前",av:"📊",tag:"序幕",_tut:true,
-  txt:"盯住中间那串数字：净值＝现金＋股票−欠款，它是你的总分。下面那条线是这只票今天的走势，冲上顶就是涨停，砸到底就是跌停。头顶四条命归零一样完蛋，风险拉满会被强制平仓。记住一个日子：每月 5 号工资 11,000 到账，同一天房租水电 6,000 扣走——剩下的才够你过日子和补仓。",
+ {who:"开盘之前",wid:"tut_market",av:"📊",tag:"序幕",_tut:true,
+  txt:"盯住净值＝现金＋股票−欠款，它是你的总分。风险拉满，会被强制平仓。",
   L:{s:"记住了"},R:{s:"开工"}}
 ];
 function nextCard(){
