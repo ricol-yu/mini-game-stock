@@ -1194,11 +1194,12 @@ function deckBack(cls){
 }
 /* 人物位渲染（2026-10-28）：素材没到位时走占位，版式跟有图时完全一样，
    所以现在就能看到「正式版长什么样」，素材来了只是把 emoji 换成图，不用改版。
-   表情差分 = 同尺寸整图换脸（laopo_happy.png 这种），美术在同一 PSD 里换表情导出，
+   表情差分 = 同尺寸整图换脸（laopo_happy.webp 这种），可以是 AI 垫图生成，
    天然对齐——不用贴片锚点那种像素级对齐的活。
-   ART_ON：默认关（不发明知 404 的请求）。素材放进 assets/char/ 后打开它，
-   或者临时用 prototype.html?art=1 预览。 */
-var ART_ON = typeof location !== "undefined" && /[?&]art=1/.test(location.search);
+/* 人物位渲染（2026-10-28）：ART_ON 默认开——素材直接显示在 prototype.html 里，不用带参数。
+   还没出图的角色走 emoji 占位（单图 404 自动塌回，版式不变）。
+   ?art=0 可临时关图（调试占位版式用）。 */
+var ART_ON = !(typeof location !== "undefined" && /[?&]art=0/.test(location.search));
 /* 干净模式开关：?clean=1 强制开；微信小程序 webview 的 UA 带 miniProgram，自动开。
    开了之后手机框外的开发包装（标题/说明）不渲染，游戏全屏——
    小程序页面里本来就是只有游戏，那层包装只活在浏览器里。 */
