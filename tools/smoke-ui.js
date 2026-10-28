@@ -144,6 +144,34 @@ step('月供按月还（有债必还，且不超过现金）', () => {
 
 const isExit = c => c && c.tag === '决策' && c.urgent;
 
+/* 借贷续命（2026-10-28 用户定）：钱花光不是结局，借不动了才是。
+   这两条一正一反，缺哪条都可能把「归零即死」偷偷改回来。 */
+step('钱花光不结束：净值归零、但信用额度还没用满 → 继续玩', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 40;
+  sandbox.S.cash = 0; sandbox.S.equity = 0; sandbox.S.debt = 8000;   // 净值 −8,000
+  sandbox.check();
+  if (sandbox.S.debt >= sandbox.creditLimit()) throw new Error('用例自身有问题：负债不该顶到额度');
+  if (sandbox.S.over) throw new Error('净值归零就直接结束了（' + getEl('o-t')._t + '），应该是「还能借」');
+});
+
+step('借不动了才结束：负债顶到信用额度 → 穿仓', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 40;
+  sandbox.S.cash = 0; sandbox.S.equity = 0; sandbox.S.debt = sandbox.creditLimit();
+  sandbox.check();
+  if (!sandbox.S.over) throw new Error('额度用满了却没结束');
+  if (getEl('o-t')._t !== '穿仓') throw new Error('结局不是穿仓，是 ' + getEl('o-t')._t);
+});
+
+step('现金刷爆转负债，并告诉玩家还能借多少', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.S.day = 30; sandbox.S.cash = 0; sandbox.S.debt = 0;
+  const m = sandbox.tick();
+  if (!(sandbox.S.debt > 0)) throw new Error('现金见底却没转成负债');
+  if (m.indexOf('还能借') < 0) throw new Error('没告诉玩家还能借多少：' + m);
+});
+
 step('离场卡：条件满足时插队出现，右滑 → 上岸结局', () => {
   sandbox.S.tut = 3; sandbox.reset();
   sandbox.S.day = 40; sandbox.S.equity = 0; sandbox.S.debt = 0; sandbox.S.cash = 31000; sandbox.S.trades = 5;
