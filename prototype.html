@@ -250,15 +250,18 @@ var S, MAX_DAY = 360, INIT = 20000, SEED_EQ = 9000, MONEY_CAP = 40000,
        仿真实测开局 9,000 会被甜头期的卡片支出在 19 天左右打死（前 30 天死亡率 41%），
        「先甜后苦」的第一口必须是真的甜。调难度先调这些常数 + 三件套对表，别手拍单卡数值。 */
     INFL_FROM = 20, INFL_RATE = 0.016, VOL_GROW = 0.003, EARLY_BURN = 80,
-    /* 月度账本（2026-10-26 第四轮）：钱要有"必须付"的地方，否则玩家手里越攒越多。
-       原来工资 6,500/15 天 = 月 13,000，而生活燃烧只有 200/天 ≈ 6,000/月——
-       日结算净 +143/天，等于每天白送 143 块，30 天白送 4,300，玩家当然觉得花不完。
-       现在拆成两笔：
-         · 平时只烧日用的（EARLY_BURN/BURN，吃饭通勤）——每天扣一点，无感；
-         · 每月 5 号发薪 9,800，同一天扣房租水电保险 4,700——一记重拳，这个月到手就少一半。
-       工资刻意低于「房租 + 吃饭 + 还贷」：打工只能续命，缺口得靠市场补，补不上就往下掉。 */
-    MONTH = 30, PAYDAY = 5, SALARY = 11000, RENT = 4600, UTIL = 1400, BILL_GROW = 0.10,
-    BURN = 95, DEBT_DUE_RATE = 0.12, DEBT_DUE_MIN = 500,
+    /* 月度账本（2026-10-28 第五轮：工资刚好 cover）。
+       上一轮 11,000 工资 / 6,000 账单 / 95 日 burn 的真实月结算是 +2,150——
+       也就是说「什么都不做、全躲开消费」一个月还能净赚两千，玩家自然不会花钱。
+       这一轮把刚性支出抬到贴着工资走，账要能一笔一笔算出来：
+         首月（第 1–30 天）：工资 9,900 − 账单 6,900（房租 5,400 + 水电物业 1,500）
+                            − 日用（前 20 天 80、之后 100）= +400   ← 刚好活
+         第 2 月：账单 7,590（房东涨 10%）− 日用 ~4,500 → −2,190     ← 通胀开始咬
+       所以「打工」只够活第一个月，之后每个月都是一道缺口：要么在卡上省，要么挣。
+       起始现金 11,000 是唯一的机动财力——社会事件单笔 1,200~8,000，
+       它只够参加其中一部分，剩下的必须拒绝（掉社会/心态）。这就是留出来的抉择余地。 */
+    MONTH = 30, PAYDAY = 5, SALARY = 9900, RENT = 5400, UTIL = 1500, BILL_GROW = 0.10,
+    BURN = 100, DEBT_DUE_RATE = 0.12, DEBT_DUE_MIN = 500,
     LAOLAI_GARNISH = 0.25,                          // 老赖：发薪日法院划走工资的比例
     CARDS = [], ST = {};
 
@@ -1499,10 +1502,10 @@ CARDS = [
   R:{s:"跟 {}",e:{buy:3000,risk:4,mind:-2,social:3}},L:{s:"不信小道消息",e:{mind:3,social:-4}}},
  {id:"work_overtime_01",who:"项目",wid:"xiangmu",av:"🌃",tag:"职场",when:"no:fired",win:[5,240],txt:"今晚上线，全组通宵。你走吗？",
   R:{s:"留下来",e:{mind:-6,social:6,risk:6,energy:-18}},L:{s:"准时走",e:{mind:5,social:-4,risk:-3,energy:10}}},
- {id:"inc_salary_01",who:"绩效",wid:"jixiao",av:"💵",tag:"收入",when:"no:fired",txt:"季度绩效下来了，6,500。",
-  R:{s:"投进去 {}",e:{cash:6500,buy:5000,mind:-2,social:3}},L:{s:"留着过日子",e:{cash:6500,mind:3,social:-2}}},
- {id:"inc_sidejob_01",who:"私活",wid:"sihuo",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 4,000，要占掉两个周末。",
-  R:{s:"接了",e:{cash:4000,mind:-5,energy:-26}},L:{s:"算了",e:{mind:3,social:-2}}},
+ {id:"inc_salary_01",who:"绩效",wid:"jixiao",av:"💵",tag:"收入",when:"no:fired",txt:"季度绩效下来了，4,000。",
+  R:{s:"投进去 {}",e:{cash:4000,buy:5000,mind:-2,social:3}},L:{s:"留着过日子",e:{cash:4000,mind:3,social:-2}}},
+ {id:"inc_sidejob_01",who:"私活",wid:"sihuo",av:"🧰",tag:"收入",txt:"朋友介绍一个活，做完给 2,400，要占掉两个周末。",
+  R:{s:"接了",e:{cash:2400,mind:-5,energy:-26}},L:{s:"算了",e:{mind:3,social:-2}}},
  {id:"inc_bonus_01",who:"年终奖",wid:"nianzhongjiang",av:"🧧",tag:"收入",when:"no:fired; day>24",win:[42,300],txt:"年终奖发了 15,000。",
   R:{s:"{} 全部加仓",e:{cash:15000,buy:15000,mind:-4}},L:{s:"{} 给家里买点东西",e:{cash:15000,spend:5200,mind:6,social:9}}},
  {id:"soc_wedding_01",who:"朋友",wid:"pengyou",av:"💌",tag:"人情",txt:"我下个月结婚，喜帖给你留着呢。",
@@ -1719,7 +1722,7 @@ CARDS = [
  {id:"work_bossmeet_01",who:"老板",wid:"laoban",av:"📋",tag:"职场",when:"no:fired",win:[6,240],txt:"例会上你走神了。老板停顿两秒，点了你的名。",
   R:{s:"找理由圆",e:{social:2,mind:-4,risk:-2}},L:{s:"承认走神",e:{social:-4,mind:1,risk:2}}},
  {id:"work_raise_01",who:"老板",wid:"laoban",av:"📋",tag:"职场",when:"no:fired;did:work_screen_01.l|no:fired;did:work_bossmeet_01.l|no:fired;did:work_overtime_01.l|no:fired;did:work_tuanjian_01.l",win:[18,200],txt:"调薪名单出了。你从头看到尾，没有你。",
-  R:{s:"去找他谈",e:{social:3,mind:-3,risk:3}},L:{s:"忍了",e:{mind:-5,social:-2,cash:1200}}},
+  R:{s:"去找他谈",e:{social:3,mind:-3,risk:3}},L:{s:"忍了",e:{mind:-7,social:-2}}},
  {id:"work_headhunt_01",who:"招聘软件",wid:"zhaopin",av:"📱",tag:"职场",txt:"猎头：薪资涨三成。背景调查会联系现公司。",
   R:{s:"聊聊看",e:{mind:4,risk:6}},L:{s:"回绝了",e:{mind:-2,social:3}}},
  {id:"work_ref_01",who:"老同事",wid:"laotongshi",av:"🤝",tag:"职场",txt:"老同事内推：他那边在招人，问你要不要投。",
@@ -1738,14 +1741,14 @@ CARDS = [
   R:{s:"截图发群里",e:{social:3,mind:-5,risk:4}},L:{s:"关掉账户页，{} 买块蛋糕",e:{mind:3,risk:-2,spend:300}}},
  {id:"self_hairloss_02",who:"地漏",wid:"dilou",av:"🚿",tag:"自己",txt:"地漏又堵了，水漫到脚边。这一阵子，好像什么都在出问题。",
   R:{s:"明天再说",e:{mind:-3,social:-2}},L:{s:"叫师傅，花 {}",e:{spend:200,mind:2}}},
- {id:"inc_salary_02",who:"奖金",wid:"jiangjin",av:"💰",tag:"收入",txt:"项目奖金到账 9,600。你先算了算，这个月要还的。",
-  R:{s:"留着过活",e:{cash:9600,mind:-2,risk:-3}},L:{s:"转一半 {} 补仓",e:{cash:9600,buy:4800,mind:3,risk:4}}},
+ {id:"inc_salary_02",who:"奖金",wid:"jiangjin",av:"💰",tag:"收入",txt:"项目奖金到账 5,600。你先算了算，这个月要还的。",
+  R:{s:"留着过活",e:{cash:5600,mind:-2,risk:-3}},L:{s:"转一半 {} 补仓",e:{cash:5600,buy:2800,mind:3,risk:4}}},
  {id:"inc_salary_03",who:"工资",wid:"gongzi",av:"💰",tag:"收入",txt:"老板放话：下季度，可能调薪，也可能裁员。",
   R:{s:"偷偷更新简历",e:{mind:2,risk:5}},L:{s:"加把劲",e:{mind:-4,social:3}}},
- {id:"inc_sidejob_02",who:"私活",wid:"sihuo",av:"💻",tag:"收入",txt:"老客户来单：6,000。deadline 正好在财报周。",
-  R:{s:"推了",e:{mind:2,social:-2}},L:{s:"接了",e:{cash:6000,mind:-6,social:-3}}},
- {id:"inc_moon_01",who:"同事",wid:"tongshi",av:"☕",tag:"收入",txt:"同事问你接不接私活：一套小程序，3,000。",
-  R:{s:"最近没空",e:{social:-4,mind:2}},L:{s:"接，周末干",e:{cash:3000,mind:-5,social:2,energy:-28}}},
+ {id:"inc_sidejob_02",who:"私活",wid:"sihuo",av:"💻",tag:"收入",txt:"老客户来单：3,600。deadline 正好在财报周。",
+  R:{s:"推了",e:{mind:2,social:-2}},L:{s:"接了",e:{cash:3600,mind:-6,social:-3,energy:-28}}},
+ {id:"inc_moon_01",who:"同事",wid:"tongshi",av:"☕",tag:"收入",txt:"同事问你接不接私活：一套小程序，1,800。",
+  R:{s:"最近没空",e:{social:-4,mind:2}},L:{s:"接，周末干",e:{cash:1800,mind:-5,social:2,energy:-28}}},
  {id:"soc_oldmate_01",who:"老同学",wid:"laotongxue",av:"🍺",tag:"人情",txt:"老同学组局。AA 每人 500。你怕聊起股票。",
   R:{s:"没去",e:{social:-5,mind:1}},L:{s:"去了，AA {}",e:{spend:500,social:7,mind:-2}}},
  {id:"soc_lend_02",who:"朋友",wid:"pengyou",av:"🤝",tag:"人情",txt:"朋友开口：借两万。他说，这次一定还。",

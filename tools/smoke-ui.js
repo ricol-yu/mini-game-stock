@@ -113,12 +113,16 @@ step('连打 60 天（每步 render + pick + resolve + tick + check）', () => {
   if (d < 20) throw new Error('只走了 ' + d + ' 天，可能中途崩在别处');
 });
 
-step('月结日分支（day 5 发薪 11,000、同一天扣房租水电）', () => {
+step('月结日分支（day 5 发薪、同一天扣房租水电）', () => {
   sandbox.S.tut = 3; sandbox.reset();
   sandbox.S.day = 5; sandbox.S.cash = 20000; sandbox.S.debt = 0;
   sandbox.tick();
   const delta = sandbox.S.cash - 20000;
-  if (delta < 4000 || delta > 5200) throw new Error('第 5 天现金变化 ' + delta + '，不像「发薪 11,000 − 账单 6,000 + 日用」');
+  // 期望值现算，不写死：改工资/账单/日 burn 时这条断言要跟着走，而不是变成假警报
+  const want = sandbox.SALARY - sandbox.billOf(5).total - sandbox.EARLY_BURN;
+  if (Math.abs(delta - want) > 2)
+    throw new Error('第 5 天现金变化 ' + delta + '，应为「工资 ' + sandbox.SALARY +
+                    ' − 账单 ' + sandbox.billOf(5).total + ' − 日用 ' + sandbox.EARLY_BURN + '」= ' + want);
   if (sandbox.S.debt !== 0) throw new Error('明明是付得起的，却欠了钱：' + sandbox.S.debt);
   sandbox.render();
 });
@@ -406,10 +410,11 @@ step('老赖：发薪日工资被划走 25% 直接还债', () => {
   sandbox.S.day = 95; sandbox.S.debt = 30000; sandbox.S.cash = 0;
   sandbox.S.equity = 0; sandbox.S.st.laolai = -1;
   const m = sandbox.tick();
-  // 工资 11,000 的 25% = 2,750 先被划走（同一天后续还会因为日用/月供再欠，
+  // 工资的 25% 先被划走（同一天后续还会因为日用/月供再欠，
   // 所以不能拿"负债净减少"当断言，那样被后面的开支抵消掉了）
+  const garnish = Math.round(sandbox.SALARY * 0.25).toLocaleString('en-US');
   if (m.indexOf('法院直接划走') < 0) throw new Error('老赖的工资没被划扣：' + m);
-  if (m.indexOf('2,750') < 0) throw new Error('划扣金额不对（应是工资的 25%）：' + m);
+  if (m.indexOf(garnish) < 0) throw new Error('划扣金额不对（应是工资的 25% = ' + garnish + '）：' + m);
 });
 
 step('老赖：借钱只能借到一半', () => {

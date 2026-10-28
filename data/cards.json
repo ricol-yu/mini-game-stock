@@ -655,13 +655,13 @@
       "whoId": "jixiao",
       "avatar": "💵",
       "tag": "收入",
-      "text": "季度绩效下来了，6,500。",
+      "text": "季度绩效下来了，4,000。",
       "when": "no:fired",
       "alwaysStatus": null,
       "left": {
         "label": "留着过日子",
         "effects": {
-          "cash": 6500,
+          "cash": 4000,
           "mind": 3,
           "social": -2
         }
@@ -669,7 +669,7 @@
       "right": {
         "label": "投进去 {}",
         "effects": {
-          "cash": 6500,
+          "cash": 4000,
           "buy": 5000,
           "mind": -2,
           "social": 3
@@ -682,7 +682,7 @@
       "whoId": "sihuo",
       "avatar": "🧰",
       "tag": "收入",
-      "text": "朋友介绍一个活，做完给 4,000，要占掉两个周末。",
+      "text": "朋友介绍一个活，做完给 2,400，要占掉两个周末。",
       "when": null,
       "alwaysStatus": null,
       "left": {
@@ -695,7 +695,7 @@
       "right": {
         "label": "接了",
         "effects": {
-          "cash": 4000,
+          "cash": 2400,
           "mind": -5,
           "energy": -26
         }
@@ -3611,9 +3611,8 @@
       "left": {
         "label": "忍了",
         "effects": {
-          "mind": -5,
-          "social": -2,
-          "cash": 1200
+          "mind": -7,
+          "social": -2
         }
       },
       "right": {
@@ -3862,14 +3861,14 @@
       "whoId": "jiangjin",
       "avatar": "💰",
       "tag": "收入",
-      "text": "项目奖金到账 9,600。你先算了算，这个月要还的。",
+      "text": "项目奖金到账 5,600。你先算了算，这个月要还的。",
       "when": null,
       "alwaysStatus": null,
       "left": {
         "label": "转一半 {} 补仓",
         "effects": {
-          "cash": 9600,
-          "buy": 4800,
+          "cash": 5600,
+          "buy": 2800,
           "mind": 3,
           "risk": 4
         }
@@ -3877,7 +3876,7 @@
       "right": {
         "label": "留着过活",
         "effects": {
-          "cash": 9600,
+          "cash": 5600,
           "mind": -2,
           "risk": -3
         }
@@ -3913,15 +3912,16 @@
       "whoId": "sihuo",
       "avatar": "💻",
       "tag": "收入",
-      "text": "老客户来单：6,000。deadline 正好在财报周。",
+      "text": "老客户来单：3,600。deadline 正好在财报周。",
       "when": null,
       "alwaysStatus": null,
       "left": {
         "label": "接了",
         "effects": {
-          "cash": 6000,
+          "cash": 3600,
           "mind": -6,
-          "social": -3
+          "social": -3,
+          "energy": -28
         }
       },
       "right": {
@@ -3938,13 +3938,13 @@
       "whoId": "tongshi",
       "avatar": "☕",
       "tag": "收入",
-      "text": "同事问你接不接私活：一套小程序，3,000。",
+      "text": "同事问你接不接私活：一套小程序，1,800。",
       "when": null,
       "alwaysStatus": null,
       "left": {
         "label": "接，周末干",
         "effects": {
-          "cash": 3000,
+          "cash": 1800,
           "mind": -5,
           "social": 2,
           "energy": -28
