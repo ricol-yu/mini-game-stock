@@ -788,6 +788,26 @@ var VITS = [
   shape:"M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z",
   tip:function(){ return "社会 " + Math.round(S.social) + "/100 · 人脉信用，见底众叛亲离。欠下的人情账最后会一起算。"; }}
 ];
+/* 悬浮提示防裁边（2026-10-28）：tip 相对触发元素 left:0 定位，右边的图标/胶囊一弹
+   就伸出屏幕右缘被裁掉。弹出前主动测量，用 margin 拉回屏幕内（transform 被入场
+   动画占着，修正只能走 margin）。只挂一次，全页 tip 通用。 */
+document.addEventListener("pointerover", function(e){
+  var h = e.target.closest ? e.target.closest(".vit-i,.chip") : null;
+  if(!h) return;
+  var tip = h.querySelector(".tip"); if(!tip) return;
+  tip.style.marginLeft = "";
+  var ph = document.querySelector(".phone"); if(!ph) return;
+  var box = ph.getBoundingClientRect(), r = tip.getBoundingClientRect(), pad = 8, shift = 0;
+  if(r.right > box.right - pad) shift = box.right - pad - r.right;
+  if(r.left + shift < box.left + pad) shift = box.left + pad - r.left;
+  if(shift) tip.style.marginLeft = shift + "px";
+}, true);
+document.addEventListener("focusin", function(e){
+  var h = e.target.closest ? e.target.closest(".vit-i,.chip") : null;
+  if(!h) return;
+  h.dispatchEvent(new Event("pointerover"));
+}, true);
+
 function vitHTML(){
   var vals = {energy:S.energy, mind:S.mind, risk:S.risk, soc:S.social};
   var warns = { energy:S.energy < 25, mind:(S.mind < 22 || S.mind > 88),
