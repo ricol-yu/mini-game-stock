@@ -48,6 +48,16 @@
   .vit-i{position:relative;width:44px;height:40px;display:flex;align-items:center;justify-content:center;cursor:default}
   .vit-i svg{display:block;filter:drop-shadow(0 1px 1px rgba(31,35,41,.08))}
   .vit-i.warn svg{animation:bl .9s infinite}
+  /* 液面升降：改的是 transform（几何属性 y/height 直接赋值不触发过渡），0.55s 缓出 */
+  .vit-i rect.fill{transition:transform .55s cubic-bezier(.3,.8,.35,1),fill .4s}
+  .vit-i.bump svg{animation:vitbump .42s ease-out}      /* 变化的那一下 Pulse（预警时让位给 blink） */
+  @keyframes vitbump{35%{transform:scale(1.25)}}
+  .vit-i .vdlt{position:absolute;top:-4px;left:50%;margin-left:-16px;width:32px;text-align:center;
+    font-size:11.5px;font-weight:800;opacity:0;pointer-events:none;
+    text-shadow:0 1px 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)}
+  .vit-i .vdlt.up{color:#12b76a}.vit-i .vdlt.dn{color:#f04438}
+  .vit-i .vdlt.on{animation:vdup 1.15s ease-out forwards}
+  @keyframes vdup{0%{opacity:0;transform:translateY(5px)}18%{opacity:1}100%{opacity:0;transform:translateY(-17px)}}
   .s-cash{background:linear-gradient(90deg,#ffc07a,#f79c1e);left:0}
   .s-eq{background:linear-gradient(90deg,#ff8a8a,#e02020)}
   .s-debt{background:repeating-linear-gradient(-45deg,#d93025 0 3px,#ffb3ab 3px 6px);right:0;opacity:.95}
@@ -860,16 +870,16 @@ var $ = function(id){ return document.getElementById(id); };
    填多少＝数值多少，满格实心、空了只剩灰槽加轮廓。数值不常驻（王权也没有），
    悬停 tip 里看——信息没丢，只是不再占一整行。 */
 var VITS = [
- {k:"energy", nm:"精力", col:"#0d9488",
+ {k:"energy", nm:"精力", col:"#ffc53d",
   shape:"M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z",
   tip:function(){ return "精力 " + Math.round(S.energy) + "/100 · 干活社交都耗它，睡觉回血，见底先进医院。"; }},
- {k:"mind", nm:"心态", col:"#1a6dff",
+ {k:"mind", nm:"心态", col:"#ff4d4f",
   shape:"M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z",
   tip:function(){ return "心态 " + Math.round(S.mind) + "/100 · 太低抑郁出局，太高（88+）会上头——买入多掏 35%。"; }},
- {k:"risk", nm:"风险", col:"#d4380d",
+ {k:"risk", nm:"风险", col:"#ff9500",
   shape:"M12 2.6 L21.8 20 H2.2 Z",
   tip:function(){ return "风险 " + Math.round(S.risk) + "/100 · 高于 68 危险，拉满会被券商强制平仓、一把清空持仓。"; }},
- {k:"soc", nm:"社会", col:"#237804",
+ {k:"soc", nm:"社会", col:"#4d9fff",
   shape:"M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z",
   tip:function(){ return "社会 " + Math.round(S.social) + "/100 · 人脉信用，见底众叛亲离。欠下的人情账最后会一起算。"; }}
 ];
@@ -893,30 +903,58 @@ document.addEventListener("focusin", function(e){
   h.dispatchEvent(new Event("pointerover"));
 }, true);
 
-function vitHTML(){
-  var vals = {energy:S.energy, mind:S.mind, risk:S.risk, soc:S.social};
-  var warns = { energy:S.energy < 25, mind:(S.mind < 22 || S.mind > 88),
-                risk:S.risk > 68, soc:S.social < 22 };
-  return VITS.map(function(v, i){
-    var val = Math.max(0, Math.min(100, vals[v.k]));
-    var warn = !!warns[v.k];
-    var col = warn ? "#d4380d" : v.col;
-    var h = (val * 0.24).toFixed(1);
-    return '<span class="vit-i' + (warn ? ' warn' : '') + '" id="r-' + v.k + '" tabindex="0">' +
+/* 骨架只 build 一次：之后 render 只推 transform / 换 fill——元素不重建，CSS 过渡才有得跑
+   （原来每帧重建 innerHTML，进度是「秒切」的，玩家看不出涨落）。 */
+var VIT_ELS = null;
+function vitBuild(){
+  $("vit").innerHTML = VITS.map(function(v, i){
+    return '<span class="vit-i" id="r-' + v.k + '" tabindex="0">' +
       '<svg viewBox="0 0 24 24" width="30" height="30" role="img" aria-label="' + v.nm + '">' +
       '<defs><clipPath id="vcp' + i + '"><path d="' + v.shape + '"/></clipPath></defs>' +
       '<path d="' + v.shape + '" fill="#eef0f3"/>' +
-      '<rect x="0" y="' + (24 - val * 0.24).toFixed(1) + '" width="24" height="' + h +
-        '" fill="' + col + '" clip-path="url(#vcp' + i + ')"/>' +
+      '<rect class="fill" id="vf-' + v.k + '" x="0" y="0" width="24" height="24" fill="' + v.col +
+        '" style="transform:translateY(24px)" clip-path="url(#vcp' + i + ')"/>' +   // 从空格起手：开局一段涨满的小动画
       '<path d="' + v.shape + '" fill="none" stroke="#3a3f46" stroke-width="1.6" stroke-linejoin="round"/>' +
       (v.k === "risk" ? '<path d="M12 8.4 v5.2" stroke="#3a3f46" stroke-width="1.8" stroke-linecap="round" fill="none"/>' +
                         '<circle cx="12" cy="16.8" r="1.05" fill="#3a3f46"/>' : '') +
       '</svg>' +
-      '<span class="tip"><b>' + v.nm + '</b>' + v.tip() + '</span></span>';
+      '<span class="vdlt" id="vd-' + v.k + '"></span>' +
+      '<span class="tip" id="vt-' + v.k + '"></span></span>';
   }).join("");
+  VIT_ELS = {};
+  VITS.forEach(function(v){
+    VIT_ELS[v.k] = { rect: $("vf-" + v.k), span: $("r-" + v.k), tip: $("vt-" + v.k),
+                     delta: $("vd-" + v.k), last: null };
+  });
+}
+function vitUpdate(){
+  var vals = {energy:S.energy, mind:S.mind, risk:S.risk, soc:S.social};
+  var warns = { energy:S.energy < 25, mind:(S.mind < 22 || S.mind > 88),
+                risk:S.risk > 68, soc:S.social < 22 };
+  VITS.forEach(function(v){
+    var e = VIT_ELS[v.k]; if(!e) return;
+    var val = Math.max(0, Math.min(100, vals[v.k]));
+    var warn = !!warns[v.k];
+    // 液面：整高矩形往下推。SVG 里 transform 的 px = 用户单位，translateY(24-val*0.24)
+    e.rect.style.transform = "translateY(" + (24 - val * 0.24).toFixed(2) + "px)";
+    e.rect.style.fill = warn ? "#ff3b30" : v.col;      // 预警统一闪红（图标自带呼吸动画，色相近也能分清）
+    e.span.classList.toggle("warn", warn);
+    e.tip.innerHTML = '<b>' + v.nm + '</b>' + v.tip(); // tip 数值每次刷新（build 一次就不能烤死在里面）
+    if(e.last !== null && Math.abs(val - e.last) >= 1 && !warn){
+      var up = val > e.last;
+      e.delta.textContent = (up ? "+" : "−") + Math.abs(Math.round(val - e.last));
+      e.delta.className = "vdlt"; void e.delta.offsetWidth;   // 重置动画从头播
+      e.delta.className = "vdlt on " + (up ? "up" : "dn");
+      e.span.classList.add("bump");                            // 图标 Pulse 一下
+      clearTimeout(e.span._b);
+      e.span._b = setTimeout(function(){ e.span.classList.remove("bump"); }, 450);
+    }
+    e.last = val;
+  });
 }
 function render(){
-  $("vit").innerHTML = vitHTML();                      // 四条命：一行图标（王权式）
+  if(!VIT_ELS) vitBuild();                             // 四条命骨架只搭一次，之后只推数值
+  vitUpdate();
 
   // 金钱三段条（现金/持仓/负债）住在中间行情区
   var wC = clamp(S.cash / MONEY_CAP * 100, 0, 100), wE = clamp(S.equity / MONEY_CAP * 100, 0, 100);
