@@ -80,7 +80,7 @@
   .chip .tip b,.vit-i .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
   .chip:hover .tip,.chip:focus .tip,.vit-i:hover .tip,.vit-i:focus .tip{opacity:1;transform:translateY(0)}
 
-  .mkt{margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
+  .mkt{position:relative;margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
     padding:6px 10px;flex:0 0 auto}
   .mkt .t{display:flex;align-items:baseline;justify-content:space-between}
   .mkt .t b{font-size:15px;font-variant-numeric:tabular-nums;display:inline-block}
@@ -105,6 +105,21 @@
   @keyframes hitDn{0%{color:var(--down);transform:scale(1.07)}60%{color:var(--down)}100%{color:inherit;transform:scale(1)}}
   .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
   .mbar{position:relative;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:5px}
+  /* 资金流水飘字（2026-10-29）：钱在哪一段动，就在哪一段正下方飘 ±金额（涨红跌绿）。
+     借贷收款、买股消费、工资账单全走这条通道；行情盈亏单飘在持仓段（带「行情」前缀）。
+     钱的变化在钱的旁边用数字说，不再用顶部 toast 念——那会挡住四条命的图标。
+     挂在 .mkt 上而不是 .mbar 里：mbar overflow:hidden 会把飘字裁掉。 */
+  .mkt .fdlt{position:absolute;top:36px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;
+    transform:translateX(-50%);white-space:nowrap;pointer-events:none;opacity:0;
+    text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9);
+    animation:fdlt 2.3s cubic-bezier(.22,.9,.3,1) both}
+  .mkt .fdlt.up{color:#e02020}.mkt .fdlt.dn{color:#0aa344}
+  @keyframes fdlt{
+    0%{opacity:0;transform:translateX(-50%) translateY(7px) scale(.94)}
+    8%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+    72%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+    100%{opacity:0;transform:translateX(-50%) translateY(-9px) scale(.99)}
+  }
   /* 分时图：昨收虚线在中轴，涨红跌绿，线下淡色填充。涨停/跌停封在上下边界 */
   .tape{position:relative;height:46px;margin-top:6px;border-radius:7px;overflow:hidden;
     background:#fcfcfd;border:1px solid #f1f2f5}
@@ -175,7 +190,10 @@
   .stamp.L{left:22%;color:var(--down);border-color:var(--down);transform:rotate(-11deg)}
   .stamp.R{right:22%;color:var(--up);border-color:var(--up);transform:rotate(11deg)}
 
-  .toast{position:absolute;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);background:rgba(31,35,41,.92);
+  /* toast 挪到底部（2026-10-29）：原来挂在 top:74px，正好压住四条命的图标进度条。
+     常规的钱/行情变化已改走飘字通道（.fdlt），toast 只剩低频的例外说明
+     （失信少借、买不上、状态开场白），沉到底部不挡任何常驻信息。 */
+  .toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%) translateY(8px);background:rgba(31,35,41,.92);
     color:#fff;font-size:11.5px;padding:7px 13px;border-radius:14px;opacity:0;transition:.28s;pointer-events:none;
     max-width:300px;text-align:center;line-height:1.6;z-index:30}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -215,7 +233,7 @@
 
     <div class="strip" id="strip"></div>
 
-    <div class="mkt">
+    <div class="mkt" id="mkt">
       <div class="t"><span class="amt"><b id="v-net">¥18,000</b><i class="dlt" id="v-delta"></i></span> <small id="v-pnl" class="flat">0.0%</small></div>
       <div class="mbar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></div>
       <div class="tape" id="tape"></div>
@@ -366,6 +384,7 @@ function sell(r){
   if(S.st.halt){ return; }                          // 停牌：卖不掉
   var amt = S.equity * r, pay = Math.min(S.debt, amt);
   S.equity -= amt; S.cost -= S.cost * r; S.trades++;
+  S._sellGot = (S._sellGot || 0) + amt;             // 记账给飘字：持仓段要区分「你卖的」和「行情跌的」
   S.debt -= pay; S.cash += (amt - pay);
   S.risk = clamp(S.risk - amt / 1400, 0, 100);      // 减仓 = 降低风险
 }
@@ -971,6 +990,31 @@ function render(){
   // 三段条哪段动了就闪一下：飘字说「变了多少」，这里说「动的是哪段钱」——
   // 「现金 0 还能花钱」的困惑就来自看不出扣的是股票还是欠款
   barFlash($("b-cash"), S.cash - S._pc); barFlash($("b-eq"), S.equity - S._pe); barFlash($("b-debt"), S.debt - S._pd);
+  // 资金流水飘字（2026-10-29）：钱在哪段动，就在哪段下面飘 ±金额。
+  // 持仓段拆账：买/卖是你自己动的，行情是市场动的（含泡沫/强平）——两笔账不能混在一行里。
+  // 相邻段的飘字可能横向撞车（负债贴着持仓），按 x 距离分配行高：撞到的往下错一行。
+  var dC = S.cash - S._pc, dE = S.equity - S._pe, dD = S.debt - S._pd;
+  var wD = clamp(S.debt / MONEY_CAP * 100, 0, 100);
+  if(isFinite(dC) && isFinite(dE) && isFinite(dD)){
+    var fl = [];
+    if(Math.abs(dC) >= 1) fl.push({ tx: (dC > 0 ? "+" : "−") + money(Math.abs(dC)), up: dC > 0, cx: wC / 2 });
+    if(Math.abs(dE) >= 1){
+      var buyGot = S._buyGot || 0, sellGot = S._sellGot || 0, pnl = dE - buyGot - sellGot;
+      var eqAny = false;
+      if(buyGot  >= 1){ fl.push({ tx: "买 +" + money(buyGot),  up: true,  cx: wC + wE / 2 }); eqAny = true; }
+      if(sellGot >= 1){ fl.push({ tx: "卖 −" + money(sellGot), up: false, cx: wC + wE / 2 }); eqAny = true; }
+      if(Math.abs(pnl) >= 1){ fl.push({ tx: (pnl > 0 ? "行情 +" : "行情 −") + money(Math.abs(pnl)), up: pnl > 0, cx: wC + wE / 2 }); eqAny = true; }
+      if(!eqAny) fl.push({ tx: (dE > 0 ? "+" : "−") + money(Math.abs(dE)), up: dE > 0, cx: wC + wE / 2 });   // 兜底：尾差零头
+    }
+    if(Math.abs(dD) >= 1) fl.push({ tx: (dD > 0 ? "债 +" : "债 −") + money(Math.abs(dD)), up: dD > 0, cx: 100 - wD / 2 });
+    var taken = [];
+    fl.forEach(function(f){
+      var row = 0;
+      while(taken.some(function(t){ return t.row === row && Math.abs(t.cx - f.cx) < 17; })) row++;
+      taken.push({ row: row, cx: f.cx });
+      mktFlow(f.tx, f.up, f.cx, row);
+    });
+  }
   S._pc = S.cash; S._pe = S.equity; S._pd = S.debt;
 
   $("tape").innerHTML = tapeHTML();                    // 当日分时图
@@ -1067,6 +1111,20 @@ function barFlash(el, d){
   el.className += " hit";
   clearTimeout(el._f);
   el._f = setTimeout(function(){ el.className = el.className.replace(/\s*hit/g, ""); }, 1150);
+}
+
+/* 资金流水飘字（2026-10-29）：在 .mkt 里生成一个 ±金额，从资金条正下方飘起、上浮消散。
+   涨红跌绿（A 股习惯）。idx 是同一段同帧的第几条，往下错开 14px 防叠字。
+   2.5s 后自删节点——飘字是短命元素，不留 DOM 垃圾。 */
+function mktFlow(text, up, cx, idx){
+  var host = $("mkt"); if(!host) return;
+  var el = document.createElement("span");
+  el.className = "fdlt " + (up ? "up" : "dn");
+  el.textContent = text;
+  el.style.left = clamp(cx, 12, 88) + "%";
+  el.style.marginTop = (idx || 0) * 14 + "px";
+  host.appendChild(el);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 2500);
 }
 
 /* ============ 每天的钱变了多少（2026-10-26） ============
@@ -1453,7 +1511,7 @@ function fly(dir){
        _autoDebt 还残留到下一张，这就是「现金 0 还能一直花钱，钱不知道扣哪了」的体验来源。 */
     var auto = S._autoDebt || 0; S._autoDebt = 0;
     var buyWant = S._buyWant || 0, buyGot = S._buyGot || 0;
-    S._buyWant = 0; S._buyGot = 0;
+    S._buyWant = 0; S._buyGot = 0; S._sellGot = 0;
     var bcut = S._borrowCut || 0; S._borrowCut = 0;
     var notes = [];
     if(borrowed > 0) notes.push("💳 借到 " + money(borrowed) + "，已记进负债");
@@ -1465,6 +1523,13 @@ function fly(dir){
         ? "💵 现金只够买 " + money(buyGot) + "，还剩 " + money(buyWant - buyGot) + " 没买上"
         : "💵 现金不够，这一笔没买成");
     }
+    /* 行情句/利息句不再进 toast（2026-10-29）：「这只票涨跌 x%」分时图标签上就有，
+       钱的影响飘在资金条上（.fdlt）；利息也化作现金飘字里的一个小减数。
+       这两句是每天都有的常驻内容，留在 toast 里 = toast 天天出现挡视线。
+       只留在 S._lastMsg 里（结局面板还要用）。 */
+    if(m) m = m.split("　·　").filter(function(s){
+      return s.indexOf("这只票") !== 0 && s !== "空仓，与你无关" && s.indexOf("利息") !== 0;
+    }).join("　·　");
     if(notes.length) m = notes.join("　·　") + (m ? "　·　" + m : "");
     if(m) toast(m);
   }, c.st ? 1800 : 260);
