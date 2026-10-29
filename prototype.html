@@ -912,8 +912,12 @@ function vitBuild(){
       '<svg viewBox="0 0 24 24" width="30" height="30" role="img" aria-label="' + v.nm + '">' +
       '<defs><clipPath id="vcp' + i + '"><path d="' + v.shape + '"/></clipPath></defs>' +
       '<path d="' + v.shape + '" fill="#eef0f3"/>' +
+      // 裁剪挂在外层静止的 <g> 上，transform 只推里面的 rect —— clip 和 transform 同元素时
+      // 裁剪区会跟着一起位移，彩色形状会从轮廓底下戳出去（2026-10-29 踩过）
+      '<g clip-path="url(#vcp' + i + ')">' +
       '<rect class="fill" id="vf-' + v.k + '" x="0" y="0" width="24" height="24" fill="' + v.col +
-        '" style="transform:translateY(24px)" clip-path="url(#vcp' + i + ')"/>' +   // 从空格起手：开局一段涨满的小动画
+        '" style="transform:translateY(24px)"/>' +   // 从空格起手：开局一段涨满的小动画
+      '</g>' +
       '<path d="' + v.shape + '" fill="none" stroke="#3a3f46" stroke-width="1.6" stroke-linejoin="round"/>' +
       (v.k === "risk" ? '<path d="M12 8.4 v5.2" stroke="#3a3f46" stroke-width="1.8" stroke-linecap="round" fill="none"/>' +
                         '<circle cx="12" cy="16.8" r="1.05" fill="#3a3f46"/>' : '') +
