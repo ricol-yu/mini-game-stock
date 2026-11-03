@@ -77,13 +77,19 @@ const stats = (page) => page.evaluate(() => {
   const browser = await chromium.launch({ executablePath: CHROME });
   const out = [];
   if (TIER) {
-    /* 降级阶梯回归：375 宽、屏高 470~590 逐档扫，stage 落在 140~240（deg1~deg6 全都可能踩到）
+    /* 降级阶梯回归：375 宽、屏高 470~590 逐档扫，stage 落在 140~260（deg1~deg6 都可能踩到）
        的档位出图存 .shots/_tier-*.png。判据：cardClip / txtClip 必须全 false——
        96 地板时代的裁字洞（正文第三行切一半）就是在这个区间炸出来的。
-       口径提醒：本模式用的是**真 viewport**（newContext 的 viewport，不是改 .phone 高度），
-       而 stageH 由 .phone.clientHeight 反推，两种方式实测同值（375×530 都是 stage 202）；
-       所以图里的 tape 显隐、deg 类都是真判定结果，可以直接拿这张图对账阶梯——
-       375 档 tape 归 deg2（stage<270）管，不是 <360 的宽度规则（那条只管 320 档）。 */
+
+       口径提醒（别拿错）：
+       · 本模式用的是**真 viewport**（newContext 的 viewport）+ `?clean=1`。clean 模式下
+         `.phone{height:100dvh}`，而 stageH 是 `stageBudget()` 用 `.phone.clientHeight`
+         反推的，所以「缩窗口」和「缩 .phone 元素」在 clean 模式下等价（实测 375×530 都是 202）。
+       · 但在**开发包装（非 clean）**里 `.phone{width:344;height:700}` 是写死的：此时无论窗口
+         多高，stageH 都按 700 算、deg 判定一动不动——想靠「缩窗口」验降级会得出
+         「降级没生效」的错结论。
+       · 因此 tape 显隐请以真 viewport + clean 的截图为准（.shots/real-*.png，375 档归 deg2
+         「stage<270」管，不是 <360 的宽度规则，那条只管 320 档）。 */
     for (const H of [470, 490, 510, 530, 550, 570, 590]) {
       const ctx = await browser.newContext({ viewport: { width: 375, height: H }, deviceScaleFactor: 2 });
       const page = await ctx.newPage();

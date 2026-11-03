@@ -2465,18 +2465,28 @@ function stageBudget(ph){
   return H - nav.offsetHeight - hud.offsetHeight - (strip ? strip.offsetHeight : 0) - mkt.offsetHeight - 12;
 }
 /* 六档阈值（§1.5）：tape 缩 → tape 隐 → 图区地板 → HUD 缩 → 图区隐 → .fn 隐。
-   实测命中：SE1 292 → ①（②由 <360 宽度规则先接管）；375 339 / 390 516 / 430 604 一档不触。 */
+   FEED = 每一档回收的高度（写死的设计值，不是量出来的）：① tape 46→36 = 10，
+   ② tape 归零再 -36，④ HUD 48→42 = 6，⑥ .fn ≈ 17；③⑤ 只是「允许让位」，不回收。
+   为什么要有 FEED：砍完 tape 之后卡区确实长高了，后面几档必须按「长高之后」的高度判，
+   否则 375×530 这种「pre 202 → 砍 tape 后 248」的屏会连 HUD 一起缩（248 > 230，本来不该动命，
+   四条命是玩家唯一的生存读数）。这和 §1.5 里 SE1 的口径一致：「砍完 tape stage 296，就不动命」。
+   仍然只量一次：FEED 是常量表，不重测，所以不会出现「砍一档→变高→退出→再砍」的抖。 */
 var DEG = [300, 270, 260, 230, 190, 170];
+var FEED = [10, 36, 0, 6, 0, 17];
 function applyDegrade(){
   var ph = phoneEl(); if(!ph) return;
   try{
     var cls = String(ph.className || "").replace(/\bdeg[1-6]\b/g, " ").replace(/\s+/g, " ").trim();
     if(cls !== ph.className) ph.className = cls;
-    var h = stageBudget(ph), n = 0;
-    // 一次测量定档：不迭代重测，否则每砍一档又触发下一档，会一路砍到没牌面
-    for(var i = 0; i < DEG.length; i++) if(h < DEG[i]) n = i + 1;
+    var h = stageBudget(ph), n = 0, gain = 0;
+    /* 按顺序往下套，命中一档就把该档回收的高度加进 gain，再用「h + gain」判下一档；
+       一旦加完还不够低就停——不回头、不重测。 */
+    for(var i = 0; i < DEG.length; i++){
+      if(h + gain < DEG[i]){ n = i + 1; gain += FEED[i]; }
+      else break;
+    }
     for(var j = 1; j <= n; j++) ph.classList.add("deg" + j);
-    ph.setAttribute("data-stage", Math.round(h));
+    ph.setAttribute("data-stage", Math.round(h));       // 记的是启动实测值（未含回收），便于对账
   }catch(_e){}
 }
 /* 正文的自然高度（不是被拉伸后的高度）。
