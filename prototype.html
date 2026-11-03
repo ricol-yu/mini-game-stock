@@ -45,6 +45,11 @@
     /* 动效：只改 transform / opacity / width / height */
     --u2-t-fast:120ms; --u2-t-base:280ms; --u2-t-slow:550ms;
     --u2-e-out:cubic-bezier(.3,.8,.35,1); --u2-e-deal:cubic-bezier(.34,1.3,.4,1);
+    /* 手感专属（motion-spec §1）：过冲 6% 是「Q 弹」的数学定义；
+       jelly 的 1.35 让中段有个明显的挤压，跟 e-out 的「稳稳停住」区分开。 */
+    --u2-t-tap:110ms; --u2-t-pop:420ms;
+    --u2-e-back:cubic-bezier(.34,1.56,.64,1);
+    --u2-e-jelly:cubic-bezier(.22,1.35,.42,1);
     /* 布局变量：--nav-status 是状态栏占位（小程序落地时换成 statusBarHeight） */
     --nav-status:44px;
   }
@@ -117,9 +122,17 @@
   .vit-i.k-soc .u2-vit-ico{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSIjNThiNmZmIi8+PC9zdmc+")}
   .vit-i.k-soc .u2-vit-out{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiNmN2VjYzkiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+")}
   .vit-i.warn{animation:u2blink 1100ms ease-in-out infinite}
-  .vit-i.bump{animation:u2bump 420ms ease-out}
+  .vit-i.bump{animation:u2bump 420ms var(--u2-e-jelly)}
   @keyframes u2blink{50%{opacity:.38}}
-  @keyframes u2bump{35%{transform:scale(1.25)}}
+  /* 加命：Q 弹。x/y 分开给（1.18/.84）才有「果冻被按一下」的挤压感；
+     等比放大 1.25 只是「变大」，看不出弹性（旧实现就是那样，玩家感受不到）。 */
+  @keyframes u2bump{
+    0%{transform:scale(1,1)}
+    28%{transform:scale(1.18,.84)}
+    50%{transform:scale(.93,1.07)}
+    70%{transform:scale(1.06,.97)}
+    86%{transform:scale(.985,1.01)}
+    100%{transform:none}}
   /* 属性飘字：图标上方 −22px，增量绿(−)红(+)——与行情涨跌色无关，读作「这条命变了多少」 */
   .vit-i .vdlt{position:absolute;top:-22px;left:50%;margin-left:0;transform:translate(-50%,5px);
     font-size:var(--u2-fs-num);font-weight:800;line-height:1;white-space:nowrap;
@@ -186,8 +199,8 @@
   /* 净值数字本身也闪一下（transform 不改布局宽度） */
   .mkt .t b#v-net.hit-up{animation:hitUp .95s ease-out both}
   .mkt .t b#v-net.hit-dn{animation:hitDn .95s ease-out both}
-  @keyframes hitUp{0%{color:var(--u2-up-deep);transform:scale(1.07)}60%{color:var(--u2-up-deep)}100%{color:inherit;transform:scale(1)}}
-  @keyframes hitDn{0%{color:var(--u2-down);transform:scale(1.07)}60%{color:var(--u2-down)}100%{color:inherit;transform:scale(1)}}
+  @keyframes hitUp{0%{color:var(--u2-up-deep);transform:scale(.94)}32%{color:var(--u2-up-deep);transform:scale(1.10)}72%{color:var(--u2-up-deep);transform:scale(.985)}100%{color:inherit;transform:none}}
+  @keyframes hitDn{0%{color:var(--u2-down);transform:scale(.94)}32%{color:var(--u2-down);transform:scale(1.10)}72%{color:var(--u2-down);transform:scale(.985)}100%{color:inherit;transform:none}}
   /* 收益率：形状(▲▼) + 符号 + 颜色三重编码，色弱也读得出（::before 不污染 textContent） */
   #v-pnl{font-size:var(--u2-fs-num);line-height:1;font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto}
   #v-pnl.up::before{content:"▲\00a0"}
@@ -373,7 +386,9 @@
     /* 宽度跟内容列走：320 档内容列 296（stage 左右各 12），留 24 才刚好不越界；
        不设 max-height ——账目信息截断比多占两行图糟得多（UX 终审口径）。 */
     max-width:min(300px, calc(100% - 24px))}
-  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* 入场走 animation（能带过冲），出场走上面的 transition（淡出不需要过冲） */
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);
+    animation:u2ToastIn 300ms cubic-bezier(.3,1.15,.4,1) both}
 
   /* ---- 开局页 / 结局页：绒布底 + 奶油大卡 ----
      z-index 40：压住 toast(30) 和 tip(35)，结局页弹出时不许有残留的提示层漏出来 */
@@ -421,8 +436,10 @@
   .btn{height:46px;padding:0 26px;border-radius:var(--u2-r-chip);border:2px solid var(--u2-edge);
     background:var(--u2-edge);color:var(--u2-card);font-size:var(--u2-fs-btn);line-height:1;font-weight:800;
     letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
-    box-shadow:0 4px 0 rgba(43,31,18,.28);-webkit-appearance:none}
-  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(43,31,18,.28)}
+    box-shadow:0 4px 0 rgba(43,31,18,.28);-webkit-appearance:none;
+    /* 起手快（110ms 压下去）、松手弹回（back 曲线自己过冲）——按钮的「实心感」全靠这一下 */
+    transition:transform var(--u2-t-tap) var(--u2-e-back),box-shadow var(--u2-t-tap) linear}
+  .btn:active{transform:translateY(3px) scale(.985);box-shadow:0 1px 0 rgba(43,31,18,.28)}
   .endcard .btn,.intro-card .btn{width:100%}
 
   .legend{margin-top:14px;font-size:11px;color:#7d8794;text-align:center;line-height:1.9;max-width:540px}
@@ -470,6 +487,122 @@
   @media (max-width:374px){
     .u2-tape-lab .u2-lab-k{display:none}
   }
+
+  /* =====================================================================
+     动效层 v2.1 —— 「手感」只回答三个问题（规范：docs/design/motion-spec.md）
+       ① 这一下打到了吗 → 震屏 / 图标摇头
+       ② 这一下值多少  → Q 弹 / 飘字 / 数字过冲
+       ③ 现在松手算数吗 → 印章「啪」地弹一下
+     ---------------------------------------------------------------------
+     铁律（违反 = 小程序掉帧或玩家眩晕，验收按 motion-spec §5）：
+       ① 只动 transform / opacity：不碰 width/height/top/left，不触发重排；
+       ② 全部有限次数；无限循环只留 .warn(blink) 与 .u2-debt-breathe 两条且互斥；
+       ③ 一次事件只挂一个主载荷（震屏 或 弹跳），抖动类时长 ≤ 520ms；
+       ④ 震屏必须带 scale(1.012/1.018)：纯平移会在圆角屏边缘闪出底色，
+          放大 1.2% 后位移永远落在画面内（这就是「震»而不是«整块飘」的分界）；
+       ⑤ ?fx=0 或系统减弱动效：全部降为 1ms 终态，数值/颜色/文字一个不少。
+     ===================================================================== */
+  @keyframes u2Shake{
+    0%{transform:translate3d(0,0,0) scale(1.012)}
+    14%{transform:translate3d(-4px,1px,0) scale(1.012)}
+    30%{transform:translate3d(3.4px,-1.4px,0) scale(1.012)}
+    48%{transform:translate3d(-2.4px,.9px,0) scale(1.012)}
+    66%{transform:translate3d(1.4px,-.5px,0) scale(1.012)}
+    84%{transform:translate3d(-.5px,.2px,0) scale(1.012)}
+    100%{transform:none}}
+  .phone.fx-shake{animation:u2Shake 360ms cubic-bezier(.36,.07,.19,.97) both}
+  @keyframes u2ShakeHard{
+    0%{transform:translate3d(0,0,0) scale(1.018)}
+    10%{transform:translate3d(-7px,2px,0) scale(1.018)}
+    22%{transform:translate3d(6px,-2.5px,0) scale(1.018)}
+    36%{transform:translate3d(-4.6px,1.6px,0) scale(1.018)}
+    52%{transform:translate3d(3px,-1px,0) scale(1.018)}
+    68%{transform:translate3d(-1.8px,.6px,0) scale(1.018)}
+    84%{transform:translate3d(.8px,-.2px,0) scale(1.018)}
+    100%{transform:none}}
+  .phone.fx-shake-hard{animation:u2ShakeHard 520ms cubic-bezier(.36,.07,.19,.97) both}
+
+  /* 通用 Q 弹：28% 处横向撑开、纵向压扁，才是「果冻」；等比缩放只是「变大」 */
+  @keyframes u2Jelly{
+    0%{transform:scale(1,1)}
+    28%{transform:scale(1.18,.84)}
+    50%{transform:scale(.93,1.07)}
+    70%{transform:scale(1.06,.97)}
+    86%{transform:scale(.985,1.01)}
+    100%{transform:none}}
+  .fx-jelly{animation:u2Jelly var(--u2-t-pop) var(--u2-e-jelly) both}
+
+  /* 摇头：掉一条命。位移 2px 量级 + 4~5 度旋转，读起来是「晃了一下」而不是「在抖」 */
+  @keyframes u2Wobble{
+    0%{transform:none}
+    16%{transform:translateX(-2.2px) rotate(-5deg)}
+    34%{transform:translateX(2px) rotate(4.5deg)}
+    52%{transform:translateX(-1.3px) rotate(-2.8deg)}
+    70%{transform:translateX(.8px) rotate(1.6deg)}
+    86%{transform:translateX(-.3px) rotate(-.6deg)}
+    100%{transform:none}}
+  .fx-wobble{animation:u2Wobble 460ms cubic-bezier(.36,.07,.19,.97) both}
+
+  /* 面板被「顿」一下：大涨大跌 / 扣月供时，让行情面板有被砸的实感 */
+  @keyframes u2Dent{
+    0%{transform:none}
+    26%{transform:translateY(3px) scaleY(.994)}
+    56%{transform:translateY(-1.6px)}
+    80%{transform:translateY(.6px)}
+    100%{transform:none}}
+  .mkt.fx-dent{animation:u2Dent 360ms cubic-bezier(.3,.8,.35,1) both}
+
+  /* 发牌：新卡从下方弹上来。0% 的 20px 是「还没完全出牌靴」的距离，再大就像从屏外飞入 */
+  @keyframes u2Deal{
+    0%{opacity:0;transform:translateY(20px) scale(.965)}
+    55%{opacity:1}
+    76%{transform:translateY(-2.5px) scale(1.003)}
+    100%{opacity:1;transform:none}}
+  .card.fx-deal{animation:u2Deal 420ms cubic-bezier(.3,.9,.3,1) both}
+
+  /* 印章锁定：拖过松手阈值那一下「啪」地弹——这是全游戏最重要的一次触觉确认。
+     必须带 rotate：印章靠 transform:rotate(±10deg) 斜放，通用 jelly 会把角度抹平。 */
+  @keyframes u2StampL{
+    0%{transform:rotate(-10deg) scale(1)}
+    34%{transform:rotate(-13deg) scale(1.2)}
+    64%{transform:rotate(-9deg) scale(.95)}
+    100%{transform:rotate(-10deg) scale(1)}}
+  @keyframes u2StampR{
+    0%{transform:rotate(10deg) scale(1)}
+    34%{transform:rotate(13deg) scale(1.2)}
+    64%{transform:rotate(9deg) scale(.95)}
+    100%{transform:rotate(10deg) scale(1)}}
+  .stamp.L.fx-lock{animation:u2StampL 340ms cubic-bezier(.3,1.3,.4,1) both}
+  .stamp.R.fx-lock{animation:u2StampR 340ms cubic-bezier(.3,1.3,.4,1) both}
+
+  /* toast 入场：从行情面板下缘「落」下来，落定前 1px 过冲 */
+  @keyframes u2ToastIn{
+    0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.96)}
+    62%{opacity:1;transform:translateX(-50%) translateY(1px) scale(1.008)}
+    100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+
+  /* 结局：整块奶油卡从绒布里浮出来，emoji 慢半拍再弹（视线先落在标题） */
+  @keyframes u2OverPop{
+    0%{opacity:0;transform:translateY(14px) scale(.93)}
+    58%{opacity:1}
+    80%{transform:translateY(-2px) scale(1.008)}
+    100%{opacity:1;transform:none}}
+  .over.on .endcard{animation:u2OverPop 460ms cubic-bezier(.3,1.05,.4,1) both}
+  .over.on .em{animation:u2Jelly 620ms cubic-bezier(.3,.9,.3,1) 140ms both}
+  .intro .intro-card{animation:u2OverPop 520ms cubic-bezier(.3,1.05,.4,1) both}
+
+  /* 系统开了「减弱动效」：全部压到 1ms 终态。数值、颜色、文字照旧，只是不再动。
+     小程序没有这个媒体查询时，用 ?fx=0 / app 级开关等效（motion-spec §6）。 */
+  @media (prefers-reduced-motion:reduce){
+    .phone.fx-shake,.phone.fx-shake-hard,.fx-jelly,.fx-wobble,.card.fx-deal,
+    .mkt.fx-dent,.stamp.fx-lock,.toast.on,.over.on .endcard,.over.on .em,
+    .intro .intro-card,.vit-i.bump,.vit-i.warn,.mbar i.u2-debt-breathe{
+      animation-duration:1ms !important;animation-iteration-count:1 !important}
+  }
+  /* ?fx=0：整站动效一次关干净（截图对照、低端安卓、系统减弱动效的兜底）。
+     只关动画与过渡，不动任何布局属性——关掉后每个状态都必须仍然是「可读的」。 */
+  html.fx-off *,html.fx-off *::before,html.fx-off *::after{
+    animation:none !important;transition-duration:1ms !important}
 </style>
 </head>
 <body>
@@ -1177,6 +1310,62 @@ function tapeHTML(){
 
 /* ============ 渲染 ============ */
 var $ = function(id){ return document.getElementById(id); };
+
+/* ============ 手感层（motion v2.1） ============
+   规范：docs/design/motion-spec.md。三条原则：
+     ① 动效只确认「已经发生的事」，不预示、不评判——这个游戏不安慰人，也不因为你
+        选错就震一下（「你被惩罚了」的体感会变成说教）；
+     ② 一件事只给一个主载荷：要么震屏、要么弹一下，不同时上（同时上 = 廉价手游）；
+     ③ 全部可关（?fx=0 / fx=1 轻档），关掉后数值、颜色、文字一个不少。
+   小程序迁移：on() 换成 setData 挂类、shake() 换成 wx.createAnimation 或同款 class，
+   三档语义与事件表照搬；haptic() 换 wx.vibrateShort({type:'light'|'medium'|'heavy'})。 */
+var FX = (function(){
+  var lv = 2;                                          // 0 全关 / 1 只留视觉轻档 / 2 默认（含马达）
+  try{
+    var m = (location.search || "").match(/[?&]fx=([012])/);
+    if(m) lv = +m[1];
+  }catch(_e){}
+  try{ if(lv === 0) document.documentElement.classList.add("fx-off"); }catch(_e){}
+  function phone(){
+    try{ return document.querySelector(".phone") || null; }catch(_e){ return null; }
+  }
+  /* 挂一次性动画：摘 → 强制回流 → 挂 → 定时摘。
+     不回流的话，同一元素连着两次同名动画只有第一次播（浏览器认为类没变过）。 */
+  function on(el, cls, ms){
+    if(lv <= 0 || !el || !el.classList) return;
+    el.classList.remove(cls);
+    try{ void (el.offsetWidth || 0); }catch(_e){}
+    el.classList.add(cls);
+    var key = "_fx" + cls;
+    clearTimeout(el[key]);
+    el[key] = setTimeout(function(){ el.classList.remove(cls); }, ms + 40);
+  }
+  function haptic(kind){
+    if(lv < 2) return;                                  // 轻档只走视觉，不动马达（省电、也不打扰）
+    try{
+      if(typeof navigator === "undefined" || !navigator.vibrate) return;
+      navigator.vibrate(kind === "hard" ? [16, 26, 16] : (kind === "mid" ? [12, 20, 12] : 10));
+    }catch(_e){}
+  }
+  /* 三档震屏：soft＝现金见底/小崩，mid＝涨跌停/上失信名单，hard＝泡沫破/结局。
+     同一时刻只允许一个在跑：先摘干净再挂，避免两次快速触发叠成抽搐。 */
+  function shake(kind){
+    var ph = phone(); if(!ph) return;
+    ph.classList.remove("fx-shake"); ph.classList.remove("fx-shake-hard");
+    if(kind === "hard"){ on(ph, "fx-shake-hard", 520); haptic("hard"); }
+    else if(kind === "mid"){ on(ph, "fx-shake", 360); haptic("mid"); }
+    else if(kind === "soft"){ on(ph, "fx-shake", 360); haptic("light"); }
+  }
+  return {
+    level: function(){ return lv; },
+    on: on, shake: shake, haptic: haptic,
+    jelly:  function(el){ on(el, "fx-jelly", 420); },
+    wobble: function(el){ on(el, "fx-wobble", 460); },
+    dent:   function(el){ on(el, "fx-dent", 360); },
+    deal:   function(el){ on(el, "fx-deal", 420); },
+    lock:   function(el){ on(el, "fx-lock", 340); }
+  };
+})();
 /* 四条命（v2 王权式液面）：DOM 结构就是将来的小程序结构——
      .vit-i ─┬ .u2-vit-slot  空槽（灰底图标）
              ├ .u2-vit-fill  液面：height = 数值%，overflow:hidden
@@ -1291,15 +1480,26 @@ function vitUpdate(){
     if(e.fill && e.fill.style) e.fill.style.height = val.toFixed(1) + "%";
     e.span.classList.toggle("warn", warn);            // 预警：整图标 1100ms 呼吸（spec §4）
     e.tip.innerHTML = '<b>' + v.nm + '</b>' + v.tip(); // tip 数值每次刷新（build 一次就不能烤死在里面）
-    if(e.last !== null && Math.abs(val - e.last) >= 1 && !warn){
-      var up = val > e.last;
-      e.delta.textContent = (up ? "+" : "−") + Math.abs(Math.round(val - e.last));
+    /* 飘字 1 点起报；图标动效 2 点起才给——1 点的抖动天天有，天天弹就是噪音，
+       「手感」只确认值得确认的事（motion-spec §2：小额变化交给数字）。 */
+    var dv = e.last === null ? 0 : val - e.last;
+    if(e.last !== null && Math.abs(dv) >= 1 && !warn){
+      var up = dv > 0;
+      /* 图标的手感按「这条命变好还是变坏」分，不按数值涨跌分：
+         风险涨是坏事（摇头）、风险降是好事（Q 弹）；其余三条反过来。
+         预警态（warn）让位给 blink——一份事件不许两个动画抢同一个元素。 */
+      var good = v.k === "risk" ? !up : up;
+      e.delta.textContent = (up ? "+" : "−") + Math.abs(Math.round(dv));
       e.delta.className = "vdlt"; void e.delta.offsetWidth;   // 重置动画从头播
       e.delta.className = "vdlt on " + (up ? "up" : "dn");
-      e.span.classList.add("bump");                            // 图标 Pulse 一下（预警时让位给 blink）
-      clearTimeout(e.span._b);
-      e.span._b = setTimeout(function(){ e.span.classList.remove("bump"); }, 450);
+      if(Math.abs(dv) >= 2){
+        e.span.classList.remove("bump"); e.span.classList.remove("fx-wobble");
+        if(good) FX.jelly(e.span); else FX.wobble(e.span);
+      }
     }
+    /* 风险第一次越过危险线（68）：屏轻震一下 + 图形摇头。
+       只报「跨过去」这一次，不在危险区里每天震——那是骚扰，不是提醒。 */
+    if(v.k === "risk" && e.last !== null && e.last <= 68 && val > 68) FX.shake("soft");
     e.last = val;
   });
 }
@@ -1900,15 +2100,21 @@ function nextCard(){
   closeTips(null);                                   // 换卡就收提示：tip 是挂在 HUD/胶囊上的浮层，
                                                      // 出牌后还被选中牌的内容占着，读到的是上一张的事
   var old = stage.querySelectorAll(".card");
-  for(var i = 0; i < old.length; i++) old[i].remove();
+  for(var i = 0; i < old.length; i++){
+    old[i].style.animation = "none";                 // 发牌动画没放完就被收走：同 hideOver 的 Chrome 滚动坑，先掐再删
+    old[i].remove();
+  }
   if(S.tut < TUT.length){                            // 序幕：一次只发一张教程卡，压不住别的卡
     var t = build(TUT[S.tut]);
-    stage.appendChild(t); cur = t; bind(t); markArtShort(); return;
+    stage.appendChild(t); cur = t; bind(t); markArtShort();
+    FX.deal(t);                                      // 发牌：从下方弹上来（.card.fx-deal）
+    return;
   }
   var a = build(pick());
   stage.appendChild(deckBack("under2")); stage.appendChild(deckBack("under"));
   stage.appendChild(a);
   cur = a; bind(a); markArtShort();                  // 新卡图区要重测：.short 是逐卡的，不随 .phone 走
+  FX.deal(a);
 }
 /* 松手阈值随卡宽走（ui-adaptation §4.2）：threshold = clamp(卡宽 × 0.22, 64, 94)，
    320 档 296 → 65、375 档 343 → 75、390 档 358 → 79、430 档 398 → 88。
@@ -1926,6 +2132,7 @@ function bind(card){
   card.addEventListener("pointerdown", function(e){
     if(S.over) return; on = true; x0 = e.clientX; y0 = e.clientY;
     th = dragThreshold(card);
+    card.classList.remove("fx-deal");                // 发牌动画还没放完就上手：先撤掉，否则和拖拽抢 transform
     card.setPointerCapture(e.pointerId); card.style.transition = "none";
   });
   card.addEventListener("pointermove", function(e){
@@ -1940,16 +2147,44 @@ function bind(card){
     var sl = card.querySelector(".stamp.L"), sr = card.querySelector(".stamp.R");
     if(sl){ sl.textContent = stampLabel(c, "L"); sl.style.opacity = dx < 0 ? t : 0; }
     if(sr){ sr.textContent = stampLabel(c, "R"); sr.style.opacity = dx > 0 ? t : 0; }
+    /* 跨过松手阈值那一刻：印章「啪」地弹一下（只弹一次，回到 0.86 以下才重新武装）。
+       这是全游戏最重要的一次触觉确认——在此之前玩家不知道「现在松手算不算数」。 */
+    if(t >= 1 && !card._lk){
+      card._lk = 1;
+      var hit = card.querySelector(dx > 0 ? ".stamp.R" : ".stamp.L");
+      if(hit) FX.lock(hit);
+      FX.haptic("light");
+    } else if(t < 0.86) card._lk = 0;
   });
   function end(){
     if(!on) return; on = false;
-    card.style.transition = "transform .32s cubic-bezier(.3,.9,.3,1), opacity .32s";
+    card._lk = 0;
+    /* 没到阈值就松手：用 back 曲线回位（过冲约 6%）。
+       线性/缓出回位像「弹簧松了」，back 曲线才像「牌被按回桌上」。 */
+    card.style.transition = "transform .42s cubic-bezier(.34,1.56,.64,1), opacity .32s";
     if(Math.abs(dx) > th) fly(dx > 0 ? "R" : "L");
     else { card.style.transform = "translate(0,0) rotate(0deg)";
       var sl = card.querySelector(".stamp.L"), sr = card.querySelector(".stamp.R");
       if(sl) sl.style.opacity = 0; if(sr) sr.style.opacity = 0; }
   }
   card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+}
+/* 一天结算后的「体感结算」：只在真的发生了什么时给一下，日常小额变动交给账目行和飘字。
+   判定按严重度降序，命中第一个就 return——一件事只给一个主载荷（motion-spec §2）。
+   注意：这里只读 S，不改任何数值。动效永不参与玩法。 */
+function fxAfter(b){
+  try{
+    var n = net(), lim = (S.intra && S.intra.lim) || "";
+    var pct = Math.abs(b.net) > 1 ? (n - b.net) / Math.abs(b.net) : 0;
+    var laolaiNew = !b.laolai && !!S.st.laolai;
+    var burst = S.flags && S.flags.burstDay === S.day;
+    if(burst){ FX.shake("hard"); FX.dent($("mkt")); return; }            // 泡沫破：这一下是真崩了
+    if(laolaiNew){ FX.shake("hard"); return; }                          // 刚上失信名单：重震，因为这是不可逆的
+    if(lim === "up" || lim === "down"){ FX.shake("mid"); FX.dent($("mkt")); return; }   // 涨跌停封板
+    if(pct <= -0.09){ FX.shake("mid"); FX.dent($("mkt")); return; }      // 单日净值 −9% 以上（杠杆吃跌停）
+    if(b.cash > 0.5 && S.cash <= 0.5 && S.debt - b.debt >= 1){ FX.shake("soft"); return; }  // 现金见底、开始欠着
+    if(pct >= 0.09){ FX.dent($("mkt")); }                               // 大涨只「顿」面板：正在读卡时别震屏
+  }catch(_e){}
 }
 function fly(dir){
   if(busy || S.over) return; busy = true;
@@ -1967,6 +2202,7 @@ function fly(dir){
   }
 
   var debt0 = S.debt;
+  var fx0 = { cash:S.cash, debt:S.debt, net:net(), laolai:!!S.st.laolai };   // 结算前快照（给手感层判断「发生了什么」）
   resolve(c, dir);
   var borrowed = S.debt - debt0;                     // 这一选择借了多少钱（给 toast 提示用）
   // 卡牌自带状态：给玩家一个提示
@@ -1977,6 +2213,7 @@ function fly(dir){
   var m = tick();
   S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
+  fxAfter(fx0);
   setTimeout(function(){
     /* 「这笔钱从哪来、到哪去」的账（2026-11-03 收口）：钱只要真的动了，账目行都会自己
        弹一笔（工资/借款/还款/消费/日用/债息/行情…），所以这几种提示不再进 popup——
@@ -2095,9 +2332,14 @@ function check(){
   var a = $("o-a"); a.textContent = money(n); a.className = n >= INIT ? "up" : "down";
   $("o-n").textContent = S.trades + " 次";
   var mm = $("o-m"); mm.textContent = "-" + (S.mdd * 100).toFixed(0) + "%"; mm.className = "down";
+  /* 结局的体感分两档：赢下来的（自由/上岸/两个人/熬成精）只轻震一下；
+     打穿的（爆了/穿仓/不动了/没有人/泡沫之后）重震——这是全游戏唯一允许「重」的时刻。
+     结局卡片本身的入场动画在 CSS 里（.over.on .endcard），这里只管「那一震」。 */
+  var softEnd = ["自由","上岸","两个人","熬成精","一次都没动"].indexOf(e[1]) >= 0;
+  FX.shake(softEnd ? "soft" : "hard");
   $("over").classList.add("on");
 }
-$("o-b").onclick = function(){ $("over").classList.remove("on"); _skipTut = true; reset(); };  // 重开不重播序幕教程（刷新页面才重播）
+$("o-b").onclick = function(){ hideOver($("over")); _skipTut = true; reset(); };  // 重开不重播序幕教程（刷新页面才重播）
 
 /* ================= 卡池 =================
    e 字段：buy 加仓 · sell 减仓(比例) · spend 出金 · borrow 借钱 · repay 还钱
@@ -2546,7 +2788,20 @@ function toggleCls(el, name, on){
 }
 function relayout(){ applyDegrade(); markArtShort(); }
 
-$("i-b").onclick = function(){ $("intro").classList.remove("on"); };
+/* 关开局/结局页：先把里面没放完的入场动画掐掉、再摘 .on，最后把页面滚回顶。
+   Chrome 的坑（320 小屏实测踩到）：带 transform 动画的元素在动画中途被 display:none，
+   会把 overflow:hidden 的页面滚动到它那边（+181px），整个 HUD 直接顶出屏幕。
+   先 animation='none' 再摘类就不触发——这条写进 motion-spec §3 铁律 ⑪。 */
+function hideOver(el){
+  if(!el) return;
+  try{
+    var kids = el.querySelectorAll(".endcard,.intro-card,.em");
+    for(var i = 0; i < kids.length; i++) kids[i].style.animation = "none";
+  }catch(_e){}
+  el.classList.remove("on");
+  try{ window.scrollTo(0, 0); }catch(_e){}
+}
+$("i-b").onclick = function(){ hideOver($("intro")); };
 $("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始」关闭）
 reset();
 introIcons();                            // 开局页那四个满格小图标

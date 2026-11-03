@@ -73,6 +73,7 @@
 | 文件 | 内容 |
 |---|---|
 | `docs/design/game-design.md` | 完整玩法规格：四属性、每日结算公式、七种状态、结局优先级 |
+| `docs/design/motion-spec.md` | **动效规范（唯一真源）**：事件表、实现铁律、`?fx` 开关、小程序迁移注意。改手感先改这里 |
 | `docs/plan/next-phase.md` | **下个阶段路线图**：卡池扩容目标、schema v2、素材规范、系统顺序、铺量门槛 |
 | `docs/plan/development-plan.md` | **执行清单（按节点推进）**：每完成一项打勾写日期，开工先看这里 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
@@ -87,6 +88,7 @@
 | `tools/check-policy.js` | 玩法体检：`policy` 五种玩法对照，`scan` 扫 512 种站队玩法 |
 | `tools/check-repeat.js` | **抽卡体检**：同卡重复 / 同类扎堆 / 借贷卡成串。`--compare` 可跑旧算法对照 |
 | `tools/simulate.js` | **无头仿真器**：`node tools/simulate.js --runs 10000`，跑的是 prototype.html 的真实代码 |
+| `tools/shot-fx.js` | 动效自检：真浏览器里读 animationName/位移验证动效真的在跑，`node tools/shot-fx.js` |
 | `tools/sim/nostock.js` | **钱路仿真**：`--policy cash\|nostock\|survive\|random`，回答「不碰股票能攒到多少」。输出逐日现金轨迹、同批纵向（避开存活偏差）、钱的来源分解（卡片净额 vs 系统净流入）、最会送钱的 15 张卡 |
 | `tools/sim/credit-check.js` | **借贷链路体检**：净值归零之后还能活几天、归零即死的占比、负债峰值、老赖触发率。改 `creditLimit` / 利息 / 月供后必跑 |
 | `prototype.html` | 可玩原型，单文件自包含。**由 `cards.json` 生成，不要手改** |
@@ -116,6 +118,9 @@
 - **拖动、动画等每帧变化的样式必须走 WXS** —— 不许在 `touchmove` 里 `setData`，会掉帧到不可用
 - **小程序类目绝不能选「游戏」** —— 该操作不可逆，选了就变成小游戏，只能重新注册账号
 - **手感相关参数（松手阈值、跟手系数、惯性衰减）不得在模拟器上定型** —— 模拟器的 touchmove 事件密度比真机低一个数量级，调出来的值必然偏移。必须在真机调试 2.0 上下调
+- **动效只做「确认」，不做「表演」** —— 规范唯一真源 `docs/design/motion-spec.md`（事件表/铁律/验收都在里面）：
+  只动 transform/opacity、全部有限次数、一次事件一个主载荷、震屏必须带 scale 防露边、
+  动效代码（`FX`）不读不改游戏状态、禁止用 `Math.random` 做抖动轨迹；`?fx=0` 必须能整站关掉且信息一个不少
 - **`app.json` 不配 `resizable`** —— 配了 PC 端会在大窗口自动双栏，一张全屏卡被拆成两栏，视觉直接崩
 - **广告只放自然停顿点**（日结算后 / 重开一局），绝不插在滑卡之间
 - **卡池唯一真源是 `data/cards.json`** —— 改卡面文案或数值一律改它，
