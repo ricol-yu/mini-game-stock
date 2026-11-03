@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375">
+<title>韭菜之王 · UI v2 定稿样张（C 版桌游风）</title>
+<style>
+/* =====================================================================
+   UI v2 · 桌游牌局风定稿样张
+   与 design/ui-v2-spec.md 逐条对应；375×812 基准，1px 设计值 → 2rpx 落地
+   ---------------------------------------------------------------------
+   Design Token（同 spec §1）
+   底色   #2a7452 → #17402f → #0c2b1e（绒布径向）
+   卡面   #fdf6e1（奶油）／次级 #f0e2be
+   描边   #241a0e 3px／细 2px
+   文字   #2b1f12 / #6b5a44 / #857356（三级）+ 绒布上 #fdf3d8
+   涨红   #e23c30（深一档 #c9302a 用于红底白字/奶油上的红字）
+   跌绿   #1e9e5a ／ 金 #f2b01e ／ 警示橙 #ff9426
+   字号   24/900 16/800 16/600 14/800 12.5/800 11/700 10/600 9/800
+   圆角   6 / 9 / 10 / 12 / 14 / 16
+   阴影   硬 0 7px 0 rgba(11,32,22,.45) ＋ 柔 0 16px 26px rgba(0,0,0,.26)
+   动效   120 / 280 / 420 / 550ms，ledg 920ms/笔，blink 1100ms，breathe 1600ms
+   ---------------------------------------------------------------------
+   小程序可行性：全文无 backdrop-filter / :has() / mask / SVG filter，
+   无大面积 blur。四条命液面用「外层定高 + overflow:hidden + 内层整图贴底」，
+   不用 clip-path（WXSS 兼容差）。
+   ===================================================================== */
+
+*{box-sizing:border-box}
+:root{
+  --felt-1:#2a7452; --felt-2:#17402f; --felt-3:#0c2b1e;
+  --card:#fdf6e1; --card-2:#f0e2be;
+  --edge:#241a0e; --ink:#2b1f12; --ink-2:#6b5a44; --ink-3:#857356;
+  --on-felt:#fdf3d8; --on-felt-2:rgba(253,243,216,.68);
+  --up:#e23c30; --up-deep:#c9302a; --down:#1e9e5a; --gold:#f2b01e; --warn:#ff9426;
+  --due-bg:#ffd9cf; --due-line:#c93a28; --due-ink:#8c1f12;
+  --felt-line:rgba(253,243,216,.5);
+  --felt-bg:radial-gradient(125% 70% at 50% 0%,var(--felt-1),var(--felt-2) 56%,var(--felt-3));
+  --num:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+body{margin:0;background:#e4e7ea;color:#2b3440;font-family:var(--num);
+  background-image:radial-gradient(rgba(60,70,85,.06) 1px,transparent 1.2px);background-size:20px 20px}
+.page{max-width:900px;margin:0 auto;padding:34px 20px 60px}
+.doc{max-width:620px;margin:0 auto 30px;text-align:center}
+.doc .k{font:800 10px/1 ui-monospace,Menlo,monospace;letter-spacing:4px;color:#7d8794;margin-bottom:10px}
+.doc h1{font-size:22px;letter-spacing:2px;margin:0 0 10px;color:#232c37}
+.doc p{font-size:12.5px;line-height:1.95;color:#6b7684;margin:0}
+.sheet{width:375px;margin:0 auto}
+.blk{margin:0 0 28px}
+.blk-h{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin:0 0 8px}
+.blk-h b{font:800 10px/1 ui-monospace,Menlo,monospace;background:#2b3440;color:#fff;
+  border-radius:5px;padding:4px 6px;letter-spacing:.5px}
+.blk-h span{font-size:12.5px;font-weight:800;color:#2b3440;letter-spacing:.5px}
+.blk-h em{flex:0 0 100%;font-style:normal;font-size:10.5px;line-height:1.7;color:#8a94a3;margin-top:2px}
+.panel{position:relative;background:var(--felt-bg);border-radius:18px;padding:14px;
+  box-shadow:0 6px 0 rgba(11,32,22,.35),0 16px 26px rgba(0,0,0,.18);overflow:hidden}
+
+/* ============================ 设备框（整屏） ============================ */
+.device{position:relative;width:375px;height:812px;border-radius:26px;overflow:hidden;
+  display:flex;flex-direction:column;background:var(--felt-bg);
+  box-shadow:0 10px 0 rgba(11,32,22,.28),0 30px 50px rgba(11,32,22,.30)}
+.device.sm{box-shadow:0 8px 0 rgba(11,32,22,.28),0 22px 36px rgba(11,32,22,.24)}
+
+/* ---- 导航：状态栏 44（空）+ 标题行 40 ---- */
+.nav{flex:0 0 auto;padding-top:44px}
+.u2-nav-bar{height:40px;display:flex;align-items:center;justify-content:center;position:relative}
+.title{font:800 16px/1 var(--num);letter-spacing:5px;color:var(--on-felt)}
+.capsule{position:absolute;right:12px;top:5px;width:78px;height:30px;border-radius:15px;
+  border:1px solid var(--felt-line);background:rgba(0,0,0,.2);
+  display:flex;align-items:center;justify-content:center;gap:13px}
+.capsule i{width:4px;height:4px;border-radius:50%;background:var(--on-felt-2);
+  position:relative;display:block}
+.capsule i::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--on-felt-2);
+  border-radius:50%;top:-2.5px;left:-2.5px}
+.capsule .dot{width:14px;height:14px;border:1px solid var(--on-felt-2);border-radius:50%}
+
+/* ---- HUD 四条命：王权式液面填充（三层：灰槽 / 彩色液面 / 亮描边） ---- */
+.hud{flex:0 0 auto;padding:2px 12px 0}
+.vit{display:flex;justify-content:space-around;align-items:center;height:46px}
+.vit-i{position:relative;width:34px;height:32px;display:block}
+.u2-vit-slot,.u2-vit-out{position:absolute;left:0;top:0;width:34px;height:32px}
+.u2-vit-fill{position:absolute;left:0;right:0;bottom:0;height:50%;overflow:hidden;
+  transition:height .55s cubic-bezier(.3,.8,.35,1)}
+.u2-vit-ico{position:absolute;left:0;bottom:0;width:34px;height:32px}
+.vit-i svg{display:block;width:100%;height:100%}
+.vit-i.warn{animation:blink 1.1s ease-in-out infinite}
+@keyframes blink{50%{opacity:.38}}
+.u2-vdlt{position:absolute;top:-17px;left:50%;transform:translateX(-50%);
+  font:800 12px/1 var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.u2-vdlt.up{color:#4fbf82}   /* 涨＝绿只用于「属性回升」的飘字，行情涨跌仍红涨绿跌 */
+.u2-vdlt.dn{color:#ff6b5e}
+
+/* ---- 状态胶囊 ---- */
+.strip{flex:0 0 auto;padding:4px 16px 0;display:flex;gap:5px;flex-wrap:wrap}
+.chip{height:22px;display:inline-flex;align-items:center;gap:3px;border-radius:12px;padding:0 9px;
+  font:700 11px/1 var(--num);background:#fdf3d8;border:1.5px solid rgba(43,31,18,.28);color:var(--ink-2)}
+.chip b{font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.chip.hot{background:#ffe9bf;border-color:#e0a53a;color:#8a5a12}
+.chip.hot b{color:#8a5a12}
+.chip.due{background:var(--due-bg);border:2px solid var(--due-line);color:var(--due-ink);padding:0 8px}
+.chip.due b{color:var(--due-ink)}
+.u2-chip-ll{background:var(--up-deep);color:#fff;font:800 9px/1 var(--num);border-radius:8px;padding:3px 5px}
+
+/* ---- 行情区 ---- */
+.mkt{position:relative;flex:0 0 auto;margin:8px 16px 6px;background:var(--card);
+  border:3px solid var(--edge);border-radius:14px;padding:9px 12px 8px;
+  box-shadow:0 4px 0 rgba(11,32,22,.40),0 12px 18px rgba(0,0,0,.22)}
+.mkt .t{display:flex;align-items:baseline;justify-content:space-between}
+.net{position:relative;font:900 24px/1.1 var(--num);letter-spacing:.3px;
+  font-variant-numeric:tabular-nums;color:var(--ink)}
+.u2-net-delta{position:absolute;left:100%;top:3px;margin-left:8px;font:800 12.5px/1.2 var(--num);
+  font-variant-numeric:tabular-nums;white-space:nowrap;animation:floaty 2.6s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.pnl{font:800 12.5px/1 var(--num);font-variant-numeric:tabular-nums}
+.up{color:var(--up)} .down{color:var(--down)}
+
+.mbar{height:7px;margin-top:8px;border-radius:4px;background:var(--card-2);
+  border:1.5px solid rgba(43,31,18,.35);overflow:hidden;display:flex}
+.mbar i{height:100%;flex:0 0 auto}
+.b-cash{background:linear-gradient(90deg,#ffc63f,#f2a51e)}
+.b-eq{background:linear-gradient(90deg,#ff6b5e,#e23c30)}
+.b-debt{margin-left:auto;
+  background:repeating-linear-gradient(-45deg,#c9302a 0 3px,#ffb3ab 3px 6px)}
+.u2-debt-breathe{animation:breathe 1.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.95}50%{opacity:.4}}
+
+/* 今日账目轮播：独立 16px 行，位在资金条与分时图之间，不压任何数字 */
+.ledg{position:relative;height:16px;margin-top:5px;overflow:hidden}
+.ledg .itm{position:absolute;left:0;right:0;top:0;height:16px;text-align:center;
+  font:700 10.5px/16px var(--num);color:var(--ink-2);opacity:0;animation:ledgPop 9s linear infinite}
+.ledg .itm:nth-child(2){animation-delay:3s}
+.ledg .itm:nth-child(3){animation-delay:6s}
+.ledg .itm b{font-weight:800;font-variant-numeric:tabular-nums}
+.ledg .itm b.up{color:var(--up)} .ledg .itm b.dn{color:var(--down)}
+.ledg .itm b.tf{color:var(--ink-3)}
+@keyframes ledgPop{
+  0%{opacity:0;transform:translateY(7px) scale(.92)}
+  2%{opacity:1;transform:translateY(0) scale(1)}
+  28%{opacity:1;transform:translateY(-4px) scale(1)}
+  32%{opacity:0;transform:translateY(-15px) scale(.98)}
+  100%{opacity:0;transform:translateY(-15px) scale(.98)}}
+
+.tape{position:relative;height:48px;margin-top:4px;border:2px solid var(--edge);
+  border-radius:9px;background:#fff9e8;overflow:hidden}
+.tape svg{display:block;width:100%;height:100%}
+.tape .mid{stroke:#c9b98c;stroke-width:1;stroke-dasharray:4 4}
+.tape .fill{fill:rgba(226,60,48,.13)}
+.tape .ln{fill:none;stroke:var(--up);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.u2-tape-lab{position:absolute;top:3px;right:4px;font:800 9px/1.7 var(--num);padding:0 5px;
+  border-radius:6px;background:var(--up-deep);color:#fff;letter-spacing:.2px;
+  font-variant-numeric:tabular-nums}
+/* 跌日：分时线、填充、角标一并转绿（涨红跌绿，不许只有数字变色） */
+.mkt.u2-dn .tape .ln{stroke:var(--down)}
+.mkt.u2-dn .tape .fill{fill:rgba(30,158,90,.13)}
+.mkt.u2-dn .u2-tape-lab{background:var(--down)}
+.mkt .d{margin-top:5px;font:600 10px/1.6 var(--num);color:var(--ink-3);
+  display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+.mkt .d b{color:var(--ink-2);font-weight:800}
+
+/* ---- 卡牌舞台 ---- */
+/* 舞台左右 16（与 ui-adaptation §2.3 内容 inset ≥16 一致）：
+   375 宽 → 卡宽 343、卡内宽 309（对账 ux 实测基准，不是旧文档的 274） */
+.stage{position:relative;flex:1 1 auto;margin:0 16px 12px;min-height:0}
+.card{position:absolute;left:0;right:0;top:4px;bottom:16px;border-radius:16px;
+  border:3px solid var(--edge);background:var(--card);padding:12px 14px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 7px 0 rgba(11,32,22,.45),0 16px 26px rgba(0,0,0,.26)}
+.card.back,.card.back2{box-shadow:none;transform-origin:50% 0;bottom:0;
+  background-color:var(--card-2);
+  background-image:repeating-linear-gradient(-45deg,#e2d3a8 0 10px,transparent 10px 20px)}
+.card.back2{z-index:0;transform:scale(.93) translateY(32px);opacity:.8;
+  border-width:2px;border-color:rgba(36,26,14,.55)}
+.card.back{z-index:1;transform:scale(.965) translateY(12px);opacity:.95}
+.card.main{z-index:2}
+
+/* 人物 + 场景图区：场景层 / 调色层 / 地面影 / 人物层 / 印章 */
+.art{position:relative;flex:1 1 auto;min-height:0;margin:0 0 10px;border-radius:9px;
+  overflow:hidden;box-shadow:inset 0 0 0 2px rgba(43,31,18,.18);background:#f3e8c9}
+.u2-art-scene{position:absolute;left:0;top:0;width:100%;height:100%}
+.u2-art-shade{position:absolute;left:0;top:0;width:100%;height:100%;
+  background:linear-gradient(180deg,rgba(30,18,6,.04) 0%,rgba(30,18,6,.06) 40%,rgba(30,18,6,.42) 100%),
+             radial-gradient(70% 50% at 50% 18%,rgba(255,255,255,.22),transparent 70%)}
+.u2-art-ground{position:absolute;left:50%;bottom:4px;margin-left:-70px;width:140px;height:16px;
+  border-radius:50%;background:radial-gradient(closest-side,rgba(90,40,10,.35),transparent)}
+.u2-art-person{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
+  font-size:114px;line-height:1;letter-spacing:0}
+.u2-art-person.sm{font-size:106px}
+.u2-art-deco{position:absolute;top:8px;font-size:24px;line-height:1}
+.u2-art-deco.d1{left:12px} .u2-art-deco.d2{right:12px}
+.txt{flex:0 0 auto;font:600 16px/1.72 var(--num);letter-spacing:.3px;color:var(--ink)}
+.fn{margin-top:8px;text-align:center;font:600 10px/1.6 var(--num);letter-spacing:.14em;color:var(--ink-3)}
+
+.stamp{position:absolute;top:47%;z-index:5;padding:7px 14px;border-radius:10px;
+  font:900 15px/1 var(--num);letter-spacing:.5px;background:rgba(253,246,225,.95);
+  border:3px solid;box-shadow:0 3px 0 rgba(0,0,0,.22);max-width:190px;opacity:.88;
+  white-space:nowrap}
+.stamp.L{left:14px;color:var(--down);border-color:var(--down);transform:rotate(-10deg)}
+.stamp.R{right:14px;color:var(--up);border-color:var(--up);transform:rotate(10deg)}
+
+/* ---- toast / 按钮 ---- */
+.toast{display:inline-flex;align-items:center;background:#2b1f12;color:var(--on-felt);
+  border:2px solid rgba(253,243,216,.22);border-radius:14px;padding:8px 14px;
+  font:700 11px/1.6 var(--num);box-shadow:0 4px 0 rgba(0,0,0,.28);max-width:300px}
+.u2-btn{height:46px;padding:0 26px;border-radius:12px;border:2px solid var(--edge);
+  background:var(--edge);color:var(--on-felt);font:800 14px/1 var(--num);
+  box-shadow:0 4px 0 rgba(0,0,0,.35);display:inline-flex;align-items:center;
+  justify-content:center;cursor:pointer;letter-spacing:1px}
+.u2-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.u2-btn-2{background:transparent;color:var(--on-felt);border-color:rgba(253,243,216,.6);
+  box-shadow:none}
+.u2-btn-2:active{transform:translateY(2px)}
+
+/* ---- 开局页 / 结局页 ---- */
+.u2-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 20px}
+.u2-over-card{width:300px;background:var(--card);border:3px solid var(--edge);border-radius:16px;
+  padding:22px 20px 20px;box-shadow:0 7px 0 rgba(11,32,22,.45),0 18px 26px rgba(0,0,0,.3);
+  text-align:center}
+.u2-kicker{font:700 10.5px/1.9 var(--num);color:var(--ink-2);letter-spacing:.5px;margin-bottom:10px}
+.u2-over-card h2{margin:0;font:900 26px/1.2 var(--num);letter-spacing:4px;color:var(--ink)}
+.u2-hair{width:40px;height:3px;background:rgba(43,31,18,.22);margin:12px auto 14px;border-radius:2px}
+.u2-intro .vit{justify-content:center;gap:16px;height:auto;margin-bottom:6px}
+.u2-intro-hint{font:700 11px/1.8 var(--num);color:var(--ink-2);letter-spacing:.5px;margin:0 0 16px}
+.u2-endcard{width:345px;max-height:700px;background:var(--card);border:3px solid var(--edge);
+  border-radius:16px;padding:20px 18px;box-shadow:0 7px 0 rgba(11,32,22,.45),0 18px 26px rgba(0,0,0,.3);
+  text-align:center;display:flex;flex-direction:column;align-items:center}
+.u2-end-ico{font-size:40px;line-height:1;margin-bottom:6px}
+.u2-endcard h2{margin:0 0 4px;font:900 20px/1.3 var(--num);letter-spacing:3px;color:var(--ink)}
+.u2-end-sub{font:700 10.5px/1.7 var(--num);color:var(--ink-3);letter-spacing:.5px;margin-bottom:12px}
+.u2-quote{font:600 13px/1.95 var(--num);color:var(--ink);margin:0 0 12px;letter-spacing:.3px}
+.u2-why{font:600 10px/1.9 var(--num);color:var(--ink-2);text-align:left;background:rgba(43,31,18,.06);
+  border-radius:10px;padding:9px 11px;margin:0 0 12px;width:100%}
+.u2-life{width:100%;border-top:2px solid rgba(43,31,18,.16);border-bottom:2px solid rgba(43,31,18,.16);
+  padding:10px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-bottom:16px}
+.u2-life div{text-align:left;font:600 10px/1.6 var(--num);color:var(--ink-3)}
+.u2-life div b{display:block;font:800 13.5px/1.4 var(--num);color:var(--ink);
+  font-variant-numeric:tabular-nums;margin-top:1px}
+
+/* ---- 样张页专用小件 ---- */
+.u2-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.u2-demo-note{font:600 10px/1.7 var(--num);color:var(--on-felt-2);margin-top:10px}
+.u2-cardstage{position:relative;height:428px}
+.u2-cardstage .card{top:2px;bottom:18px}
+/* 牌背贴舞台底（写在前面的 .card.back{bottom:0} 会被上面这条覆盖，这里补回来） */
+.u2-cardstage .card.back,.u2-cardstage .card.back2{bottom:0}
+.u2-nav-demo{padding-top:0}
+.u2-nav-demo .u2-status{height:44px;display:flex;align-items:center;justify-content:center;
+  font:700 10px/1 ui-monospace,Menlo,monospace;color:rgba(253,243,216,.55);
+  border:1px dashed rgba(253,243,216,.3);border-radius:8px;margin-bottom:6px;letter-spacing:1px}
+.u2-statebox{background:rgba(0,0,0,.16);border-radius:12px;padding:10px;margin-top:10px}
+.u2-statebox .lbl{font:700 10px/1.6 var(--num);color:var(--on-felt-2);letter-spacing:1px;margin-bottom:8px}
+.u2-foot{max-width:620px;margin:8px auto 0;text-align:center;font:600 10.5px/1.9 var(--num);
+  color:#8a94a3;letter-spacing:.4px}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="doc">
+    <div class="k">韭菜之王 · UI V2</div>
+    <h1>C 版 · 桌游牌局风 定稿样张</h1>
+    <p>375×812 基准 · 组件清单 · 与 <code>design/ui-v2-spec.md</code> 逐条对应<br>
+       灰色小字是组件名与规格要点，绿色面板是绒布底（游戏真实背景）。</p>
+  </div>
+
+  <div class="sheet">
+
+    <!-- ==================== 01 整屏 · 正常态 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>01</b><span>整屏 · 正常态</span>
+        <em>状态栏 44 + 导航 40 + HUD 46 + 胶囊 26 + 行情 ~150 + 卡牌舞台 剩余</em></div>
+      <div class="device">
+        <div class="nav">
+          <div class="u2-nav-bar"><span class="title">韭菜之王</span>
+            <span class="capsule"><i></i><span class="dot"></span></span></div>
+        </div>
+        <div class="hud"><div class="vit" data-hud='{"energy":0.85,"mind":0.55,"risk":0.78,"soc":0.7,"warn":["risk"]}'></div></div>
+        <div class="strip">
+          <div class="chip due">🏠 1 天后交钱 <b>¥6,900</b></div>
+        </div>
+        <div class="mkt" data-mkt='{"net":26153,"dlt":5670,"pnl":"+30.8%","cash":9060,"eq":17093,"debt":0,"day":4}'></div>
+        <div class="stage">
+          <div class="card back2"></div>
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art">
+              <span class="u2-art-scene" style="background:radial-gradient(60% 40% at 50% 12%,rgba(255,235,190,.85),transparent 70%),linear-gradient(180deg,#ffd98f,#ffb36b 45%,#e08a4e)"></span>
+              <span class="u2-art-deco d1">🏮</span><span class="u2-art-deco d2">🏮</span>
+              <span class="u2-art-shade"></span>
+              <span class="u2-art-ground"></span>
+              <span class="u2-art-person">🧓</span>
+            </div>
+            <div class="txt">楼下办寿宴，整栋楼都去了。</div>
+            <div class="stamp L">← 推掉</div>
+            <div class="stamp R">去凑份子 ¥800 →</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 02 导航 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>02</b><span>自定义导航 nav</span>
+        <em>状态栏 44 只留空；标题 16/800 字距 5px；右侧 78×30 胶囊位（真机由微信绘制）</em></div>
+      <div class="panel u2-nav-demo">
+        <div class="u2-status">状态栏占位 44（statusBarHeight）</div>
+        <div class="u2-nav-bar" style="height:44px"><span class="title">韭菜之王</span>
+          <span class="capsule" style="top:7px"><i></i><span class="dot"></span></span></div>
+        <div class="u2-demo-note">描边 1px rgba(253,243,216,.5) · 底色 rgba(0,0,0,.20) · 标题色 #fdf3d8（绒布上对比 9.3:1）</div>
+      </div>
+    </section>
+
+    <!-- ==================== 03 HUD ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>03</b><span>HUD 四条命（王权式液面）</span>
+        <em>图标即容器：外层定高 + overflow 裁切，液面高度 = 数值；亮描边 2.2px；预警时整图 1100ms 呼吸</em></div>
+      <div class="panel">
+        <div class="vit" data-hud='{"energy":0.85,"mind":0.55,"risk":0.42,"soc":0.7}'></div>
+        <div class="u2-demo-note">正常态：精力 85 · 心态 55 · 风险 42 · 社会 70</div>
+        <div class="u2-statebox">
+          <div class="lbl">风险预警态（risk 78 &gt; 68）＋ 属性飘字（−12 / +8）</div>
+          <div class="vit" data-hud='{"energy":0.85,"mind":0.55,"risk":0.78,"soc":0.7,"warn":["risk"],"deltas":{"mind":"−12","energy":"+8"}}'></div>
+        </div>
+        <div class="u2-demo-note">填充色 精力 #ffcf3f / 心态 #ff5d52 / 风险 #ff9426 / 社会 #58b6ff；槽底 rgba(0,0,0,.26)</div>
+      </div>
+    </section>
+
+    <!-- ==================== 04 状态胶囊 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>04</b><span>状态胶囊 chip</span>
+        <em>高 22 · 圆角 12 · 11px/700；四态：普通 / 热度 / 欠款 / 老赖（红标）</em></div>
+      <div class="panel">
+        <div class="strip" style="padding:0">
+          <div class="chip">📈 牛市第 3 天</div>
+          <div class="chip hot">🔥 涨停</div>
+          <div class="chip due">🏠 1 天后交钱 <b>¥6,900</b></div>
+        </div>
+        <div class="strip" style="padding:8px 0 0">
+          <div class="chip due">🏠 已逾期 2 天 <b>¥6,900</b> <span class="u2-chip-ll">老赖</span></div>
+          <div class="chip hot">⚠ 风险 78</div>
+        </div>
+        <div class="u2-demo-note">普通 #fdf3d8 / 热度 #ffe9bf / 欠款 #ffd9cf + 2px 描边 / 老赖标 #c9302a 白字 9px</div>
+      </div>
+    </section>
+
+    <!-- ==================== 05 行情区 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>05</b><span>行情区 mkt（含负债段）</span>
+        <em>3px 描边 · 净值 24/900 · 飘字绝对定位不推挤收益率 · 资金条三段 · 分时图 48 高</em></div>
+      <div class="panel">
+        <div style="margin:0" class="mkt" data-mkt='{"net":26153,"dlt":5670,"pnl":"+30.8%","cash":9060,"eq":17093,"debt":0,"day":4}'></div>
+        <div class="u2-statebox">
+          <div class="lbl">负债 80% 呼吸态（负债段斜纹 1600ms 呼吸）</div>
+          <div style="margin:0" class="mkt" data-mkt='{"net":8120,"dlt":-1420,"pnl":"-14.9%","cash":420,"eq":7700,"debt":8000,"day":37,"breathe":true}'></div>
+        </div>
+        <div class="u2-demo-note">账目轮播为独立 16px 行（三笔循环，920ms/笔），不压净值和资金条</div>
+      </div>
+    </section>
+
+    <!-- ==================== 06 有图卡 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>06</b><span>卡牌 · 有图（人物 + 场景）</span>
+        <em>3px 描边 + 硬投影；图位圆角 9 内衬线；场景层 → 调色层 → 地面影 → 人物层 → 印章；下缘露两层牌背</em></div>
+      <div class="panel">
+        <div class="u2-cardstage stage" style="margin:0">
+          <div class="card back2"></div>
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art">
+              <span class="u2-art-scene" style="background:radial-gradient(60% 40% at 50% 12%,rgba(255,235,190,.85),transparent 70%),linear-gradient(180deg,#ffd98f,#ffb36b 45%,#e08a4e)"></span>
+              <span class="u2-art-deco d1">🏮</span><span class="u2-art-deco d2">🏮</span>
+              <span class="u2-art-shade"></span>
+              <span class="u2-art-ground"></span>
+              <span class="u2-art-person">🧓</span>
+            </div>
+            <div class="txt">楼下办寿宴，整栋楼都去了。</div>
+            <div class="stamp L">← 推掉</div>
+            <div class="stamp R">去凑份子 ¥800 →</div>
+          </div>
+        </div>
+        <div class="u2-demo-note">实装：场景 WebP 铺满 cover，人物透明 WebP contain 底部对齐（占位 emoji 版式完全一致）</div>
+      </div>
+    </section>
+
+    <!-- ==================== 07 无图占位卡 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>07</b><span>卡牌 · 无图占位（emoji）</span>
+        <em>图框 / 圆角 / 内衬线 / 高度 / 下沿暗层全部不变，只把场景换成中性渐变、人物换成 106px emoji</em></div>
+      <div class="panel">
+        <div class="u2-cardstage stage" style="margin:0">
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art">
+              <span class="u2-art-scene" style="background:linear-gradient(180deg,#f3e8c9,#e0cfa6)"></span>
+              <span class="u2-art-shade" style="opacity:.55"></span>
+              <span class="u2-art-ground"></span>
+              <span class="u2-art-person sm">🧓</span>
+            </div>
+            <div class="txt">楼下办寿宴，整栋楼都去了。</div>
+            <div class="stamp L">← 推掉</div>
+            <div class="stamp R">去凑份子 ¥800 →</div>
+          </div>
+        </div>
+        <div class="u2-demo-note">素材未到 / 单图 404 都走这一态，占位不许塌版（与 06 逐像素对齐）</div>
+      </div>
+    </section>
+
+    <!-- ==================== 08 既定事实卡 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>08</b><span>卡牌 · 既定事实卡</span>
+        <em>没有印章、没有红绿提示——这不是选择题，是账单；正文下加一行 10px 字距 .14em 的说明</em></div>
+      <div class="panel">
+        <div class="u2-cardstage stage" style="margin:0;height:398px">
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art">
+              <span class="u2-art-scene" style="background:linear-gradient(180deg,#e8e0cc,#cfc4a8)"></span>
+              <span class="u2-art-shade" style="opacity:.5"></span>
+              <span class="u2-art-ground"></span>
+              <span class="u2-art-person sm">🧾</span>
+            </div>
+            <div class="txt">停牌第七天，管理费照扣。</div>
+            <div class="fn">不是选择题，是账单</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 09 toast / 按钮 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>09</b><span>toast 与按钮</span>
+        <em>toast：深咖底 + 2px 浅描边 + 硬投影，不透明（小程序不支持 backdrop-filter）</em></div>
+      <div class="panel">
+        <div class="u2-row"><span class="toast">这个月的账单已经扣过了</span></div>
+        <div class="u2-row" style="margin-top:14px">
+          <button class="u2-btn">开始</button>
+          <button class="u2-btn u2-btn-2">再看一遍</button>
+        </div>
+        <div class="u2-demo-note">主按钮 46 高 · 圆角 12 · 硬投影 0 4px 0；按下位移 3px，阴影收到 1px</div>
+      </div>
+    </section>
+
+    <!-- ==================== 10 欠款 / 老赖态 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>10</b><span>欠款 / 老赖态（组合）</span>
+        <em>欠款胶囊红态 + 老赖红标 + 负债段呼吸；同一时刻只允许一个无限动画在跑</em></div>
+      <div class="panel">
+        <div class="strip" style="padding:0">
+          <div class="chip due">🏠 已逾期 2 天 <b>¥6,900</b> <span class="u2-chip-ll">老赖</span></div>
+          <div class="chip">负债 <b>¥8,000</b> / 10,000</div>
+        </div>
+        <div style="margin:8px 0 0" class="mkt" data-mkt='{"net":8120,"dlt":-1420,"pnl":"-14.9%","cash":420,"eq":7700,"debt":8000,"day":37,"breathe":true}'></div>
+      </div>
+    </section>
+
+    <!-- ==================== 11 开局页 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>11</b><span>开局页</span>
+        <em>绒布即背景，中央一张 300 宽奶油卡；标题 26/900 字距 4；不做背景插画</em></div>
+      <div class="device sm">
+        <div class="u2-screen">
+          <div class="u2-over-card">
+            <div class="u2-kicker">一个关于炒股、生活和不赔上人生的故事</div>
+            <h2>韭菜之王</h2>
+            <div class="u2-hair"></div>
+            <div class="u2-intro">
+              <div class="vit" data-hud='{"energy":1,"mind":1,"risk":0,"soc":1}'></div>
+              <p class="u2-intro-hint">右滑＝照做 · 左滑＝推掉</p>
+            </div>
+            <button class="u2-btn" style="width:100%">开始</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 12 结局页 ==================== -->
+    <section class="blk">
+      <div class="blk-h"><b>12</b><span>结局页</span>
+        <em>奶油大卡 345 宽；数据 2×2 用上下 2px 线分隔；结局不用红绿表达好坏，只陈述</em></div>
+      <div class="device sm">
+        <div class="u2-screen">
+          <div class="u2-endcard">
+            <div class="u2-end-ico">📉</div>
+            <h2>穿仓</h2>
+            <div class="u2-end-sub">第 47 天 · 强制平仓</div>
+            <p class="u2-quote">那天下午你一直在刷行情，<br>手机烫得像刚出锅的。</p>
+            <p class="u2-why">风险 96 时券商按规则平掉了全部持仓。你前一天还在算补多少钱能把成本摊下来——账户里已经没有可补的钱了。</p>
+            <div class="u2-life">
+              <div>这一辈子<b>47 天</b></div><div>最后剩下<b>¥1,240</b></div>
+              <div>买卖次数<b>23 次</b></div><div>最大回落<b>−62%</b></div>
+            </div>
+            <button class="u2-btn" style="width:100%">再来一辈子</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="u2-foot">涨红跌绿（A股惯例）· ¥ 计价 · 正文对比度 ≥4.5:1 · 无 backdrop-filter / :has() / mask / SVG filter<br>
+    完整 token 表与组件逐条规格见 design/ui-v2-spec.md</div>
+</div>
+
+<script>
+/* ===================================================================
+   四条命 / 行情区 生成器（纯静态数据驱动，**不调 Math.random**）
+   前端落地时这套结构直接换成真实状态渲染：
+     HUD  : 每个 .u2-vit-fill 的 height = 数值%
+     mkt  : 净值 / 三段宽度 / 账目行都来自 S
+   =================================================================== */
+
+/* 图标几何沿用 prototype.html VITS，形状不改 */
+var U2_SHAPE = {
+  energy: 'M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z',
+  mind: 'M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z',
+  risk: 'M12 2.6 L21.8 20 H2.2 Z',
+  soc: 'M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z'
+};
+var U2_VIT = [
+  { k: 'energy', c: '#ffcf3f' },
+  { k: 'mind',   c: '#ff5d52' },
+  { k: 'risk',   c: '#ff9426' },
+  { k: 'soc',    c: '#58b6ff' }
+];
+
+function u2Icon(k, fill){
+  return '<svg viewBox="0 0 24 24"><path d="' + U2_SHAPE[k] + '" fill="' + fill + '"/></svg>';
+}
+function u2Outline(k){
+  var ex = k === 'risk'
+    ? '<path d="M12 8.4 v5.2" stroke="#241a0e" stroke-width="1.9" stroke-linecap="round" fill="none"/>'
+    + '<circle cx="12" cy="16.8" r="1.1" fill="#241a0e"/>'
+    : '';
+  return '<svg viewBox="0 0 24 24"><path d="' + U2_SHAPE[k] + '" fill="none" stroke="#f7ecc9"'
+    + ' stroke-width="2.2" stroke-linejoin="round"/>' + ex + '</svg>';
+}
+/* cfg: {energy:.85, mind:.55, risk:.78, soc:.7, warn:['risk'], deltas:{mind:'-12'}} */
+function u2Hud(cfg){
+  return U2_VIT.map(function(v){
+    var pct = Math.round((cfg[v.k] == null ? 1 : cfg[v.k]) * 100);
+    var isWarn = cfg.warn && cfg.warn.indexOf(v.k) > -1;
+    var d = cfg.deltas && cfg.deltas[v.k];
+    return '<span class="vit-i' + (isWarn ? ' warn' : '') + '">'
+      + '<span class="u2-vit-slot">' + u2Icon(v.k, 'rgba(0,0,0,.26)') + '</span>'
+      + '<span class="u2-vit-fill" style="height:' + pct + '%"><span class="u2-vit-ico">'
+      + u2Icon(v.k, v.c) + '</span></span>'
+      + '<span class="u2-vit-out">' + u2Outline(v.k) + '</span>'
+      + (d ? '<i class="u2-vdlt ' + (d.charAt(0) === '+' ? 'up' : 'dn') + '">' + d + '</i>' : '')
+      + '</span>';
+  }).join('');
+}
+
+/* 分时图几何：线右端压在高度 30% 附近，给右上角「今 +1.5%」角标留 ≥8px 间距 */
+var U2_TAPE = 'M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5'
+            + ' L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5'
+            + ' L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14';
+
+function u2Money(n){
+  return '¥' + Math.round(n).toLocaleString('en-US');
+}
+/* o: {net, dlt, pnl, cash, eq, debt, day, breathe} */
+function u2Mkt(o){
+  /* 三段共占一条：现金 + 持仓 + 负债 各按总和算占比（负债是右起斜纹段） */
+  var total = o.cash + o.eq + (o.debt || 0);
+  var cashW = (o.cash / total * 100).toFixed(1);
+  var eqW = (o.eq / total * 100).toFixed(1);
+  var debtW = o.debt ? (o.debt / total * 100).toFixed(1) : 0;
+  var dltCls = o.dlt >= 0 ? 'up' : 'down';
+  var pnlCls = o.pnl.charAt(0) === '-' ? 'down' : 'up';
+  var ledgItems = o.pnl.charAt(0) === '-'
+    ? ['今日账目 <b class="dn">−¥1,500</b> 水电物业',
+       '今日账目 <b class="dn">−¥142</b> 管理费',
+       '今日账目 <b class="tf">¥0</b> 无交易']
+    : ['今日账目 <b class="up">+¥5,670</b> 持仓浮动',
+       '今日账目 <b class="dn">−¥1,500</b> 水电物业',
+       '今日账目 <b class="tf">¥0</b> 无交易'];
+  var ledg = ledgItems.map(function(s){ return '<span class="itm">' + s + '</span>'; }).join('');
+
+  return ''
+    + '<div class="t"><span class="net">' + u2Money(o.net)
+    + '<i class="u2-net-delta ' + dltCls + '">' + (o.dlt >= 0 ? '▲ +' : '▼ −')
+    + u2Money(Math.abs(o.dlt)).replace('¥', '¥') + '</i></span>'
+    + '<span class="pnl ' + pnlCls + '">' + (pnlCls === 'up' ? '▲ ' : '▼ ') + o.pnl + '</span></div>'
+    + '<div class="mbar">'
+    +   '<i class="b-cash" style="width:' + cashW + '%"></i>'
+    +   '<i class="b-eq" style="width:' + eqW + '%"></i>'
+    +   (o.debt ? '<i class="b-debt' + (o.breathe ? ' u2-debt-breathe' : '') + '" style="width:' + debtW + '%"></i>' : '')
+    + '</div>'
+    + '<div class="ledg">' + ledg + '</div>'
+    + '<div class="tape">'
+    +   '<svg viewBox="0 0 347 46" preserveAspectRatio="none">'
+    +     '<line class="mid" x1="0" y1="33" x2="347" y2="33"/>'
+    +     '<path class="fill" d="' + U2_TAPE + ' L347 46 L0 46 Z"/>'
+    +     '<path class="ln" d="' + U2_TAPE + '"/>'
+    +   '</svg>'
+    +   '<span class="u2-tape-lab">今 ' + (o.pnl.charAt(0) === '-' ? '▼ 1.5%' : '▲ 1.5%') + '</span>'
+    + '</div>'
+    + '<div class="d"><span>第 <b>' + o.day + '</b> 天 · 现金 <b>' + u2Money(o.cash)
+    + '</b> · 持仓 <b>' + u2Money(o.eq) + '</b></span></div>';
+}
+
+document.querySelectorAll('[data-hud]').forEach(function(el){
+  el.innerHTML = u2Hud(JSON.parse(el.getAttribute('data-hud')));
+});
+document.querySelectorAll('[data-mkt]').forEach(function(el){
+  var o = JSON.parse(el.getAttribute('data-mkt'));
+  el.innerHTML = u2Mkt(o);
+  if(o.pnl.charAt(0) === '-') el.classList.add('u2-dn');   /* 跌日整条行情转绿 */
+});
+</script>
+</body>
+</html>

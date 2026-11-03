@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>韭菜之王 · 视觉方向探索 A/B/C</title>
+<style>
+/* =====================================================================
+   页面骨架（与皮肤无关）
+   ===================================================================== */
+*{box-sizing:border-box}
+body{margin:0;background:#e8eaee;color:#3a4450;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  /* 中性点阵底纹：三版深浅不一，用浅灰点阵衬底不抢戏 */
+  background-image:radial-gradient(rgba(60,70,85,.055) 1px,transparent 1.2px);
+  background-size:22px 22px}
+.page{max-width:1400px;margin:0 auto;padding:36px 24px 44px}
+.head{text-align:center;margin-bottom:6px}
+.head h1{font-size:21px;letter-spacing:3px;margin:0 0 10px;color:#2b3440}
+.head p{font-size:12.5px;color:#6b7684;line-height:2;margin:0;max-width:760px;margin-inline:auto}
+.row{display:flex;gap:40px;justify-content:center;align-items:flex-start;margin-top:28px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;align-items:center}
+.cap{font-size:13.5px;font-weight:800;letter-spacing:1.5px;margin-bottom:4px;color:#2b3440}
+.cap em{font-style:normal;font-size:11px;font-weight:700;color:#8a94a3;margin-right:2px}
+.cap small{display:block;font-weight:400;font-size:11px;color:#7a8494;margin-top:2px;letter-spacing:.4px}
+.foot{margin-top:36px;text-align:center;font-size:11.5px;color:#8a94a3;letter-spacing:.6px;line-height:2}
+
+/* 手机框：375×812 基准（与实机同尺寸，token 可直接换算） */
+.phone{width:375px;height:812px;border-radius:34px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;flex:0 0 auto;
+  box-shadow:0 26px 60px rgba(22,28,38,.30),0 4px 14px rgba(22,28,38,.16)}
+
+/* ---- 共享布局：导航 ---- */
+.nav{height:58px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;
+  position:relative;padding-bottom:10px}
+.nav .title{font-size:16px;font-weight:700;letter-spacing:4px;color:var(--ink)}
+.capsule{position:absolute;right:14px;top:15px;width:80px;height:30px;border-radius:15px;
+  border:1px solid var(--cap-line);background:var(--cap-bg);
+  display:flex;align-items:center;justify-content:center;gap:14px}
+.capsule i{width:4px;height:4px;border-radius:50%;background:var(--ink-3);display:block;position:relative}
+.capsule i::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--ink-3);
+  border-radius:50%;top:-2.5px;left:-2.5px}
+.capsule .dot{width:14px;height:14px;border:1px solid var(--ink-3);border-radius:50%}
+
+/* ---- 共享布局：HUD 四条命（王权式：图标即容器，矩形从底往上填） ---- */
+.hud{flex:0 0 auto;padding:0 10px}
+.vit{display:flex;justify-content:space-around;align-items:flex-end;padding:2px 6px 6px}
+.vit-i{width:44px;height:40px;display:flex;align-items:center;justify-content:center}
+.vit-i svg{display:block;overflow:visible}
+.vit-i .slot{fill:var(--vit-slot)}
+.vit-i .ol{fill:none;stroke:var(--vit-line);stroke-width:1.7;stroke-linejoin:round}
+.vit-i .ex{fill:none;stroke:var(--vit-ex);stroke-width:2;stroke-linecap:round}
+.vit-i .exc{fill:var(--vit-ex)}
+.vit-i.warn{animation:bl 1.1s infinite}
+@keyframes bl{50%{opacity:.38}}
+/* 四条命的填充液面：数值→translateY（24 × (1-数值)），静态稿直接写死 */
+.fe{fill:var(--c-energy)} .fm{fill:var(--c-mind)} .fr{fill:var(--c-risk)} .fs{fill:var(--c-soc)}
+
+/* ---- 共享布局：状态胶囊行 ---- */
+.strip{flex:0 0 auto;padding:3px 16px 0;display:flex;gap:5px}
+.chip{font-size:10.5px;border-radius:12px;padding:3px 9px;display:flex;align-items:center;gap:3px;
+  line-height:1.5;border:1px solid var(--chip-line);background:var(--chip-bg);color:var(--chip-c)}
+.chip b{font-weight:800;font-variant-numeric:tabular-nums}
+.chip.due{background:var(--due-bg);border-color:var(--due-line);color:var(--due-c)}
+.chip.due b{color:var(--due-c)}
+
+/* ---- 共享布局：行情区 ---- */
+.mkt{position:relative;margin:7px 16px 6px;border:1px solid var(--line);border-radius:var(--r-panel);
+  background:var(--panel);padding:8px 12px 7px;flex:0 0 auto}
+.mkt .t{display:flex;align-items:baseline;justify-content:space-between}
+.net{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);
+  position:relative;display:inline-block;letter-spacing:.3px}
+.dlt{position:absolute;left:100%;top:2px;margin-left:8px;font-style:normal;font-size:12.5px;
+  font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--up);
+  animation:floaty 2.6s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.pnl{font-size:12.5px;font-weight:800;color:var(--up);font-variant-numeric:tabular-nums}
+.mbar{height:7px;border-radius:4px;background:var(--bar-bg);overflow:hidden;margin-top:7px;display:flex}
+.mbar .b-cash{width:34.7%;background:var(--cash-g)}
+.mbar .b-eq{width:65.3%;background:var(--eq-g)}
+.mkt .d{margin-top:6px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;
+  font-variant-numeric:tabular-nums}
+.mkt .d b{color:var(--ink-2);font-weight:700}
+
+/* 分时图（同一份几何，三版只换色） */
+.tape{position:relative;height:48px;margin-top:7px;border-radius:var(--r-tape);overflow:hidden;
+  background:var(--tape-bg);border:1px solid var(--tape-line)}
+.tape svg{display:block;width:100%;height:100%}
+.tape .mid{stroke:var(--tape-mid);stroke-width:1;stroke-dasharray:4 4}
+.tape .area{fill:var(--tape-fill)}
+.tape .ln{fill:none;stroke:var(--up);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.tape .lab{position:absolute;top:3px;right:4px;font-size:9px;line-height:1.6;padding:0 5px;
+  border-radius:5px;font-variant-numeric:tabular-nums;letter-spacing:.2px;
+  background:var(--lab-bg);color:var(--lab-c);font-weight:700}
+
+/* ---- 共享布局：卡牌舞台（露出下一张牌背） ---- */
+.stage{flex:1;position:relative;margin:0 15px 10px;min-height:0}
+.card{position:absolute;left:0;right:0;top:4px;bottom:16px;border-radius:var(--r-card);
+  border:var(--card-bd);background:var(--card-bg);box-shadow:var(--card-sh);
+  padding:12px 14px 12px;display:flex;flex-direction:column;overflow:hidden}
+/* 牌背从主卡下缘露出一条（origin 顶部对齐：缩放不抬底边，peek 高度可控） */
+.card.back{bottom:0;transform-origin:50% 0;transform:scale(.965) translateY(14px);opacity:var(--back-op);z-index:0;
+  background:var(--back-bg);border-color:var(--back-bd);
+  background-image:var(--back-tex);box-shadow:none}
+.card.main{z-index:1}
+/* 人物+场景图位：圆角内嵌一块「素材位」，object-fit:cover 的裁切感——
+   实装时这里放 assets/char/xxx.webp（560×640 竖版），emoji 只是占位示意 */
+.card .art{flex:1 1 auto;min-height:0;margin:0 0 10px;position:relative;overflow:hidden;
+  border-radius:var(--r-art);background:var(--art-bg);box-shadow:var(--art-inset);
+  display:flex;align-items:flex-end;justify-content:center}
+.card .art .ph{font-size:108px;line-height:1;display:block;transform:translateY(10px);
+  filter:var(--art-filter)}
+.card .art .deco{position:absolute;font-size:26px;line-height:1;opacity:.95}
+.card .art .deco.d1{top:10px;left:14px}
+.card .art .deco.d2{top:10px;right:14px}
+.card .art .ground{position:absolute;bottom:6px;left:50%;margin-left:-70px;width:140px;height:16px;
+  border-radius:50%;background:var(--ground)}
+.card .txt{flex:0 0 auto;font-size:16px;line-height:1.7;color:var(--ink);letter-spacing:.3px;
+  font-weight:var(--txt-w,400)}
+/* 选项印章：平时拖动才浮现，方向稿直接摆出来示意（王权式，压在图区上） */
+.stamp{position:absolute;top:47%;z-index:5;padding:6px 13px;border-radius:var(--r-stamp);
+  font-size:14.5px;font-weight:800;letter-spacing:.5px;border:var(--stamp-bd);
+  color:var(--stamp-c-l);background:var(--stamp-bg);box-shadow:var(--stamp-sh);
+  max-width:190px;opacity:.82;pointer-events:none;backdrop-filter:blur(2px)}
+.stamp.L{left:14px;color:var(--down);border-color:var(--down);transform:rotate(-10deg)}
+.stamp.R{right:14px;color:var(--up);border-color:var(--up);transform:rotate(10deg)}
+
+/* =====================================================================
+   A · 深色行情终端 —— 富途夜盘 × roguelike 卡牌，「夜里盯着人生这只票」
+   ---------------------------------------------------------------------
+   设计 token：
+   · 底色      #0d1420（近黑墨蓝）／面板 #141c2a
+   · 文字      #e8eef6 / 次级 #93a1b3 / 弱化 #5f7189
+   · 涨跌      涨 #ff5a5a（高饱和暗底红）／跌 #2bd47d（暗底绿）／现金金 #f0b350
+   · 字号阶梯  净值 22·800 ／ 正文 16·400 ／ 辅助 10~12.5
+   · 圆角      面板 12 ／ 卡牌 16 ／ 图位 10
+   · 阴影      卡 0 18px 44px rgba(0,0,0,.55)（深投影托浮起面板）
+   · 特征      数字微发光（text-shadow）／线性发光 HUD／图区压暗融入
+   ===================================================================== */
+.pa{--ink:#e8eef6;--ink-2:#93a1b3;--ink-3:#5f7189;--line:#263449;--up:#ff5a5a;--down:#2bd47d;
+  --cap-line:#2a3850;--cap-bg:rgba(255,255,255,.045);
+  --vit-slot:#182230;--vit-line:#8fa6c4;--vit-ex:#0d1420;
+  --c-energy:#ffd166;--c-mind:#ff6b6e;--c-risk:#ffa02e;--c-soc:#57a8ff;
+  --chip-bg:rgba(255,255,255,.04);--chip-line:#263449;--chip-c:#93a1b3;
+  --due-bg:rgba(255,90,90,.13);--due-line:rgba(255,90,90,.55);--due-c:#ff8a8a;
+  --panel:#141c2a;--r-panel:12px;--r-tape:8px;
+  --bar-bg:#1d2736;--cash-g:linear-gradient(90deg,#f7c666,#e09b2d);
+  --eq-g:linear-gradient(90deg,#ff7a7a,#ff4444);
+  --tape-bg:#101826;--tape-line:#202c40;--tape-mid:rgba(255,255,255,.14);
+  --tape-fill:rgba(255,90,90,.10);--lab-bg:rgba(255,90,90,.16);--lab-c:#ff8585;
+  --r-card:16px;--card-bd:1px solid #2b3a52;--card-sh:0 18px 44px rgba(0,0,0,.55);
+  --card-bg:linear-gradient(180deg,#18212f,#121926);
+  --back-op:.95;--back-bg:#1a2434;--back-bd:#33435e;
+  --back-tex:repeating-linear-gradient(-45deg,rgba(255,255,255,.03) 0 8px,transparent 8px 16px);
+  --r-art:10px;--art-inset:inset 0 0 0 1px rgba(255,255,255,.06);
+  --art-filter:brightness(.92) saturate(.85);
+  --ground:radial-gradient(closest-side,rgba(0,0,0,.5),transparent);
+  --r-stamp:9px;--stamp-bd:2.5px solid;--stamp-bg:rgba(13,20,32,.86);
+  --stamp-sh:0 0 14px rgba(0,0,0,.5);--txt-w:400;
+  background:radial-gradient(140% 70% at 50% -10%,#16202f,#0d1420 55%)}
+/* A 版特征：发光 */
+.pa .net{text-shadow:0 0 16px rgba(122,178,255,.30)}
+.pa .dlt{text-shadow:0 0 12px rgba(255,90,90,.5)}
+.pa .tape .ln{filter:drop-shadow(0 0 4px rgba(255,90,90,.55))}
+.pa .vit-i svg{filter:drop-shadow(0 0 5px rgba(90,140,220,.22))}
+.pa .art{background:
+  radial-gradient(60% 45% at 50% 82%,rgba(255,160,70,.16),transparent 70%),
+  radial-gradient(120% 90% at 50% 18%,#26334a,#141d2c 72%)}
+.pa .lab{background:rgba(20,28,42,.9);border:1px solid rgba(255,90,90,.45)}
+.pa .title{text-shadow:0 0 12px rgba(140,180,255,.35)}
+
+/* =====================================================================
+   B · 精致浅色纸感 —— 桌游说明书 × 杂志排版，「克制、体面、有点文学性」
+   ---------------------------------------------------------------------
+   设计 token：
+   · 底色      #f6f0e3（暖米白纸）／卡面 #fffdf6（比纸更亮的卡纸）
+   · 文字      墨色 #33291d / 次级 #8c7f6b / 弱化 #b3a68f
+   · 涨跌      涨 #bf3b2b（朱砂红）／跌 #3e7d5b（苔绿）／点缀 印泥红 #b5432e
+   · 字号阶梯  净值 22·800 ／ 正文 16·500 ／ 辅助 10~12.5
+   · 圆角      面板 10 ／ 卡牌 12 ／ 图位 9（偏小，克制）
+   · 阴影      极轻 0 10px 24px rgba(90,70,40,.14)——纸是有厚度的，但不浮夸
+   · 特征      细描边 + 纸纹颗粒／分时图做成「贴的行情剪报」／印章双线框
+   ===================================================================== */
+.pb{--ink:#33291d;--ink-2:#8c7f6b;--ink-3:#b3a68f;--line:#e3d9c4;--up:#bf3b2b;--down:#3e7d5b;
+  --cap-line:#d8ccb2;--cap-bg:#fbf7ec;
+  --vit-slot:#eee4cf;--vit-line:#6b5d49;--vit-ex:#33291d;
+  --c-energy:#dfa93a;--c-mind:#cf5f52;--c-risk:#d98e2b;--c-soc:#7d97ad;
+  --chip-bg:#f5eedd;--chip-line:#ddd2b8;--chip-c:#8c7f6b;
+  --due-bg:#f9e9e4;--due-line:#d9a79a;--due-c:#a8402c;
+  --panel:#fffdf6;--r-panel:10px;--r-tape:7px;
+  --bar-bg:#ece2cc;--cash-g:linear-gradient(90deg,#dcae50,#c2892c);
+  --eq-g:linear-gradient(90deg,#c0574a,#a8402c);
+  --tape-bg:#fffef9;--tape-line:#d8cbaf;--tape-mid:#c9bda3;
+  --tape-fill:rgba(191,59,43,.08);--lab-bg:#fdf3ee;--lab-c:#bf3b2b;
+  --r-card:12px;--card-bd:1px solid #d9cdb2;--card-sh:0 10px 24px rgba(90,70,40,.15);
+  --card-bg:#fffdf6;
+  --back-op:.85;--back-bg:#f7f1e2;--back-bd:#ddd2b8;
+  --back-tex:repeating-linear-gradient(-45deg,#efe6d0 0 8px,transparent 8px 16px);
+  --r-art:9px;--art-inset:inset 0 0 0 1px rgba(120,95,60,.18),inset 0 0 0 4px rgba(255,253,246,.9);
+  --art-filter:sepia(.26) saturate(.9) brightness(1.02);
+  --ground:radial-gradient(closest-side,rgba(120,90,50,.28),transparent);
+  --r-stamp:7px;--stamp-bd:2px solid;--stamp-bg:rgba(255,253,246,.94);
+  --stamp-sh:inset 0 0 0 2.5px rgba(255,253,246,1),inset 0 0 0 3.5px rgba(181,67,46,.55);
+  --txt-w:500;
+  background:#f6f0e3;
+  background-image:radial-gradient(rgba(120,95,60,.05) 1px,transparent 1.2px);
+  background-size:7px 7px}
+/* B 版特征：纸纹 + 剪报 */
+.pb .mkt,.pb .card{background-image:radial-gradient(rgba(120,95,60,.035) 1px,transparent 1.2px);
+  background-size:7px 7px}
+/* 行情剪报：细双框，像从报纸上剪下来贴进手账 */
+.pb .tape{box-shadow:inset 0 0 0 3px #fffdf6,inset 0 0 0 4px #e6dcc4}
+.pb .tape .ln{stroke-width:1.8}
+.pb .nav .title{border-bottom:2px solid #33291d;padding-bottom:3px;letter-spacing:6px}
+
+/* =====================================================================
+   C · 强游戏感桌游风 —— Reigns × Slay the Spire，「我在玩一局牌局人生」
+   ---------------------------------------------------------------------
+   设计 token：
+   · 底色      深绿赌桌绒布 #17402f→#256b4e 径向 ／ 卡面奶油 #fdf6e1
+   · 文字      深咖 #2b1f12 / 次级 #6b5a44
+   · 涨跌      涨 #e23c30 ／跌 #1e9e5a ／点缀 鎏金 #f2b01e
+   · 字号阶梯  净值 24·900 ／ 正文 16·600 ／ 辅助 10~12.5
+   · 圆角      面板 14 ／ 卡牌 16 ／ 印章 10
+   · 阴影      拟物双层：硬投影 0 7px 0 rgba(0,0,0,.22) + 柔影 0 16px 28px
+   · 特征      3px 粗描边 ／ 粗壮 HUD ／ 大数字 ／ 印章厚卡片质感
+   ===================================================================== */
+.pc{--ink:#2b1f12;--ink-2:#6b5a44;--ink-3:#9a8a6e;--line:#2b1f12;--up:#e23c30;--down:#1e9e5a;
+  --cap-line:rgba(253,243,216,.5);--cap-bg:rgba(0,0,0,.18);
+  --vit-slot:rgba(0,0,0,.28);--vit-line:#f7ecc9;--vit-ex:#2b1f12;
+  --c-energy:#ffcf3f;--c-mind:#ff5d52;--c-risk:#ff9426;--c-soc:#58b6ff;
+  --chip-bg:#fdf3d8;--chip-line:#2b1f12;--chip-c:#6b5a44;
+  --due-bg:#ffd9cf;--due-line:#c93a28;--due-c:#8c1f12;
+  --panel:#fdf6e1;--r-panel:14px;--r-tape:9px;
+  --bar-bg:#e8dcbd;--cash-g:linear-gradient(90deg,#ffc63f,#f2a51e);
+  --eq-g:linear-gradient(90deg,#ff6b5e,#e23c30);
+  --tape-bg:#fff9e8;--tape-line:#d9c99c;--tape-mid:#c9b98c;
+  --tape-fill:rgba(226,60,48,.13);--lab-bg:#e23c30;--lab-c:#fff;
+  --r-card:16px;--card-bd:3px solid #2b1f12;
+  --card-sh:0 7px 0 rgba(15,40,29,.42),0 18px 30px rgba(0,0,0,.35);
+  --card-bg:#fdf6e1;
+  --back-op:.95;--back-bg:#efe3c2;--back-bd:#2b1f12;
+  --back-tex:repeating-linear-gradient(-45deg,#e2d3a8 0 10px,transparent 10px 20px);
+  --r-art:10px;--art-inset:inset 0 0 0 2px rgba(43,31,18,.25);
+  --art-filter:none;
+  --ground:radial-gradient(closest-side,rgba(90,40,10,.35),transparent);
+  --r-stamp:10px;--stamp-bd:3px solid;--stamp-bg:rgba(253,246,225,.95);
+  --stamp-sh:0 3px 0 rgba(0,0,0,.2);--txt-w:600;
+  background:radial-gradient(130% 80% at 50% 0%,#27704f,#17402f 58%,#0e2f21)}
+.pc .card,.pc .mkt{border-width:3px}
+.pc .net{font-size:24px;font-weight:900}
+.pc .stamp{font-size:15px;padding:7px 14px}
+.pc .chip{border-width:2px;border-radius:14px;font-weight:700}
+.pc .vit-i .ol{stroke-width:2.4}
+.pc .tape{border-width:2px;border-color:#2b1f12}
+.pc .mbar{border:1.5px solid rgba(43,31,18,.35)}
+.pc .art{background:
+  radial-gradient(70% 50% at 50% 20%,rgba(255,255,255,.30),transparent 70%),
+  radial-gradient(rgba(190,60,30,.14) 2px,transparent 2.6px),
+  linear-gradient(180deg,#ffdf96,#ff9e58);
+  background-size:auto,26px 26px,auto}
+</style>
+</head>
+<body>
+<!-- 四条命 clipPath：三个手机共用同一组形状（与 prototype.html VITS 一致），只换配色 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="cp-e"><path d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/></clipPath>
+    <clipPath id="cp-m"><path d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/></clipPath>
+    <clipPath id="cp-r"><path d="M12 2.6 L21.8 20 H2.2 Z"/></clipPath>
+    <clipPath id="cp-s"><path d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/></clipPath>
+  </defs>
+</svg>
+
+<div class="page">
+  <div class="head">
+    <h1>《韭菜之王》· 视觉方向探索</h1>
+    <p>同一份游戏数据（第 4 天 · 交钱日前夜），三种皮肤方向，信息架构与 prototype.html 完全一致，只换视觉。
+       A · 深色行情终端——夜里盯着人生这只票；B · 纸感账本——克制、体面、有点文学性；
+       C · 桌游牌局——我在玩一局牌局人生。选定后该版设计 token 直接进 prototype.html。</p>
+  </div>
+
+  <div class="row">
+    <!-- ============ A · 深色行情终端 ============ -->
+    <div class="col">
+      <div class="cap"><em>A</em>深色行情终端<small>富途夜盘 × roguelike 卡牌 · 数字发光，暗色沉浸</small></div>
+      <div class="phone pa">
+        <div class="nav"><div class="title">韭菜之王</div>
+          <div class="capsule"><i></i><span class="dot"></span></div></div>
+        <div class="hud"><div class="vit">
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/>
+            <g clip-path="url(#cp-e)"><rect class="fe" width="24" height="24" style="transform:translateY(3.6px)"/></g>
+            <path class="ol" d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/></svg></span>
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/>
+            <g clip-path="url(#cp-m)"><rect class="fm" width="24" height="24" style="transform:translateY(10.8px)"/></g>
+            <path class="ol" d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/></svg></span>
+          <span class="vit-i warn"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M12 2.6 L21.8 20 H2.2 Z"/>
+            <g clip-path="url(#cp-r)"><rect class="fr" width="24" height="24" style="transform:translateY(5.3px)"/></g>
+            <path class="ol" d="M12 2.6 L21.8 20 H2.2 Z"/>
+            <path class="ex" d="M12 8.4 v5.2"/><circle class="exc" cx="12" cy="16.8" r="1.1"/></svg></span>
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/>
+            <g clip-path="url(#cp-s)"><rect class="fs" width="24" height="24" style="transform:translateY(7.2px)"/></g>
+            <path class="ol" d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/></svg></span>
+        </div></div>
+        <div class="strip"><div class="chip due">🏠 1 天后交钱 <b>¥6,900</b></div></div>
+        <div class="mkt">
+          <div class="t"><span class="net">¥26,153<i class="dlt">+¥5,670</i></span><span class="pnl">+30.8%</span></div>
+          <div class="mbar"><i class="b-cash"></i><i class="b-eq"></i></div>
+          <div class="tape">
+            <svg viewBox="0 0 347 46" preserveAspectRatio="none">
+              <line class="mid" x1="0" y1="33" x2="347" y2="33"/>
+              <path class="area" d="M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5 L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5 L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14 L347 46 L0 46 Z"/>
+              <path class="ln" d="M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5 L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5 L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14"/>
+            </svg>
+            <span class="lab">今 +1.5%</span>
+          </div>
+          <div class="d"><span>第 <b>4</b> 天 · 现金 <b>¥9,060</b> · 持仓 <b>¥17,093</b></span></div>
+        </div>
+        <div class="stage">
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art"><span class="deco d1">🏮</span><span class="deco d2">🏮</span>
+              <span class="ground"></span><span class="ph">🧓</span></div>
+            <div class="txt">楼下办寿宴，整栋楼都去了。</div>
+            <div class="stamp L">推掉</div>
+            <div class="stamp R">去凑份子 ¥800</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ B · 精致浅色纸感 ============ -->
+    <div class="col">
+      <div class="cap"><em>B</em>精致浅色纸感<small>桌游说明书 × 杂志排版 · 克制、体面、有点文学性</small></div>
+      <div class="phone pb">
+        <div class="nav"><div class="title">韭菜之王</div>
+          <div class="capsule"><i></i><span class="dot"></span></div></div>
+        <div class="hud"><div class="vit">
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/>
+            <g clip-path="url(#cp-e)"><rect class="fe" width="24" height="24" style="transform:translateY(3.6px)"/></g>
+            <path class="ol" d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/></svg></span>
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/>
+            <g clip-path="url(#cp-m)"><rect class="fm" width="24" height="24" style="transform:translateY(10.8px)"/></g>
+            <path class="ol" d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/></svg></span>
+          <span class="vit-i warn"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M12 2.6 L21.8 20 H2.2 Z"/>
+            <g clip-path="url(#cp-r)"><rect class="fr" width="24" height="24" style="transform:translateY(5.3px)"/></g>
+            <path class="ol" d="M12 2.6 L21.8 20 H2.2 Z"/>
+            <path class="ex" d="M12 8.4 v5.2"/><circle class="exc" cx="12" cy="16.8" r="1.1"/></svg></span>
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/>
+            <g clip-path="url(#cp-s)"><rect class="fs" width="24" height="24" style="transform:translateY(7.2px)"/></g>
+            <path class="ol" d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/></svg></span>
+        </div></div>
+        <div class="strip"><div class="chip due">🏠 1 天后交钱 <b>¥6,900</b></div></div>
+        <div class="mkt">
+          <div class="t"><span class="net">¥26,153<i class="dlt">+¥5,670</i></span><span class="pnl">+30.8%</span></div>
+          <div class="mbar"><i class="b-cash"></i><i class="b-eq"></i></div>
+          <div class="tape">
+            <svg viewBox="0 0 347 46" preserveAspectRatio="none">
+              <line class="mid" x1="0" y1="33" x2="347" y2="33"/>
+              <path class="area" d="M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5 L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5 L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14 L347 46 L0 46 Z"/>
+              <path class="ln" d="M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5 L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5 L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14"/>
+            </svg>
+            <span class="lab">今 +1.5%</span>
+          </div>
+          <div class="d"><span>第 <b>4</b> 天 · 现金 <b>¥9,060</b> · 持仓 <b>¥17,093</b></span></div>
+        </div>
+        <div class="stage">
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art"><span class="ground"></span><span class="ph">🧓</span></div>
+            <div class="txt">楼下办寿宴，整栋楼都去了。</div>
+            <div class="stamp L">推掉</div>
+            <div class="stamp R">去凑份子 ¥800</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ C · 强游戏感桌游风 ============ -->
+    <div class="col">
+      <div class="cap"><em>C</em>强游戏感桌游风<small>Reigns × Slay the Spire · 粗描边厚卡片，一局牌局人生</small></div>
+      <div class="phone pc">
+        <div class="nav"><div class="title">韭菜之王</div>
+          <div class="capsule"><i></i><span class="dot"></span></div></div>
+        <div class="hud"><div class="vit">
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/>
+            <g clip-path="url(#cp-e)"><rect class="fe" width="24" height="24" style="transform:translateY(3.6px)"/></g>
+            <path class="ol" d="M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z"/></svg></span>
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/>
+            <g clip-path="url(#cp-m)"><rect class="fm" width="24" height="24" style="transform:translateY(10.8px)"/></g>
+            <path class="ol" d="M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z"/></svg></span>
+          <span class="vit-i warn"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M12 2.6 L21.8 20 H2.2 Z"/>
+            <g clip-path="url(#cp-r)"><rect class="fr" width="24" height="24" style="transform:translateY(5.3px)"/></g>
+            <path class="ol" d="M12 2.6 L21.8 20 H2.2 Z"/>
+            <path class="ex" d="M12 8.4 v5.2"/><circle class="exc" cx="12" cy="16.8" r="1.1"/></svg></span>
+          <span class="vit-i"><svg viewBox="0 0 24 24" width="30" height="30">
+            <path class="slot" d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/>
+            <g clip-path="url(#cp-s)"><rect class="fs" width="24" height="24" style="transform:translateY(7.2px)"/></g>
+            <path class="ol" d="M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z"/></svg></span>
+        </div></div>
+        <div class="strip"><div class="chip due">🏠 1 天后交钱 <b>¥6,900</b></div></div>
+        <div class="mkt">
+          <div class="t"><span class="net">¥26,153<i class="dlt">+¥5,670</i></span><span class="pnl">+30.8%</span></div>
+          <div class="mbar"><i class="b-cash"></i><i class="b-eq"></i></div>
+          <div class="tape">
+            <svg viewBox="0 0 347 46" preserveAspectRatio="none">
+              <line class="mid" x1="0" y1="33" x2="347" y2="33"/>
+              <path class="area" d="M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5 L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5 L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14 L347 46 L0 46 Z"/>
+              <path class="ln" d="M0 37 L18 35 L32 37.5 L48 33.5 L62 30.5 L78 32.5 L92 28.5 L108 30 L122 25.5 L138 27.5 L152 22.5 L168 24.5 L182 19.5 L198 21.5 L212 16.5 L228 19 L242 14.5 L258 16.5 L272 11.5 L288 13.5 L302 13 L318 14.5 L334 12 L347 14"/>
+            </svg>
+            <span class="lab">今 +1.5%</span>
+          </div>
+          <div class="d"><span>第 <b>4</b> 天 · 现金 <b>¥9,060</b> · 持仓 <b>¥17,093</b></span></div>
+        </div>
+        <div class="stage">
+          <div class="card back"></div>
+          <div class="card main">
+            <div class="art"><span class="deco d1">🏮</span><span class="deco d2">🏮</span>
+              <span class="ground"></span><span class="ph">🧓</span></div>
+            <div class="txt">楼下办寿宴，整栋楼都去了。</div>
+            <div class="stamp L">推掉</div>
+            <div class="stamp R">去凑份子 ¥800</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">选定方向后：该版设计 token 与组件规范全量应用到 prototype.html，并同步迁移微信小程序。<br>
+    涨红跌绿（A股惯例）· ¥ 计价 · 人物图区为素材位示意（实装 560×640 WebP，圆角内嵌 cover 裁切）</div>
+</div>
+</body>
+</html>

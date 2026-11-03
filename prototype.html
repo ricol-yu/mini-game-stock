@@ -3,92 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>韭菜之王 · 可玩原型 v3</title>
+<title>韭菜之王 · 可玩原型 v4</title>
 <style>
+  /* =====================================================================
+     UI v2 · 桌游牌局风（C 版）
+     施工依据：design/ui-v2-spec.md（token §1 / 组件 §3 / 类名映射 §6）
+     适配依据：docs/design/ui-adaptation.md（降级阶梯 §1.5 / 无障碍 §4.3 / 必改 §6）
+     ---------------------------------------------------------------------
+     原则：① 手感克制——质感只靠「粗描边 + 双层硬投影 + 渐变 + 纹理」；
+           ② 文字永远赢——正文自然高度，图区吃剩余空间；
+           ③ 一屏三层——绒布（命）／奶油纸（账）／卡面（事）；
+           ④ 数字是主角——tabular-nums + 800/900。
+     小程序红线：无 backdrop-filter / :has() / mask / SVG filter / 大面积 blur；
+                 四条命用「外层定高 + overflow:hidden + 内层整图贴底」，不用 clip-path。
+     ===================================================================== */
   :root{
-    --bg:#f2f3f5; --panel:#fff; --ink:#1f2329; --ink-2:#646a73; --ink-3:#8f959e;
-    --line:#e5e6eb; --up:#e02020; --down:#0aa344; --gold:#d48806; --blue:#1a6dff;
-    --shadow:0 8px 28px rgba(31,35,41,.10), 0 2px 6px rgba(31,35,41,.06);
+    /* 绒布（三档径向：顶部 15% 亮 → 主色 → 压边） */
+    --u2-felt-1:#2a7452; --u2-felt-2:#17402f; --u2-felt-3:#0c2b1e;
+    --u2-felt-bg:radial-gradient(125% 70% at 50% 0%,var(--u2-felt-1),var(--u2-felt-2) 56%,var(--u2-felt-3));
+    /* 纸面 */
+    --u2-card:#fdf6e1; --u2-card-2:#f0e2be;
+    --u2-edge:#241a0e; --u2-ink:#2b1f12; --u2-ink-2:#6b5a44; --u2-ink-3:#857356;
+    --u2-on-felt:#fdf3d8; --u2-on-felt-2:rgba(253,243,216,.68);
+    /* 语义色：奶油底上的红字/红印章一律 up-deep（5.1:1），up 只给深底和图形 */
+    --u2-up:#e23c30; --u2-up-deep:#c9302a; --u2-down:#1e9e5a;
+    --u2-gold:#f2b01e; --u2-warn:#ff9426;
+    --u2-due-bg:#ffd9cf; --u2-due-line:#c93a28; --u2-due-ink:#8c1f12;
+    --u2-felt-line:rgba(253,243,216,.50); --u2-shadow-ink:rgba(11,32,22,.45);
+    /* 字号阶梯（固定 px，小程序同样不缩：375 与 414 都保住 10px 下限） */
+    --u2-fs-hero:24px; --u2-fs-title:16px; --u2-fs-body:16px; --u2-fs-btn:14px;
+    --u2-fs-num:12.5px; --u2-fs-cap:11px; --u2-fs-meta:10px; --u2-fs-tag:9px; --u2-fs-stamp:15px;
+    /* 圆角阶梯 */
+    --u2-r-tag:6px; --u2-r-art:9px; --u2-r-stamp:10px;
+    --u2-r-chip:12px; --u2-r-panel:14px; --u2-r-card:16px;
+    /* 阴影阶梯（硬投影 + 柔影必须成对） */
+    --u2-sh-hard:0 7px 0 rgba(11,32,22,.45);
+    --u2-sh-hard-sm:0 4px 0 rgba(11,32,22,.40);
+    --u2-sh-soft:0 16px 26px rgba(0,0,0,.26);
+    --u2-sh-stamp:0 3px 0 rgba(0,0,0,.22);
+    --u2-sh-inset:inset 0 0 0 2px rgba(43,31,18,.18);
+    /* 动效：只改 transform / opacity / width / height */
+    --u2-t-fast:120ms; --u2-t-base:280ms; --u2-t-slow:550ms;
+    --u2-e-out:cubic-bezier(.3,.8,.35,1); --u2-e-deal:cubic-bezier(.34,1.3,.4,1);
+    /* 布局变量：--nav-status 是状态栏占位（小程序落地时换成 statusBarHeight）；
+       --hud-bottom 由启动 JS 实测写回，toast 锚在它下面（不再写死 112px） */
+    --nav-status:44px;
+    --hud-bottom:132px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;}
-  .wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 12px 36px}
+  html,body{margin:0;padding:0;background:var(--u2-felt-bg);color:var(--u2-ink);
+    font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','HarmonyOS Sans SC','MiSans','Microsoft YaHei',sans-serif;
+    font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+
+  /* ---- 开发包装（只在桌面浏览器里存在；clean 模式全部不渲染） ---- */
+  .wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:20px 12px 32px;background:#e6e9ec}
   .head{text-align:center;margin-bottom:12px}
-  .head h1{font-size:19px;margin:0 0 6px;letter-spacing:1px}
-  .head p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+  .head h1{font-size:19px;margin:0 0 6px;letter-spacing:1px;color:#2b3440}
+  .head p{margin:0;font-size:12.5px;color:#6b7684;line-height:1.7}
+  .phone{width:344px;height:700px;background:var(--u2-felt-bg);border-radius:28px;position:relative;
+    overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 10px 0 rgba(11,32,22,.28),0 30px 50px rgba(11,32,22,.30)}
 
-  .phone{width:344px;height:700px;background:var(--panel);border-radius:30px;position:relative;
-    box-shadow:var(--shadow);overflow:hidden;border:1px solid #e9eaee;display:flex;flex-direction:column}
-
-  /* 干净模式（clean=1 或微信 webview 自动识别）：只留游戏本体，全屏铺满。
-     桌面上手机框外的标题/说明是给人看的开发包装，上小程序时不存在这些东西——
-     小程序页面就是 .phone 里的内容本身。 */
+  /* 干净模式（?clean=1 或微信 webview）：只留游戏本体。
+     绒布底铺满整屏，内容列 480 封顶居中（折叠屏/宽屏策略，ui-adaptation §1.2）。 */
   html.clean,body.clean{width:100%;height:100%;overflow:hidden}
-  html.clean .wrap{padding:0;justify-content:stretch}
+  html.clean .wrap{padding:0;justify-content:flex-start;background:transparent}
   html.clean .head{display:none}
-  html.clean .phone{width:100%;max-width:none;height:100vh;border:none;border-radius:0;
-    box-shadow:none}
+  html.clean .phone{width:100%;max-width:480px;height:100vh;height:100dvh;margin:0 auto;
+    border-radius:0;box-shadow:none}
   @media (max-width:420px){
-    html.clean .phone{width:100%;max-width:none}
+    .phone{width:100%;max-width:344px}
   }
-  .nav{height:66px;padding:22px 14px 0;display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 auto}
-  .nav .title{font-size:15.5px;font-weight:700;letter-spacing:3px}
-  .capsule{position:absolute;right:12px;top:26px;width:78px;height:29px;border-radius:15px;border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;gap:12px;background:#fbfbfc}
-  .capsule i{width:4px;height:4px;border-radius:50%;background:var(--ink-3);display:block;position:relative}
-  .capsule i::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--ink-3);border-radius:50%;top:-2.5px;left:-2.5px}
-  .capsule .dot{width:14px;height:14px;border:1px solid var(--ink-3);border-radius:50%}
 
-  .hud{padding:0 10px;flex:0 0 auto}
-  /* 四条命（2026-10-28 王权式）：图标即进度条——图标形状当裁剪框，矩形从底往上填，
-     填多少＝数值多少，满格实心、空了只剩轮廓。具体数值挪进悬停 tip，
-     HUD 从四行压成一行，省下的高度全给卡面人物位。 */
-  .vit{display:flex;justify-content:space-around;align-items:flex-end;padding:3px 4px 8px}
-  .vit-i{position:relative;width:44px;height:40px;display:flex;align-items:center;justify-content:center;cursor:default}
-  .vit-i svg{display:block;filter:drop-shadow(0 1px 1px rgba(31,35,41,.08))}
-  .vit-i.warn svg{animation:bl .9s infinite}
-  /* 液面升降：改的是 transform（几何属性 y/height 直接赋值不触发过渡），0.55s 缓出 */
-  .vit-i rect.fill{transition:transform .55s cubic-bezier(.3,.8,.35,1),fill .4s}
-  .vit-i.bump svg{animation:vitbump .42s ease-out}      /* 变化的那一下 Pulse（预警时让位给 blink） */
-  @keyframes vitbump{35%{transform:scale(1.25)}}
-  .vit-i .vdlt{position:absolute;top:-4px;left:50%;margin-left:-16px;width:32px;text-align:center;
-    font-size:11.5px;font-weight:800;opacity:0;pointer-events:none;
-    text-shadow:0 1px 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)}
-  .vit-i .vdlt.up{color:#12b76a}.vit-i .vdlt.dn{color:#f04438}
+  /* ---- 导航：状态栏占位(空) + 标题行 40；右侧 78×30 胶囊占位（真机由微信绘制） ---- */
+  .nav{flex:0 0 auto;padding-top:var(--nav-status)}
+  .u2-nav-bar{height:40px;display:flex;align-items:center;justify-content:center;position:relative}
+  .nav .title{font-size:var(--u2-fs-title);line-height:1.4;font-weight:800;letter-spacing:5px;
+    color:var(--u2-on-felt);text-indent:5px}
+  .capsule{position:absolute;right:12px;top:5px;width:78px;height:30px;border-radius:15px;
+    border:1px solid var(--u2-felt-line);background:rgba(0,0,0,.20);
+    display:flex;align-items:center;justify-content:center;gap:13px}
+  .capsule i{width:4px;height:4px;border-radius:50%;background:var(--u2-on-felt-2);display:block;position:relative}
+  .capsule i::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--u2-on-felt-2);
+    border-radius:50%;top:-2.5px;left:-2.5px}
+  .capsule .dot{width:14px;height:14px;border:1px solid var(--u2-on-felt-2);border-radius:50%}
+
+  /* ---- HUD 四条命（王权式液面，三层结构，WXML 可直接照抄） ----
+     外层定高 = 图标形状的裁剪框：.u2-vit-fill 的高度就是液面，
+     内层 .u2-vit-ico 是整张彩色图、贴底放置，overflow 自然裁出下半截。
+     改高度即改数值，天然带 550ms 过渡。 */
+  .hud{flex:0 0 auto;padding:2px 12px 0}
+  .vit{display:flex;justify-content:space-around;align-items:center;height:46px}
+  .vit-i{position:relative;width:34px;height:32px;display:block;cursor:pointer}
+  /* 44×44 触达热区（图标视觉不变，ui-adaptation §4.3） */
+  .vit-i::after{content:"";position:absolute;left:-5px;right:-5px;top:-6px;bottom:-6px}
+  .u2-vit-slot,.u2-vit-out{position:absolute;left:0;top:0;width:34px;height:32px;
+    background-repeat:no-repeat;background-position:50% 100%;background-size:32px 32px;pointer-events:none}
+  .u2-vit-fill{position:absolute;left:0;right:0;bottom:0;height:50%;overflow:hidden;
+    transition:height var(--u2-t-slow) var(--u2-e-out)}
+  .u2-vit-ico{position:absolute;left:0;bottom:0;width:34px;height:32px;
+    background-repeat:no-repeat;background-position:50% 100%;background-size:32px 32px}
+  /* 图标本体：4 形状 × 3 层（空槽 / 实心 / 亮描边），全部 base64 data-URI。
+     小程序落地：这 12 条 background-image 就是 12 个 wxss 类。 */
+  .vit-i.k-energy .u2-vit-slot{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEzIDIgTDUuNSAxMy41IEgxMC44IEw5LjYgMjIgTDE4LjUgOS41IEgxMi42IFoiIGZpbGw9InJnYmEoMCwwLDAsLjI2KSIvPjwvc3ZnPg==")}
+  .vit-i.k-energy .u2-vit-ico{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEzIDIgTDUuNSAxMy41IEgxMC44IEw5LjYgMjIgTDE4LjUgOS41IEgxMi42IFoiIGZpbGw9IiNmZmNmM2YiLz48L3N2Zz4=")}
+  .vit-i.k-energy .u2-vit-out{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEzIDIgTDUuNSAxMy41IEgxMC44IEw5LjYgMjIgTDE4LjUgOS41IEgxMi42IFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y3ZWNjOSIgc3Ryb2tlLXdpZHRoPSIyLjIiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=")}
+  .vit-i.k-mind .u2-vit-slot{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDIwLjggQzYuNCAxNS44IDMuNCAxMi4zIDMuNCA4LjkgQzMuNCA2IDUuNiAzLjkgOC4yIDMuOSBDOS45IDMuOSAxMS4zIDQuOSAxMiA2LjQgQzEyLjcgNC45IDE0LjEgMy45IDE1LjggMy45IEMxOC40IDMuOSAyMC42IDYgMjAuNiA4LjkgQzIwLjYgMTIuMyAxNy42IDE1LjggMTIgMjAuOCBaIiBmaWxsPSJyZ2JhKDAsMCwwLC4yNikiLz48L3N2Zz4=")}
+  .vit-i.k-mind .u2-vit-ico{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDIwLjggQzYuNCAxNS44IDMuNCAxMi4zIDMuNCA4LjkgQzMuNCA2IDUuNiAzLjkgOC4yIDMuOSBDOS45IDMuOSAxMS4zIDQuOSAxMiA2LjQgQzEyLjcgNC45IDE0LjEgMy45IDE1LjggMy45IEMxOC40IDMuOSAyMC42IDYgMjAuNiA4LjkgQzIwLjYgMTIuMyAxNy42IDE1LjggMTIgMjAuOCBaIiBmaWxsPSIjZmY1ZDUyIi8+PC9zdmc+")}
+  .vit-i.k-mind .u2-vit-out{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDIwLjggQzYuNCAxNS44IDMuNCAxMi4zIDMuNCA4LjkgQzMuNCA2IDUuNiAzLjkgOC4yIDMuOSBDOS45IDMuOSAxMS4zIDQuOSAxMiA2LjQgQzEyLjcgNC45IDE0LjEgMy45IDE1LjggMy45IEMxOC40IDMuOSAyMC42IDYgMjAuNiA4LjkgQzIwLjYgMTIuMyAxNy42IDE1LjggMTIgMjAuOCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiNmN2VjYzkiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+")}
+  .vit-i.k-risk .u2-vit-slot{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDIuNiBMMjEuOCAyMCBIMi4yIFoiIGZpbGw9InJnYmEoMCwwLDAsLjI2KSIvPjwvc3ZnPg==")}
+  .vit-i.k-risk .u2-vit-ico{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDIuNiBMMjEuOCAyMCBIMi4yIFoiIGZpbGw9IiNmZjk0MjYiLz48L3N2Zz4=")}
+  .vit-i.k-risk .u2-vit-out{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDIuNiBMMjEuOCAyMCBIMi4yIFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y3ZWNjOSIgc3Ryb2tlLXdpZHRoPSIyLjIiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIgOC40IHY1LjIiIHN0cm9rZT0iIzI0MWEwZSIgc3Ryb2tlLXdpZHRoPSIxLjkiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTYuOCIgcj0iMS4xIiBmaWxsPSIjMjQxYTBlIi8+PC9zdmc+")}
+  .vit-i.k-soc .u2-vit-slot{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSJyZ2JhKDAsMCwwLC4yNikiLz48L3N2Zz4=")}
+  .vit-i.k-soc .u2-vit-ico{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSIjNThiNmZmIi8+PC9zdmc+")}
+  .vit-i.k-soc .u2-vit-out{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiNmN2VjYzkiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+")}
+  .vit-i.warn{animation:u2blink 1100ms ease-in-out infinite}
+  .vit-i.bump{animation:u2bump 420ms ease-out}
+  @keyframes u2blink{50%{opacity:.38}}
+  @keyframes u2bump{35%{transform:scale(1.25)}}
+  /* 属性飘字：图标上方 −22px，增量绿(−)红(+)——与行情涨跌色无关，读作「这条命变了多少」 */
+  .vit-i .vdlt{position:absolute;top:-22px;left:50%;margin-left:0;transform:translate(-50%,5px);
+    font-size:var(--u2-fs-num);font-weight:800;line-height:1;white-space:nowrap;
+    font-variant-numeric:tabular-nums;opacity:0;pointer-events:none;
+    text-shadow:0 1px 2px rgba(11,32,22,.55),0 0 6px rgba(11,32,22,.45)}
+  .vit-i .vdlt.up{color:#4fbf82}
+  .vit-i .vdlt.dn{color:#ff6b5e}
   .vit-i .vdlt.on{animation:vdup 1.15s ease-out forwards}
-  @keyframes vdup{0%{opacity:0;transform:translateY(5px)}18%{opacity:1}100%{opacity:0;transform:translateY(-17px)}}
-  .s-cash{background:linear-gradient(90deg,#ffc07a,#f79c1e);left:0}
-  .s-eq{background:linear-gradient(90deg,#ff8a8a,#e02020)}
-  .s-debt{background:repeating-linear-gradient(-45deg,#d93025 0 3px,#ffb3ab 3px 6px);right:0;opacity:.95}
-  @keyframes bl{50%{opacity:.35}}
+  @keyframes vdup{
+    0%{opacity:0;transform:translate(-50%,8px)}
+    18%{opacity:1;transform:translate(-50%,0)}
+    100%{opacity:0;transform:translate(-50%,-17px)}}
 
-  .strip{padding:3px 14px 0;display:flex;gap:5px;flex-wrap:wrap;min-height:0;flex:0 0 auto}
+  /* ---- 状态胶囊 ---- */
+  .strip{flex:0 0 auto;padding:4px 16px 0;display:flex;gap:5px;flex-wrap:wrap;min-height:0}
   .strip:empty{display:none}
-  .chip{font-size:10px;color:var(--ink-2);background:#f7f8fa;border:1px solid var(--line);
-    border-radius:11px;padding:2px 7px;display:flex;align-items:center;gap:3px;line-height:1.5;position:relative;cursor:help}
-  .chip b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-  .chip.hot{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
-  /* 有欠款：交钱日变成红色提醒（还不上一次就是老赖）；老赖再加一个红标 */
-  .chip.due{background:#fff1f0;border-color:#ffa39e;color:#a8071a}
-  .chip.due b{color:#a8071a}
-  .chip .ll{background:#a8071a;color:#fff;border-radius:8px;padding:0 5px;font-size:9px;font-weight:700}
-  .chip .tip,.vit-i .tip{position:absolute;top:calc(100% + 7px);left:0;transform:translateY(-4px);
-    background:rgba(31,35,41,.94);color:#fff;font-size:10.5px;line-height:1.7;padding:8px 11px;border-radius:10px;
-    max-width:230px;width:max-content;white-space:normal;text-align:left;opacity:0;pointer-events:none;
-    transition:opacity .16s,transform .16s;z-index:18}
-  .chip .tip b,.vit-i .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
-  .chip:hover .tip,.chip:focus .tip,.vit-i:hover .tip,.vit-i:focus .tip{opacity:1;transform:translateY(0)}
+  .chip{height:22px;font-size:var(--u2-fs-cap);line-height:1;font-weight:700;color:var(--u2-ink-2);
+    background:#fdf3d8;border:1.5px solid rgba(43,31,18,.28);border-radius:var(--u2-r-chip);
+    padding:0 9px;display:inline-flex;align-items:center;gap:3px;position:relative;cursor:pointer}
+  /* 32px 触达热区（本体 22，隐形外扩 5px） */
+  .chip::after{content:"";position:absolute;left:-2px;right:-2px;top:-5px;bottom:-5px}
+  .chip b{font-weight:800;color:var(--u2-ink);font-variant-numeric:tabular-nums}
+  .chip.hot{background:#ffe9bf;border-color:#e0a53a;color:#8a5a12}
+  .chip.hot b{color:#8a5a12}
+  .chip.due{background:var(--u2-due-bg);border:2px solid var(--u2-due-line);color:var(--u2-due-ink);padding:0 8px}
+  .chip.due b{color:var(--u2-due-ink)}
+  .chip .ll,.u2-chip-ll{background:var(--u2-up-deep);color:#fff;border-radius:8px;
+    padding:1px 5px;font-size:9px;font-weight:800;line-height:1.4}
+  .u2-freeze{border-color:#e0a53a}
 
-  .mkt{position:relative;margin:5px 14px 6px;background:#fafbfc;border:1px solid var(--line);border-radius:10px;
-    padding:6px 10px;flex:0 0 auto}
-  .mkt .t{display:flex;align-items:baseline;justify-content:space-between}
-  .mkt .t b{font-size:15px;font-variant-numeric:tabular-nums;display:inline-block}
-  /* 每天净值的涨跌：在净值右边飘一个 ±金额（涨红跌绿），停 2 秒多再走。
-     绝对定位挂在净值右侧，不占布局——否则每天数字一变，右边的收益率就跟着抖一下。 */
-  .mkt .t .amt{position:relative;display:inline-block}
-  .mkt .dlt{position:absolute;left:100%;top:1px;margin-left:8px;font-style:normal;
-    font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3;
+  /* 提示卡：触屏 tap 弹出（.tip.on），桌面 hover 保留；
+     本体 pointer-events:none，不抢滑卡手势（ui-adaptation §4.3） */
+  .chip .tip,.vit-i .tip{position:absolute;top:calc(100% + 8px);left:0;transform:translateY(-4px);
+    background:rgba(36,26,14,.96);color:var(--u2-on-felt);font-size:10.5px;line-height:1.7;
+    padding:8px 11px;border-radius:10px;border:1px solid rgba(253,243,216,.18);
+    max-width:230px;width:max-content;white-space:normal;text-align:left;
+    opacity:0;pointer-events:none;transition:opacity var(--u2-t-fast),transform var(--u2-t-fast);z-index:40}
+  .chip .tip b,.vit-i .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
+  .chip .tip.on,.vit-i .tip.on{opacity:1;transform:translateY(0)}
+  @media (hover:hover){
+    .chip:hover .tip,.chip:focus .tip,.vit-i:hover .tip,.vit-i:focus .tip{opacity:1;transform:translateY(0)}
+  }
+
+  /* ---- 行情区（奶油纸面板） ---- */
+  .mkt{position:relative;flex:0 0 auto;margin:8px 16px 6px;background:var(--u2-card);
+    border:3px solid var(--u2-edge);border-radius:var(--u2-r-panel);padding:9px 12px 8px;
+    box-shadow:var(--u2-sh-hard-sm),0 12px 18px rgba(0,0,0,.22)}
+  .mkt .t{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .mkt .t .amt{position:relative;display:inline-block;min-width:0}
+  .mkt .t b#v-net{display:inline-block;font-size:var(--u2-fs-hero);line-height:1.1;font-weight:900;
+    letter-spacing:.3px;font-variant-numeric:tabular-nums;color:var(--u2-ink)}
+  /* 净值涨跌飘字：绝对定位挂在净值右侧，不占布局——否则每天数字一变右边收益率就抖 */
+  .mkt .dlt{position:absolute;left:100%;top:3px;margin-left:8px;font-style:normal;
+    font-size:var(--u2-fs-num);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2;
     white-space:nowrap;opacity:0;pointer-events:none}
   .mkt .dlt.on{animation:dltUp 2.9s cubic-bezier(.22,.9,.3,1) both}
   /* 前 6% 淡入，84% 才开始走——玩家读完牌抬眼还能看见这笔账 */
@@ -96,149 +183,254 @@
     0%{opacity:0;transform:translateY(8px) scale(.94)}
     6%{opacity:1;transform:translateY(0) scale(1)}
     84%{opacity:1;transform:translateY(0) scale(1)}
-    100%{opacity:0;transform:translateY(-8px) scale(.99)}
-  }
-  /* 净值数字本身也闪一下，跟飘字同呼吸（用 transform 不改布局宽度） */
-  .mkt .t b.hit-up{animation:hitUp .95s ease-out both}
-  .mkt .t b.hit-dn{animation:hitDn .95s ease-out both}
-  @keyframes hitUp{0%{color:var(--up);transform:scale(1.07)}60%{color:var(--up)}100%{color:inherit;transform:scale(1)}}
-  @keyframes hitDn{0%{color:var(--down);transform:scale(1.07)}60%{color:var(--down)}100%{color:inherit;transform:scale(1)}}
-  .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
-  .mbar{position:relative;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:5px}
-  /* 今日账目行（2026-11-03 改轮播 + 弹出）：多项并列会把进度条和分时图全盖住、红绿灰糊成一片——
-     改成一次只显示一项，每 0.95 秒换下一笔，右下角小字标「第几笔/共几笔」。
-     动效跟四条命图标的飘字同一套：从下往上弹出来（带一点放大回弹），停留后继续向上飘散，
-     所以它读起来是「冒出来一笔账」，不是一行字原地换内容。
-     单行居中挂在分时图上缘（装饰区），不压净值和资金条。
-     红字=进账/涨，绿字=出账/跌，灰字=转账（借贷/买卖，钱没离开你，只是换了个口袋）。
-     超过 7 笔时小额的合并成「其他」，保证轮完一圈不超过 8 秒。挂在 .mkt 上。 */
-  .mkt .ledg{position:absolute;top:40px;left:2px;right:2px;height:16px;font-size:11px;line-height:16px;
-    text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;
-    text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9)}
+    100%{opacity:0;transform:translateY(-8px) scale(.99)}}
+  /* 净值数字本身也闪一下（transform 不改布局宽度） */
+  .mkt .t b#v-net.hit-up{animation:hitUp .95s ease-out both}
+  .mkt .t b#v-net.hit-dn{animation:hitDn .95s ease-out both}
+  @keyframes hitUp{0%{color:var(--u2-up-deep);transform:scale(1.07)}60%{color:var(--u2-up-deep)}100%{color:inherit;transform:scale(1)}}
+  @keyframes hitDn{0%{color:var(--u2-down);transform:scale(1.07)}60%{color:var(--u2-down)}100%{color:inherit;transform:scale(1)}}
+  /* 收益率：形状(▲▼) + 符号 + 颜色三重编码，色弱也读得出（::before 不污染 textContent） */
+  #v-pnl{font-size:var(--u2-fs-num);line-height:1;font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  #v-pnl.up::before{content:"▲\00a0"}
+  #v-pnl.down::before{content:"▼\00a0"}
+  .mkt .dlt.up::before{content:"▲\00a0"}
+  .mkt .dlt.down::before{content:"▼\00a0"}
+
+  /* 三段资金条：现金(金) / 持仓(红) / 负债(斜纹，右起) */
+  .mbar{position:relative;height:7px;margin-top:8px;border-radius:4px;background:var(--u2-card-2);
+    border:1.5px solid rgba(43,31,18,.35);overflow:hidden;display:block}
+  .mbar i{position:absolute;top:0;height:100%;
+    transition:width var(--u2-t-slow) var(--u2-e-out),left var(--u2-t-slow) var(--u2-e-out)}
+  .s-cash{background:linear-gradient(90deg,#ffc63f,#f2a51e);left:0}
+  .s-eq{background:linear-gradient(90deg,#ff6b5e,#e23c30)}
+  .s-debt{background:repeating-linear-gradient(-45deg,#c9302a 0 3px,#ffb3ab 3px 6px);right:0;opacity:.95}
+  /* 某段动了闪一下：飘字说「变了多少」，这里说「动的是哪段钱」 */
+  .mbar i.hit{animation:barHit 1.15s ease-out both}
+  @keyframes barHit{0%{opacity:1;transform:scaleY(1.55)}55%{opacity:1;transform:scaleY(1.25)}100%{opacity:1;transform:scaleY(1)}}
+  /* 负债摸到信用额度八成：呼吸提醒（与 blink 同类无限动画，同时只跑一个） */
+  .mbar i.u2-debt-breathe{animation:u2breathe 1.6s ease-in-out infinite}
+  @keyframes u2breathe{0%,100%{opacity:.95}50%{opacity:.4}}
+
+  /* 今日账目轮播：独立 16px 行，夹在资金条与分时图之间——
+     多花 16px 换分时图 100% 不被文字盖住。红＝进账、绿＝出账、灰＝转账。
+     display:block 必须显式写：span 挂 position:relative 不会块化，height 不生效（实测踩过）。 */
+  .mkt .ledg{display:block;position:relative;height:16px;margin-top:5px;overflow:hidden;
+    opacity:0;transition:opacity .2s}
   .mkt .ledg.on{opacity:1}
-  .mkt .ledg em{font-style:normal;color:var(--ink-2);margin-right:1px}
-  .mkt .ledg b{font-weight:700;font-variant-numeric:tabular-nums}
-  .mkt .ledg b.up{color:#e02020}
-  .mkt .ledg b.dn{color:#0aa344}
-  .mkt .ledg b.tf{color:#8f959e}
-  .mkt .ledg .itm{display:inline-block;opacity:0;
+  .mkt .ledg .itm{position:absolute;left:0;right:0;top:0;height:16px;text-align:center;
+    font-size:10.5px;line-height:16px;font-weight:700;color:var(--u2-ink-2);
+    font-variant-numeric:tabular-nums;opacity:0;
     animation:ledgPop .92s cubic-bezier(.22,.9,.3,1) both}
-  /* 18% 处弹到位（和图标 vdup 同一节奏），72% 开始飘散，100% 走完正好接下一笔 */
+  .mkt .ledg em{font-style:normal;color:var(--u2-ink-2);margin-right:2px}
+  .mkt .ledg b{font-weight:800;font-variant-numeric:tabular-nums}
+  .mkt .ledg b.up{color:var(--u2-up-deep)}
+  .mkt .ledg b.dn{color:var(--u2-down)}
+  .mkt .ledg b.tf{color:var(--u2-ink-3)}
+  /* 18% 处弹到位（与图标 vdup 同一节奏），72% 开始飘散，100% 正好接下一笔 */
   @keyframes ledgPop{
     0%{opacity:0;transform:translateY(7px) scale(.92)}
     18%{opacity:1;transform:translateY(0) scale(1)}
     22%{transform:translateY(-1px) scale(1.04)}
     72%{opacity:1;transform:translateY(-4px) scale(1)}
-    100%{opacity:0;transform:translateY(-15px) scale(.98)}
-  }
-  /* 分时图：昨收虚线在中轴，涨红跌绿，线下淡色填充。涨停/跌停封在上下边界 */
-  .tape{position:relative;height:46px;margin-top:6px;border-radius:7px;overflow:hidden;
-    background:#fcfcfd;border:1px solid #f1f2f5}
-  .tape svg{display:block;width:100%;height:46px}
-  /* 划线动画：dasharray 由 JS 按 getTotalLength 精确设置。
-     别用 pathLength="1"+dasharray:1 的归一化写法——浏览器量长有误差，
-     会导致线画到 70% 左右就被截断（实测踩过） */
-  .tape .ln{transition:stroke-dashoffset .7s cubic-bezier(.3,.9,.3,1)}
+    100%{opacity:0;transform:translateY(-15px) scale(.98)}}
+
+  /* 分时图：昨收虚线在中轴，涨红跌绿，线下 13% 填充。
+     跌日整组转绿（线 / 填充 / 角标）——不是只绿数字（.mkt.u2-dn） */
+  .tape{position:relative;height:48px;margin-top:4px;border:2px solid var(--u2-edge);
+    border-radius:var(--u2-r-art);background:#fff9e8;overflow:hidden}
+  .tape svg{display:block;width:100%;height:100%}
+  .tape .mid{stroke:#c9b98c;stroke-width:1;stroke-dasharray:4 4}
+  .tape .fill{fill:rgba(226,60,48,.13)}
+  .tape .ln{fill:none;stroke:var(--u2-up);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;
+    transition:stroke-dashoffset .7s cubic-bezier(.3,.9,.3,1)}
+  .tape .end{stroke:var(--u2-up);stroke-width:2}
+  .mkt.u2-dn .tape .fill{fill:rgba(30,158,90,.13)}
+  .mkt.u2-dn .tape .ln,.mkt.u2-dn .tape .end{stroke:var(--u2-down)}
+  .mkt.u2-flat .tape .fill{fill:rgba(43,31,18,.10)}
+  .mkt.u2-flat .tape .ln,.mkt.u2-flat .tape .end{stroke:var(--u2-ink-3)}
   .tape .ar{animation:tapeFade .55s ease-out both}
   @keyframes tapeFade{from{opacity:0}to{opacity:1}}
-  .tape .lab{position:absolute;top:3px;right:4px;font-size:9px;line-height:1.5;padding:0 4px;border-radius:4px;
-    font-variant-numeric:tabular-nums;letter-spacing:.2px;background:rgba(255,255,255,.9)}
-  .tape .lab.up{color:#e02020}
-  .tape .lab.down{color:#0aa344}
-  .tape .lab.seal-up{color:#fff;background:#e02020}
-  .tape .lab.seal-down{color:#fff;background:#0aa344}
-  .tape .lab.halt{color:#8f959e;background:rgba(0,0,0,.045)}
+  .u2-tape-lab{position:absolute;top:3px;right:4px;font-size:var(--u2-fs-tag);line-height:1.7;
+    font-weight:800;padding:0 5px;border-radius:var(--u2-r-tag);
+    font-variant-numeric:tabular-nums;letter-spacing:.2px;
+    background:var(--u2-up-deep);color:#fff}
+  .u2-tape-lab.down{background:var(--u2-down)}
+  .u2-tape-lab.halt{background:rgba(43,31,18,.55)}
   .tape .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:10px;color:var(--ink-3)}
-  .mbar i{position:absolute;top:0;height:100%;transition:width .45s cubic-bezier(.4,1.2,.4,1),left .45s cubic-bezier(.4,1.2,.4,1)}
-  /* 三段条哪段动了就闪一下（和飘字同呼吸：飘字说变了多少，这里说动的是哪段钱） */
-  .mbar i.hit{animation:barHit 1.15s ease-out both}
-  @keyframes barHit{0%{filter:brightness(1.85) saturate(1.5)}55%{filter:brightness(1.4)}100%{filter:brightness(1)}}
-  /* 负债烧到信用的八成：条开始呼吸，提醒「再借就要借不动了」（2026-10-28） */
-  .mbar i.debtwarn{animation:debtWarn 1.6s ease-in-out infinite}
-  @keyframes debtWarn{0%,100%{opacity:.95}50%{opacity:.4}}
-  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-2)}
-  small{font-size:10.5px}
+    font-size:10px;color:var(--u2-ink-3)}
 
-  .stage{flex:1;position:relative;margin:0 16px;touch-action:none;user-select:none;-webkit-user-select:none;min-height:150px}
-  .card{user-select:none;-webkit-user-select:none;position:absolute;inset:4px 0 8px;background:#fff;border-radius:16px;border:1px solid var(--line);
-    box-shadow:0 10px 26px rgba(31,35,41,.11);padding:16px 17px 12px;display:flex;flex-direction:column;
-    will-change:transform;cursor:grab;overflow:hidden}
-  .card.under{transform:scale(.955) translateY(9px);opacity:.55;box-shadow:0 4px 12px rgba(31,35,41,.07)}
-  .card.under2{transform:scale(.91) translateY(18px);opacity:.28}
-  /* 垫层是空白牌背：只暗示「还有牌」，不透露是哪张（预览永远不准，见 nextCard 注释） */
-  .card.back{background:#f7f8fa;border-color:#eceef1;cursor:default;
-    background-image:repeating-linear-gradient(-45deg,#f0f1f4 0 8px,transparent 8px 16px)}
-  /* 人物位（2026-10-28）：卡面上半部留给人像/场景图，素材没到位时用 emoji 占位。
-     实测（375 屏）：卡内宽 274、文字只占两行 55px，文字区本来就有 190px 是空的——
-     所以这块地本来就该放图，不是我硬塞进去的。
-     尺寸规矩：文字优先。.txt 自然高度、.art 吃剩余空间，图再大也压不到字，
-     图多出来的部分 object-fit:cover 自动裁掉（见 AGENTS「卡面版式」）。 */
-  /* 人物位（2026-10-28 第二版）：王权式——图是卡内一块圆角方块，占卡面大头。
-     规矩不变：文字优先。.txt 自然高度、.art 吃剩余空间，文字变长图自动缩、永远挤不掉字。
-     HUD 压成一行图标后，图区比上一版高约 60px（三档机型实测，见 art-asset-spec）。 */
-  .card .art{flex:1 1 auto;min-height:170px;margin:0 0 10px;position:relative;overflow:hidden;
-    border-radius:12px;background:linear-gradient(180deg,#f6f7f9,#eef0f4);display:flex;align-items:center;justify-content:center}
-  .card .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;
-    -webkit-user-drag:none;user-select:none;pointer-events:none}
-  .card .art .ph{font-size:46px;opacity:.42;filter:saturate(.55)}
-  /* 图 404 时自己塌回占位，不能留一个破图标 */
-  .card .art.gone img{display:none}
-  .card .art.gone::after{content:attr(data-ph);font-size:46px;opacity:.42;filter:saturate(.55)}
-  /* 有人物位时文字改成自然高度，剩余空间全给图 */
-  .card .art ~ .txt{flex:0 0 auto}
-  .card .txt{font-size:16px;line-height:1.72;color:var(--ink);flex:1;letter-spacing:.2px}
-  /* 既定事实卡（欠账清算）：两边结果一样，所以不给红绿提示、只留一行"已经这样了"——
-     这不是一道选择题，是账单。 */
-  .card .fn{margin-top:7px;text-align:center;font-size:10.5px;letter-spacing:.14em;color:var(--ink-3)}
+  .mkt .d{margin-top:5px;font-size:var(--u2-fs-meta);line-height:1.6;font-weight:600;color:var(--u2-ink-3);
+    display:flex;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums}
+  .mkt .d span{min-width:0}
+  .mkt .d span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mkt .d span:last-child{flex:0 0 auto}
+  .mkt .d b{color:var(--u2-ink-2);font-weight:800}
+  .up{color:var(--u2-up-deep)} .down{color:var(--u2-down)} .flat{color:var(--u2-ink-3)}
 
-  /* 选项印章（王权式）：平时看不见，拖动时对应侧浮现出来——拖左亮左选项、拖右亮右选项，
-     透明度跟拖动距离走，出牌瞬间定格在卡上飞出去。位置在画面中下、离边 20px（拖动时也在屏内），
-     z-index 必须压过 .art（人物位是定位元素且靠后，不加层级会把它盖住）。 */
-  .stamp{position:absolute;top:52%;z-index:5;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;
-    letter-spacing:.5px;border:3px solid;opacity:0;pointer-events:none;background:rgba(255,255,255,.94);max-width:200px;
-    transition:opacity .12s}
-  .stamp.L{left:22%;color:var(--down);border-color:var(--down);transform:rotate(-11deg)}
-  .stamp.R{right:22%;color:var(--up);border-color:var(--up);transform:rotate(11deg)}
+  /* ---- 卡牌舞台：一叠牌（主卡 + 两层空白牌背） ---- */
+  .stage{flex:1 1 auto;position:relative;margin:0 16px 12px;margin-bottom:calc(12px + env(safe-area-inset-bottom));
+    min-height:150px;touch-action:none;user-select:none;-webkit-user-select:none}
+  .card{position:absolute;left:0;right:0;top:4px;bottom:16px;z-index:2;
+    background:var(--u2-card);border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);
+    padding:12px 14px;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:var(--u2-sh-hard),var(--u2-sh-soft);
+    will-change:transform;cursor:grab;user-select:none;-webkit-user-select:none}
+  /* 牌背垫层：只暗示「还有牌」，绝不透露内容（预读永远不准，见 deckBack 注释）。
+     scale 因子沿用 spec §3.5（.965 / .93），但位移从 translateY 改成 bottom + 底部原点：
+     样张的 translateY(12/32) 在 428px 舞台上每层露 6~8px，真机卡高 480~570px 时
+     scale 的收缩量（0.035H / 0.07H ≈ 17 / 35px）把 translateY 全吃掉——实测两层牌背
+     只差 0.7px，糊成一层。底部原点 + bottom(6/0) 让「每层露 10 / 16px」在任何卡高下恒定，
+     且永远不会伸出舞台底边（不用跟 safe-area 打架）。 */
+  .card.under,.card.under2{transform-origin:50% 100%;box-shadow:none;cursor:default;
+    background-color:var(--u2-card-2);
+    background-image:repeating-linear-gradient(-45deg,#e2d3a8 0 10px,transparent 10px 20px)}
+  .card.under{z-index:1;bottom:6px;transform:scale(.965);opacity:.95}
+  .card.under2{z-index:0;bottom:0;border-width:2px;border-color:rgba(36,26,14,.55);
+    transform:scale(.93);opacity:.80}
 
-  /* toast 挂在图标正下方、状态胶囊那一行（2026-10-29 二次定位）：
-     太上挡四条命、太下被滑卡的手指挡住——胶囊行是唯一两头都不占的位置。
-     常规的钱/行情变化走「今日账目」行（.ledg），toast 只剩低频的例外说明。 */
-  .toast{position:absolute;left:50%;top:112px;transform:translateX(-50%) translateY(-8px);background:rgba(31,35,41,.92);
-    color:#fff;font-size:11.5px;padding:7px 13px;border-radius:14px;opacity:0;transition:.28s;pointer-events:none;
-    max-width:300px;text-align:center;line-height:1.6;z-index:30}
+  /* ---- 卡面人物图区：场景 / 调色 / 地面影 / 人物 四层 ----
+     文字优先：.txt 自然高度、.art 吃剩余空间，图再大也挤不掉字（AGENTS 铁律）。
+     min-height 取 96（§1.5 阶梯③的下限）——target 机型实测图区 ≥187，
+     96 是保证「文字永不被 overflow 裁掉」的兜底地板。 */
+  .card .art{position:relative;flex:1 1 auto;min-height:96px;margin:0 0 10px;border-radius:var(--u2-r-art);
+    overflow:hidden;box-shadow:var(--u2-sh-inset);background:linear-gradient(180deg,#f3e8c9,#e0cfa6)}
+  .card .art .u2-art-scene{position:absolute;left:0;top:0;width:100%;height:100%;display:block;
+    object-fit:cover;object-position:50% top;-webkit-user-drag:none;user-select:none;pointer-events:none}
+  .card .art .u2-art-shade{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(30,18,6,.04) 0%,rgba(30,18,6,.06) 40%,rgba(30,18,6,.42) 100%),
+               radial-gradient(70% 50% at 50% 18%,rgba(255,255,255,.22),transparent 70%)}
+  .card .art .u2-art-ground{position:absolute;left:50%;bottom:4px;margin-left:-70px;width:140px;height:16px;
+    border-radius:50%;background:radial-gradient(closest-side,rgba(90,40,10,.35),transparent);pointer-events:none}
+  .card .art .u2-art-person{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
+    font-size:108px;line-height:1;display:none;pointer-events:none;
+    filter:sepia(.2) saturate(.95)}
+  /* 无图 / 单图 404：场景层收起，emoji 顶上——图框、圆角、内衬线、高度、暗层全不变 */
+  .card .art.no-img .u2-art-person,.card .art.gone .u2-art-person{display:block}
+  .card .art.no-img .u2-art-shade,.card .art.gone .u2-art-shade{opacity:.55}
+  .card .art.gone .u2-art-scene{display:none}
+  .card .art.gone{background:linear-gradient(180deg,#f3e8c9,#e0cfa6)}
+  .card .txt{font-size:var(--u2-fs-body);line-height:1.72;font-weight:600;letter-spacing:.3px;
+    color:var(--u2-ink);flex:0 0 auto}
+  /* 既定事实卡：无印章、无红绿提示——这不是选择题，是账单 */
+  .card .fn{margin-top:8px;text-align:center;font-size:var(--u2-fs-meta);line-height:1.6;font-weight:600;
+    letter-spacing:.14em;color:var(--u2-ink-3)}
+
+  /* ---- 左右印章：拖到哪边亮哪边，透明度跟拖动距离走 ----
+     left/right 用 20% 而不是 spec 的 14px：印章是钉在卡上的，松手阈值 78px 时
+     卡已平移 78px，14px 的偏移会让印章正好滑出屏幕外（v1 的 22% 就是为这个）。
+     20% 在 320~430 全档都能保证「拖动全程在屏内」，出牌瞬间照旧随卡飞出。 */
+  .stamp{position:absolute;top:47%;z-index:5;padding:7px 14px;border-radius:var(--u2-r-stamp);
+    font-size:var(--u2-fs-stamp);line-height:1;font-weight:900;letter-spacing:.5px;
+    border:3px solid;background:rgba(253,246,225,.95);box-shadow:var(--u2-sh-stamp);
+    max-width:200px;white-space:nowrap;overflow:hidden;
+    opacity:0;pointer-events:none;transition:opacity var(--u2-t-fast)}
+  .stamp.L{left:20%;color:var(--u2-down);border-color:var(--u2-down);transform:rotate(-10deg)}
+  /* 奶油底上的红印章用 up-deep（up 只有 4.3:1，读不清） */
+  .stamp.R{right:20%;color:var(--u2-up-deep);border-color:var(--u2-up-deep);transform:rotate(10deg)}
+
+  /* ---- toast：锚点由 JS 实测写回（--toast-top，落在行情面板下缘 = 卡区顶部）----
+     不写死 112px（那是开发框 344 布局的 eyeball 值，390 档正好压 HUD 图标行）；
+     JS 量不到时退回 --hud-bottom（ui-adaptation §6-2 的原始锚点）。 */
+  .toast{position:absolute;left:50%;top:var(--toast-top, calc(var(--hud-bottom) + 8px));
+    transform:translateX(-50%) translateY(-8px);
+    background:#2b1f12;color:var(--u2-on-felt);font-size:var(--u2-fs-cap);line-height:1.6;font-weight:700;
+    padding:8px 14px;border:2px solid rgba(253,243,216,.22);border-radius:var(--u2-r-panel);
+    box-shadow:0 4px 0 rgba(0,0,0,.28);
+    opacity:0;transition:opacity var(--u2-t-base),transform var(--u2-t-base);
+    pointer-events:none;max-width:300px;text-align:center;z-index:30}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  .over{position:absolute;inset:0;background:rgba(255,255,255,.985);z-index:20;display:none;
-    flex-direction:column;align-items:center;justify-content:center;padding:26px 26px;text-align:center}
+  /* ---- 开局页 / 结局页：绒布底 + 奶油大卡 ---- */
+  .over{position:absolute;inset:0;background:var(--u2-felt-bg);z-index:20;display:none;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
   .over.on{display:flex}
-  .over .em{font-size:38px;margin-bottom:6px}
-  .over h2{margin:0 0 4px;font-size:20px;letter-spacing:2px}
-  .over .sub{font-size:11.5px;color:var(--ink-3);margin-bottom:15px}
-  .quote{font-size:13.5px;line-height:2;color:var(--ink);margin:0 0 16px;padding:0 4px;letter-spacing:.4px}
-  .over .why{font-size:11px;line-height:1.8;color:var(--ink-3);margin:0 0 16px;padding:8px 12px;max-width:300px;
-    background:rgba(0,0,0,.035);border-radius:10px;text-align:left}
-  .life{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;width:100%;max-width:262px;margin-bottom:18px;
-    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 0}
-  .life div{font-size:10.5px;color:var(--ink-3);text-align:left}
-  .life div b{display:block;font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:1px}
-  .intro .intro-hint{font-size:11.5px;color:var(--ink-3);margin:0 0 20px;letter-spacing:1px}
-  .btn{background:var(--ink);color:#fff;border:0;border-radius:22px;padding:11px 30px;font-size:14px;cursor:pointer}
-  .legend{margin-top:14px;font-size:11.5px;color:var(--ink-3);text-align:center;line-height:1.9;max-width:540px}
-  @media (max-width:420px){.phone{width:100%;max-width:344px}}
+  .over h2{margin:0;font-size:20px;line-height:1.3;font-weight:900;letter-spacing:3px;color:var(--u2-ink)}
+  .over.intro{justify-content:center}
+  .intro-card{width:300px;max-width:100%;background:var(--u2-card);border:3px solid var(--u2-edge);
+    border-radius:var(--u2-r-card);padding:24px 20px 20px;
+    box-shadow:var(--u2-sh-hard),0 18px 26px rgba(0,0,0,.30);text-align:center}
+  .intro .kicker{font-size:11px;line-height:1.8;font-weight:700;color:var(--u2-ink-2);
+    letter-spacing:.4px;margin-bottom:10px}
+  .intro h2{font-size:26px;line-height:1.2;font-weight:900;letter-spacing:4px;color:var(--u2-ink);margin:0;
+    text-indent:4px}
+  .u2-hair{width:40px;height:3px;border-radius:2px;background:rgba(43,31,18,.22);margin:12px auto 14px}
+  .intro .vit{justify-content:center;gap:16px;height:auto;margin-bottom:6px}
+  .intro .vit-i{cursor:default}
+  .intro .vit-i::after{display:none}
+  .intro .intro-hint{font-size:11px;line-height:1.8;font-weight:700;color:var(--u2-ink-2);
+    letter-spacing:.5px;margin:0 0 16px}
+
+  .endcard{width:345px;max-width:100%;max-height:100%;overflow-y:auto;
+    background:var(--u2-card);border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);
+    padding:20px 18px;box-shadow:var(--u2-sh-hard),0 18px 26px rgba(0,0,0,.30);
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    -webkit-overflow-scrolling:touch}
+  .over .em{font-size:40px;line-height:1;margin-bottom:6px}
+  .over .sub{font-size:10.5px;line-height:1.7;font-weight:700;color:var(--u2-ink-3);
+    letter-spacing:.5px;margin:4px 0 12px}
+  .quote{font-size:13px;line-height:1.95;font-weight:600;color:var(--u2-ink);margin:0 0 12px;
+    letter-spacing:.3px}
+  .over .why{font-size:10px;line-height:1.9;font-weight:600;color:var(--u2-ink-2);text-align:left;
+    background:rgba(43,31,18,.06);border-radius:10px;padding:9px 11px;margin:0 0 12px;width:100%}
+  .life{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;width:100%;margin-bottom:16px;
+    border-top:2px solid rgba(43,31,18,.16);border-bottom:2px solid rgba(43,31,18,.16);padding:10px 0}
+  .life div{font-size:10px;line-height:1.6;font-weight:600;color:var(--u2-ink-3);text-align:left}
+  .life div b{display:block;font-size:13.5px;line-height:1.4;font-weight:800;color:var(--u2-ink);
+    font-variant-numeric:tabular-nums;margin-top:1px}
+  /* 结局页不用红绿表达好坏，只陈述数据 */
+  .life div b.up,.life div b.down{color:var(--u2-ink)}
+
+  /* ---- 按钮 ---- */
+  .btn{height:46px;padding:0 26px;border-radius:var(--u2-r-chip);border:2px solid var(--u2-edge);
+    background:var(--u2-edge);color:var(--u2-card);font-size:var(--u2-fs-btn);line-height:1;font-weight:800;
+    letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 0 rgba(43,31,18,.28);-webkit-appearance:none}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(43,31,18,.28)}
+  .endcard .btn,.intro-card .btn{width:100%}
+
+  .legend{margin-top:14px;font-size:11px;color:#7d8794;text-align:center;line-height:1.9;max-width:540px}
+
+  /* =====================================================================
+     降级阶梯（ui-adaptation §1.5）：由 applyDegrade() 按启动实测 stageH 挂类，
+     只会从 deg1 累加到 degN。砍的永远是装饰高度，玩法文字与选项永不砍。
+     ===================================================================== */
+  .phone.deg1 .tape{height:36px}
+  .phone.deg2 .tape{display:none}
+  .phone.deg3 .vit{height:40px}
+  /* deg3 把图区地板撤掉（而不是压到 96）：170~200 这段卡高装不下「96 图 + 三行正文」，
+     文字优先规则在这里生效——图先让到只剩一条边，文字永远不被裁（AGENTS 铁律） */
+  .phone.deg3 .card .art{min-height:0}
+  .phone.deg4 .card .art{display:none}
+  .phone.deg4 .card .txt{flex:1 1 auto}
+  .phone.deg5 .card .fn{display:none}
+
+  /* 窄屏（仅 SE1 一档）：只收紧边距，字号与间距不缩（可读性优先，§1.2） */
+  @media (max-width:359px){
+    .stage{margin-left:12px;margin-right:12px}
+    .mkt{margin-left:10px;margin-right:10px}
+    .card{padding:12px}
+    .strip{padding-left:12px;padding-right:12px}
+    .hud{padding-left:10px;padding-right:10px}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="head">
-    <h1>韭菜之王 · 原型 v3</h1>
+    <h1>韭菜之王 · 原型 v4</h1>
     <p>你只有一只票，它甚至没有名字。<br>
        右滑 = 投入 / 认了 &nbsp;·&nbsp; 左滑 = 抽身 / 算了</p>
   </div>
 
   <div class="phone">
-    <div class="nav"><div class="title">韭菜之王</div>
-      <div class="capsule"><i></i><span class="dot"></span></div></div>
+    <div class="nav">
+      <div class="u2-nav-bar">
+        <div class="title">韭菜之王</div>
+        <!-- 微信胶囊占位：真机上这块由微信绘制，代码里只留 78×30 的空位（spec §3.1） -->
+        <div class="capsule"><i></i><span class="dot"></span></div>
+      </div>
+    </div>
 
     <div class="hud"><div class="vit" id="vit"></div></div>
 
@@ -255,29 +447,35 @@
     <div class="toast" id="toast"></div>
 
     <div class="over intro" id="intro">
-      <h2>《韭菜之王》</h2>
-      <div class="sub">一个关于炒股、生活和不赔上人生的故事</div>
-      <p class="intro-hint">右滑＝照做 · 左滑＝推掉 · 进去就懂了</p>
-      <button class="btn" id="i-b">开始</button>
+      <div class="intro-card">
+        <div class="kicker">一个关于炒股、生活和不赔上人生的故事</div>
+        <h2>韭菜之王</h2>
+        <div class="u2-hair"></div>
+        <div class="vit" id="i-vit"></div>
+        <p class="intro-hint">右滑＝照做 · 左滑＝推掉</p>
+        <button class="btn" id="i-b">开始</button>
+      </div>
     </div>
 
     <div class="over" id="over">
-      <div class="em" id="o-em">📉</div>
-      <h2 id="o-t"></h2>
-      <div class="sub" id="o-s"></div>
-      <p class="quote" id="o-q"></p>
-      <p class="why" id="o-why"></p>
-      <div class="life">
-        <div>这一辈子<b id="o-d"></b></div><div>最后剩下<b id="o-a"></b></div>
-        <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
+      <div class="endcard">
+        <div class="em" id="o-em">📉</div>
+        <h2 id="o-t"></h2>
+        <div class="sub" id="o-s"></div>
+        <p class="quote" id="o-q"></p>
+        <p class="why" id="o-why"></p>
+        <div class="life">
+          <div>这一辈子<b id="o-d"></b></div><div>最后剩下<b id="o-a"></b></div>
+          <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
+        </div>
+        <button class="btn" id="o-b">再来一辈子</button>
       </div>
-      <button class="btn" id="o-b">再来一辈子</button>
     </div>
   </div>
 
   <div class="legend">
     虚构作品。所有行情、人物与公司均为虚构，不构成任何投资建议。<br>
-    v3：定名《韭菜之王》· 四属性（精力/心态/风险/社会）· 状态系统（泡沫、冬天、停牌、添丁、失业、内线、上头）<br>
+    v4：桌游牌局风换肤（奶油卡面 / 硬投影 / 一叠牌）· 四条命液面填充 · 触屏可点开数值明细<br>
     每月 5 号发薪、同日扣房租水电；有欠款则每月自动还月供。没钱就只能卖股票，或者欠着。<br>
     平衡：3000 局模拟 — 乱滑玩家平均活 34 天、通关 7%；会玩的策略通关率约为乱滑的 7 倍。
   </div>
@@ -880,7 +1078,9 @@ function tapeHTML(){
   }
   pts[0] = 0; pts[n - 1] = dev;                          // 两端钉死在真实收盘上（图上写的数就是它）
   var flat = Math.abs(dev) < 0.0005;                    // 平盘：不涂红也不涂绿，免得「今 +0.0%」标成上涨
-  var C = lim === "halt" || flat ? "#8f959e" : (dev >= 0 ? "#e02020" : "#0aa344");
+  /* 颜色不再内联写死：线 / 填充 / 角标全走 CSS 类，跌日由 .mkt.u2-dn 整组转绿——
+     这样「整组变色」不会漏掉某一条（旧版只换了数字，线还是红的）。 */
+  var dn = !flat && lim !== "halt" && dev < 0;
   var ln = "", x, y, lastY = mid;
   for(i = 0; i < n; i++){
     x = (i / (n - 1) * W).toFixed(1);
@@ -891,92 +1091,124 @@ function tapeHTML(){
   var area = ln + "L" + W + "," + mid + "L0," + mid + "Z";
   var dp = (dev >= 0 ? "+" : "") + (dev * 100).toFixed(1) + "%", tag, cls;
   if(lim === "halt"){ tag = "停牌"; cls = "halt"; }
-  else if(lim === "up"){ tag = "涨停 +10%"; cls = "seal-up"; }
-  else if(lim === "down"){ tag = "跌停 −10%"; cls = "seal-down"; }
-  else if(lim === "crash"){ tag = "崩 " + dp.replace("-", "−"); cls = "seal-down"; }   // 泡沫破：一天崩掉 30%+
+  else if(lim === "up"){ tag = "涨停 ▲10%"; cls = ""; }
+  else if(lim === "down"){ tag = "跌停 ▼10%"; cls = "down"; }
+  else if(lim === "crash"){ tag = "崩 " + dp.replace("-", "−"); cls = "down"; }   // 泡沫破：一天崩掉 30%+
   else if(flat){ tag = "今 0.0%"; cls = "halt"; }
-  else { tag = "今 " + dp; cls = dev >= 0 ? "up" : "down"; }
+  else { tag = (dn ? "今 ▼ " : "今 ▲ ") + dp.replace("-", "−").replace("+", ""); cls = dn ? "down" : ""; }
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
-      '<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0" stop-color="' + C + '" stop-opacity=".22"/>' +
-        '<stop offset="1" stop-color="' + C + '" stop-opacity="0"/>' +
-      '</linearGradient></defs>' +
-      '<path class="ar" d="' + area + '" fill="url(#tg)"/>' +
-      '<line x1="0" y1="' + mid + '" x2="' + W + '" y2="' + mid + '" stroke="#dcdee3" ' +
-        'stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>' +
-      '<path class="ln" d="' + ln + '" fill="none" stroke="' + C + '" stroke-width="1.6" ' +
-        'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
-      '<line x1="' + (W - 2) + '" y1="' + (lastY - 3) + '" x2="' + (W - 2) + '" y2="' + (lastY + 3) +
-        '" stroke="' + C + '" stroke-width="2" vector-effect="non-scaling-stroke"/>' +
-    '</svg><span class="lab ' + cls + '">' + tag + '</span>';
+      '<path class="fill ar" d="' + area + '"/>' +
+      '<line class="mid" x1="0" y1="' + mid + '" x2="' + W + '" y2="' + mid +
+        '" vector-effect="non-scaling-stroke"/>' +
+      '<path class="ln" d="' + ln + '" vector-effect="non-scaling-stroke"/>' +
+      '<line class="end" x1="' + (W - 2) + '" y1="' + (lastY - 3) + '" x2="' + (W - 2) + '" y2="' + (lastY + 3) +
+        '" vector-effect="non-scaling-stroke"/>' +
+    '</svg><span class="u2-tape-lab ' + cls + '">' + tag + '</span>';
 }
 
 /* ============ 渲染 ============ */
 var $ = function(id){ return document.getElementById(id); };
-/* 四条命图标（2026-10-28 王权式）：图标形状当 clipPath，一个矩形从底往上填，
-   填多少＝数值多少，满格实心、空了只剩灰槽加轮廓。数值不常驻（王权也没有），
-   悬停 tip 里看——信息没丢，只是不再占一整行。 */
+/* 四条命（v2 王权式液面）：DOM 结构就是将来的小程序结构——
+     .vit-i ─┬ .u2-vit-slot  空槽（灰底图标）
+             ├ .u2-vit-fill  液面：height = 数值%，overflow:hidden
+             │   └ .u2-vit-ico  彩色整图贴底，被上一层自然裁出下半截
+             ├ .u2-vit-out   亮描边（绒布上必须亮色描边，深色会糊）
+             ├ .tip          数值明细（触屏 tap / 桌面 hover）
+             └ .vdlt         属性飘字
+   图标是 12 张 base64 data-URI（4 形状 × 空槽/实心/描边），全部写在 CSS 里：
+   不用内联 SVG、不用 clipPath —— WXML 不支持内联 SVG，迁移会翻车（spec §7.2 / §7.3）。 */
 var VITS = [
- {k:"energy", nm:"精力", col:"#ffc53d",
-  shape:"M13 2 L5.5 13.5 H10.8 L9.6 22 L18.5 9.5 H12.6 Z",
+ {k:"energy", nm:"精力",
   tip:function(){ return "精力 " + Math.round(S.energy) + "/100 · 干活社交都耗它，睡觉回血，见底先进医院。"; }},
- {k:"mind", nm:"心态", col:"#ff4d4f",
-  shape:"M12 20.8 C6.4 15.8 3.4 12.3 3.4 8.9 C3.4 6 5.6 3.9 8.2 3.9 C9.9 3.9 11.3 4.9 12 6.4 C12.7 4.9 14.1 3.9 15.8 3.9 C18.4 3.9 20.6 6 20.6 8.9 C20.6 12.3 17.6 15.8 12 20.8 Z",
+ {k:"mind", nm:"心态",
   tip:function(){ return "心态 " + Math.round(S.mind) + "/100 · 太低抑郁出局，太高（88+）会上头——买入多掏 35%。"; }},
- {k:"risk", nm:"风险", col:"#ff9500",
-  shape:"M12 2.6 L21.8 20 H2.2 Z",
+ {k:"risk", nm:"风险",
   tip:function(){ return "风险 " + Math.round(S.risk) + "/100 · 高于 68 危险，拉满会被券商强制平仓、一把清空持仓。"; }},
- {k:"soc", nm:"社会", col:"#4d9fff",
-  shape:"M8.6 4.6 a3.3 3.3 0 1 0 0.01 0 Z M2.9 20 c0-3.7 2.6-6 5.7-6 s5.7 2.3 5.7 6 Z M16.4 6.4 a2.9 2.9 0 1 0 0.01 0 Z M15.2 13.6 c3 .3 5.2 2.4 5.2 5.6 v0.8 h-4.4 Z",
+ {k:"soc", nm:"社会",
   tip:function(){ return "社会 " + Math.round(S.social) + "/100 · 人脉信用，见底众叛亲离。欠下的人情账最后会一起算。"; }}
 ];
-/* 悬浮提示防裁边（2026-10-28）：tip 相对触发元素 left:0 定位，右边的图标/胶囊一弹
-   就伸出屏幕右缘被裁掉。弹出前主动测量，用 margin 拉回屏幕内（transform 被入场
-   动画占着，修正只能走 margin）。只挂一次，全页 tip 通用。 */
+
+/* tip 防裁边：tip 相对触发元素 left:0 定位，最右的图标/胶囊一弹就伸出屏幕右缘被裁掉。
+   弹出前主动测量，用 margin 拉回屏幕内（transform 被入场动画占着，修正只能走 margin）。 */
+function fitTip(tip){
+  try{
+    tip.style.marginLeft = "";
+    var ph = document.querySelector(".phone"); if(!ph) return;
+    var box = ph.getBoundingClientRect(), r = tip.getBoundingClientRect(), pad = 8, shift = 0;
+    if(r.right > box.right - pad) shift = box.right - pad - r.right;
+    if(r.left + shift < box.left + pad) shift = box.left + pad - r.left;
+    if(shift) tip.style.marginLeft = shift + "px";
+  }catch(_e){}
+}
+/* 触屏可达性（ui-adaptation §6-1）：tip 原来只在 :hover/:focus，真机上没有入口。
+   现在 chip / 四条命点一下就开（同一时刻只开一个，点空白全关），桌面仍保留 hover。
+   委托在 document 上：strip 每天重建，逐个绑定必然丢事件。 */
+function tipHostOf(t){
+  return t && t.closest ? t.closest(".vit-i,.chip") : null;
+}
+function closeTips(keep){
+  try{
+    var all = document.querySelectorAll(".tip");
+    for(var i = 0; i < all.length; i++) if(all[i] !== keep) all[i].classList.remove("on");
+  }catch(_e){}
+}
+function toggleTip(host){
+  var tip = host.querySelector ? host.querySelector(".tip") : null;
+  if(!tip) return;
+  var open = !tip.classList.contains("on");
+  closeTips(open ? tip : null);
+  if(open) tip.classList.add("on"); else tip.classList.remove("on");
+  if(open) fitTip(tip);
+}
+document.addEventListener("click", function(e){
+  var host = tipHostOf(e.target);
+  if(!host){ closeTips(null); return; }     // 点空白处：全关
+  toggleTip(host);
+}, true);
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+  var host = tipHostOf(e.target);
+  if(!host) return;
+  if(e.preventDefault) e.preventDefault();
+  toggleTip(host);
+}, true);
 document.addEventListener("pointerover", function(e){
-  var h = e.target.closest ? e.target.closest(".vit-i,.chip") : null;
-  if(!h) return;
+  var h = tipHostOf(e.target); if(!h) return;
   var tip = h.querySelector(".tip"); if(!tip) return;
-  tip.style.marginLeft = "";
-  var ph = document.querySelector(".phone"); if(!ph) return;
-  var box = ph.getBoundingClientRect(), r = tip.getBoundingClientRect(), pad = 8, shift = 0;
-  if(r.right > box.right - pad) shift = box.right - pad - r.right;
-  if(r.left + shift < box.left + pad) shift = box.left + pad - r.left;
-  if(shift) tip.style.marginLeft = shift + "px";
+  fitTip(tip);
 }, true);
 document.addEventListener("focusin", function(e){
-  var h = e.target.closest ? e.target.closest(".vit-i,.chip") : null;
-  if(!h) return;
-  h.dispatchEvent(new Event("pointerover"));
+  var h = tipHostOf(e.target); if(!h) return;
+  var tip = h.querySelector(".tip"); if(tip) fitTip(tip);
 }, true);
 
-/* 骨架只 build 一次：之后 render 只推 transform / 换 fill——元素不重建，CSS 过渡才有得跑
-   （原来每帧重建 innerHTML，进度是「秒切」的，玩家看不出涨落）。 */
+/* 骨架只 build 一次：之后 render 只推液面高度——元素不重建，CSS 过渡才有得跑。 */
 var VIT_ELS = null;
+function vitIconHTML(k, pct, withIds){
+  return '<span class="u2-vit-slot"></span>' +
+    '<span class="u2-vit-fill"' + (withIds ? ' id="vf-' + k + '"' : '') +
+      (pct == null ? '' : ' style="height:' + pct + '%"') + '><span class="u2-vit-ico"></span></span>' +
+    '<span class="u2-vit-out"></span>';
+}
 function vitBuild(){
-  $("vit").innerHTML = VITS.map(function(v, i){
-    return '<span class="vit-i" id="r-' + v.k + '" tabindex="0">' +
-      '<svg viewBox="0 0 24 24" width="30" height="30" role="img" aria-label="' + v.nm + '">' +
-      '<defs><clipPath id="vcp' + i + '"><path d="' + v.shape + '"/></clipPath></defs>' +
-      '<path d="' + v.shape + '" fill="#eef0f3"/>' +
-      // 裁剪挂在外层静止的 <g> 上，transform 只推里面的 rect —— clip 和 transform 同元素时
-      // 裁剪区会跟着一起位移，彩色形状会从轮廓底下戳出去（2026-10-29 踩过）
-      '<g clip-path="url(#vcp' + i + ')">' +
-      '<rect class="fill" id="vf-' + v.k + '" x="0" y="0" width="24" height="24" fill="' + v.col +
-        '" style="transform:translateY(24px)"/>' +   // 从空格起手：开局一段涨满的小动画
-      '</g>' +
-      '<path d="' + v.shape + '" fill="none" stroke="#3a3f46" stroke-width="1.6" stroke-linejoin="round"/>' +
-      (v.k === "risk" ? '<path d="M12 8.4 v5.2" stroke="#3a3f46" stroke-width="1.8" stroke-linecap="round" fill="none"/>' +
-                        '<circle cx="12" cy="16.8" r="1.05" fill="#3a3f46"/>' : '') +
-      '</svg>' +
-      '<span class="vdlt" id="vd-' + v.k + '"></span>' +
-      '<span class="tip" id="vt-' + v.k + '"></span></span>';
+  $("vit").innerHTML = VITS.map(function(v){
+    return '<span class="vit-i k-' + v.k + '" id="r-' + v.k + '" tabindex="0" role="button" aria-label="' + v.nm + '">' +
+      vitIconHTML(v.k, 0, true) +                        // 从空槽起手：开局一段涨满的小动画
+      '<span class="tip" id="vt-' + v.k + '"></span>' +
+      '<i class="vdlt" id="vd-' + v.k + '"></i></span>';
   }).join("");
   VIT_ELS = {};
   VITS.forEach(function(v){
-    VIT_ELS[v.k] = { rect: $("vf-" + v.k), span: $("r-" + v.k), tip: $("vt-" + v.k),
+    VIT_ELS[v.k] = { fill: $("vf-" + v.k), span: $("r-" + v.k), tip: $("vt-" + v.k),
                      delta: $("vd-" + v.k), last: null };
   });
+}
+/* 开局页的四个小图标（满格静态，纯装饰；不带 id，避免和 HUD 撞） */
+function introIcons(){
+  var host = $("i-vit"); if(!host) return;
+  host.innerHTML = VITS.map(function(v){
+    return '<span class="vit-i k-' + v.k + '">' + vitIconHTML(v.k, 100, false) + '</span>';
+  }).join("");
 }
 function vitUpdate(){
   var vals = {energy:S.energy, mind:S.mind, risk:S.risk, soc:S.social};
@@ -986,17 +1218,16 @@ function vitUpdate(){
     var e = VIT_ELS[v.k]; if(!e) return;
     var val = Math.max(0, Math.min(100, vals[v.k]));
     var warn = !!warns[v.k];
-    // 液面：整高矩形往下推。SVG 里 transform 的 px = 用户单位，translateY(24-val*0.24)
-    e.rect.style.transform = "translateY(" + (24 - val * 0.24).toFixed(2) + "px)";
-    e.rect.style.fill = warn ? "#ff3b30" : v.col;      // 预警统一闪红（图标自带呼吸动画，色相近也能分清）
-    e.span.classList.toggle("warn", warn);
+    // 液面：外层高度就是数值。过渡（550ms）挂在 .u2-vit-fill 的 height 上
+    if(e.fill && e.fill.style) e.fill.style.height = val.toFixed(1) + "%";
+    e.span.classList.toggle("warn", warn);            // 预警：整图标 1100ms 呼吸（spec §4）
     e.tip.innerHTML = '<b>' + v.nm + '</b>' + v.tip(); // tip 数值每次刷新（build 一次就不能烤死在里面）
     if(e.last !== null && Math.abs(val - e.last) >= 1 && !warn){
       var up = val > e.last;
       e.delta.textContent = (up ? "+" : "−") + Math.abs(Math.round(val - e.last));
       e.delta.className = "vdlt"; void e.delta.offsetWidth;   // 重置动画从头播
       e.delta.className = "vdlt on " + (up ? "up" : "dn");
-      e.span.classList.add("bump");                            // 图标 Pulse 一下
+      e.span.classList.add("bump");                            // 图标 Pulse 一下（预警时让位给 blink）
       clearTimeout(e.span._b);
       e.span._b = setTimeout(function(){ e.span.classList.remove("bump"); }, 450);
     }
@@ -1014,7 +1245,7 @@ function render(){
   $("b-eq").style.width = wE + "%";   $("b-eq").style.left = wC + "%";
   $("b-debt").style.width = clamp(S.debt / MONEY_CAP * 100, 0, 100) + "%";
   // 负债摸到信用的八成：条开始呼吸。额度是个暗数，不提醒的话玩家会在"突然穿仓"那天懵住
-  $("b-debt").classList.toggle("debtwarn", S.debt >= creditLimit() * 0.8);
+  $("b-debt").classList.toggle("u2-debt-breathe", S.debt >= creditLimit() * 0.8);
   // 三段条哪段动了就闪一下：账目行说「变了多少、哪来的」，这里说「动的是哪段钱」——
   // 「现金 0 还能花钱」的困惑就来自看不出扣的是股票还是欠款
   barFlash($("b-cash"), S.cash - S._pc); barFlash($("b-eq"), S.equity - S._pe); barFlash($("b-debt"), S.debt - S._pd);
@@ -1022,6 +1253,14 @@ function render(){
   S._pc = S.cash; S._pe = S.equity; S._pd = S.debt;
 
   $("tape").innerHTML = tapeHTML();                    // 当日分时图
+  // 跌日整组转绿 / 停牌平盘转灰：线、填充、角标一起变，不是只绿那个百分数（spec §3.4）
+  try{
+    var it0 = S.intra, dev0 = it0 && it0.prev ? (it0.close / it0.prev - 1) : 0;
+    var halt0 = !!(it0 && it0.lim === "halt"), flat0 = !!it0 && Math.abs(dev0) < 0.0005;
+    var mk = $("mkt");
+    mk.classList.toggle("u2-dn", !!it0 && !halt0 && !flat0 && dev0 < 0);
+    mk.classList.toggle("u2-flat", !!it0 && (halt0 || flat0));
+  }catch(_e){}
   try{                                                 // 划线动画：先量长度再放行（桩环境没有 getTotalLength，静默跳过）
     var lnEl = $("tape").querySelector(".ln"), tl = lnEl.getTotalLength();
     lnEl.style.strokeDasharray = tl; lnEl.style.strokeDashoffset = tl;
@@ -1064,6 +1303,19 @@ function render(){
     html += '<span class="chip' + (k==="bubble"||k==="crisis"||k==="halt"||k==="bull"||k==="bear"?" hot":"") + '" tabindex="0">' +
             info.ic + info.nm + (left > 0 ? ' <b>' + left + '</b>天' : '') +
             '<span class="tip"><b>' + info.ic + " " + info.nm + '</b>' + (info.tip || "（这个状态暂时没有说明。）") + '</span></span>';
+  }
+  // 风险预警（spec §4）：risk > 68 时胶囊行补一条热度态胶囊，跟图标呼吸、三角填充三处同报
+  if(S.risk > 68){
+    html += '<span class="chip hot u2-freeze" tabindex="0">⚠ 风险 <b>' + Math.round(S.risk) + '</b>' +
+            '<span class="tip"><b>⚠ 风险 ' + Math.round(S.risk) + '/100</b>' +
+            '高于 68 就是危险区：一次重仓、一条内线消息都可能把它推满，拉满会被强制平仓、一把清空持仓。</span></span>';
+  }
+  // 负债 80% 呼吸态：胶囊行同步报一句「负债 8,000 / 10,000」，额度不再是暗数（spec §4）
+  if(S.debt >= creditLimit() * 0.8 && S.debt > 1){
+    html += '<span class="chip due" tabindex="0">负债 <b>' + money(S.debt) + '</b> / ' +
+            money(creditLimit()).replace("¥","") +
+            '<span class="tip"><b>负债 ' + money(S.debt) + ' / 额度 ' + money(creditLimit()) + '</b>' +
+            '已经用掉八成额度，再借就要借不动了。每月 5 号和 20 号各还一次月供。</span></span>';
   }
   strip.innerHTML = html;
   // 提示卡逐个定位：夹在手机框内（overflow:hidden 会裁掉居中伸出去的部分）。
@@ -1117,17 +1369,32 @@ function barFlash(el, d){
   el._f = setTimeout(function(){ el.className = el.className.replace(/\s*hit/g, ""); }, 1150);
 }
 
-/* 今日账目行（2026-11-03 轮播 + 弹出）：把 S.ledger 里的钱项一次一项弹出来，
-   每 0.95 秒换下一笔，右下角「第几笔/共几笔」。超过 7 笔时小额的合并成「其他」，
-   轮完一圈自动淡出——最多 8 项 × 0.95s ≈ 8 秒封顶。连滑时旧账目直接被新一天的顶掉。 */
+/* 今日账目行（v2：独立 16px 行）：把 S.ledger 里的钱项一次一项弹出来，每 0.92 秒换下一笔。
+   位置从「压在分时图上」改到「资金条与分时图之间」的独立一行——多花 16px 高度，
+   换来分时图 100% 不被文字盖住（spec §3.4）。超过 7 笔时小额的合并成「其他」，
+   一圈 ≤ 8 秒封顶。连滑时旧账目直接被新一天的顶掉。
+   行元素常驻（第一次出现后不再删除）：否则每天 16px 的进出会让整块行情区跳一下。 */
+function ensureLedgRow(){
+  var host = $("mkt"); if(!host) return null;
+  try{
+    var q = host.querySelector(".ledg");
+    if(q && q.parentNode === host) return q;
+  }catch(_e){}
+  var el = document.createElement("span");
+  el.className = "ledg";
+  var tapeEl = $("tape");
+  try{ host.insertBefore(el, tapeEl); }catch(_e){ host.appendChild(el); }   // 桩 DOM 没有 insertBefore：退化成追加
+  return el;
+}
 function ledShow(){
   var host = $("mkt"); if(!host) return;
-  var old = host.querySelector(".ledg");
-  if(old && old.parentNode) old.parentNode.removeChild(old);
   clearTimeout(ledShow._t);
   var L = S.ledger; S.ledger = {};
   var keys = Object.keys(L).filter(function(k){ return Math.abs(L[k]) >= 1; });
-  if(!keys.length) return;
+  var el = ensureLedgRow();
+  if(!el) return;
+  el.innerHTML = "";                                     // 清掉上一轮那笔（16px 行高保留）
+  if(!keys.length){ el.classList.remove("on"); return; }
   keys.sort(function(a, b){ return Math.abs(L[b]) - Math.abs(L[a]); });
   var other = 0;
   if(keys.length > 7){                                   // 第 8 笔起都是小钱，合并成「其他」
@@ -1135,26 +1402,22 @@ function ledShow(){
     keys = keys.slice(0, 7);
     if(Math.abs(other) >= 1) keys.push("其他");
   }
-  var el = document.createElement("span");
-  el.className = "ledg";
   var itm = document.createElement("span");
   itm.className = "itm";
   el.appendChild(itm);
-  host.appendChild(el);
   var i = 0;
   (function one(){
     var k = keys[i], v = k === "其他" ? other : L[k];
     var cls = LED_IO[k] ? (v > 0 ? "up" : "dn") : "tf";  // 真收支红进绿出，借贷/买卖是转账走灰色
     itm.innerHTML = "<em>" + k + "</em><b class='" + cls + "'>" +
-      (v > 0 ? "+" : "−") + money(Math.abs(v)) + "</b>";
+      (v > 0 ? "▲ +" : "▼ −") + money(Math.abs(v)) + "</b>";
     /* 同一句文案只改 innerHTML 不会重播 CSS 动画，得把 animation 的宿主类摘掉、
        强制回流、再挂回去——否则第一笔之后每一笔都是「静止地换字」。 */
     itm.classList.remove("itm"); void itm.offsetWidth; itm.classList.add("itm");
     i++;
     ledShow._t = setTimeout(i < keys.length ? one : function(){
-      el.classList.remove("on");                         // 轮完一圈，淡出再拆
-      ledShow._t = setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 220);
-    }, 950);
+      el.classList.remove("on");                         // 轮完一圈，淡出（行留着占位）
+    }, 920);
   })();
   el.classList.add("on");
 }
@@ -1399,13 +1662,11 @@ function deckBack(cls){
   d.className = "card " + cls + " back";
   return d;
 }
-/* 人物位渲染（2026-10-28）：素材没到位时走占位，版式跟有图时完全一样，
-   所以现在就能看到「正式版长什么样」，素材来了只是把 emoji 换成图，不用改版。
-   表情差分 = 同尺寸整图换脸（laopo_happy.webp 这种），可以是 AI 垫图生成，
-   天然对齐——不用贴片锚点那种像素级对齐的活。
-/* 人物位渲染（2026-10-28）：ART_ON 默认开——素材直接显示在 prototype.html 里，不用带参数。
-   还没出图的角色走 emoji 占位（单图 404 自动塌回，版式不变）。
-   ?art=0 可临时关图（调试占位版式用）。 */
+/* 人物图区（v2 四层，自下而上）：场景 → 调色 → 地面影 → 人物。
+   有图：场景层用 cover 铺满（导出图是人物+场景合成的一张 560×640）；
+   无图 / 单图 404：场景收起，emoji 顶上——图框、圆角、内衬线、高度、下沿暗层全不变，
+   占位与真图逐像素对齐（spec §5.3，占位不许塌版）。
+   ART_ON 默认开：素材直接显示，不用带参数；?art=0 强制走占位（调占位版式用）。 */
 var ART_ON = !(typeof location !== "undefined" && /[?&]art=0/.test(location.search));
 /* 干净模式开关：?clean=1 强制开；微信小程序 webview 的 UA 带 miniProgram，自动开。
    开了之后手机框外的开发包装（标题/说明）不渲染，游戏全屏——
@@ -1417,19 +1678,29 @@ if (typeof document !== "undefined" && document.documentElement) {
 }
 function artHTML(c){
   var ph = c.av || "🖼";
-  if(!ART_ON || !c.wid) return '<div class="art" data-ph="' + ph + '"><span class="ph">' + ph + '</span></div>';
+  var hasImg = ART_ON && c.wid;
   var file = c.wid + (c.emo ? "_" + c.emo : "") + ".webp";   // 素材规范：WebP（单张 ≤45KB 预算内）
-  return '<div class="art" data-ph="' + ph + '">' +
-         '<img src="assets/char/' + file + '" alt="" onerror="this.parentNode.classList.add(\'gone\')"></div>';
+  return '<div class="art ' + (hasImg ? 'img' : 'no-img') + '" data-ph="' + ph + '">' +
+    (hasImg ? '<img class="u2-art-scene" src="assets/char/' + file + '" alt="" ' +
+              'onerror="this.parentNode.classList.add(\'gone\')">' : '') +
+    '<span class="u2-art-shade"></span>' +
+    '<span class="u2-art-ground"></span>' +
+    '<span class="u2-art-person">' + ph + '</span>' +
+  '</div>';
+}
+/* 印章文案：色弱双保险——左边永远是「←」开头、右边永远是「→」结尾（形状+符号+颜色三重编码） */
+function stampLabel(c, dir){
+  var s = labelOf(dir === "R" ? c.R : c.L);
+  return dir === "R" ? (s + " →") : ("← " + s);
 }
 function build(c){
   var d = document.createElement("div");
   d.className = c.fact ? "card fact" : "card";       // fact：既定事实卡，两边一样，只用来告诉玩家"已经这样了"
-  /* 王权式（2026-10-28）：卡面只有画面＋文案＋选项印章。
+  /* 王权式：卡面只有画面＋文案＋选项印章。
      ① 顶部的「谁在说话」行删了——是谁说的话，读内容就知道；
-     ② 选项不常驻：平时看不见，拖动时对应侧的印章浮现出来（见 bind 的 pointermove），
-        底部常驻操作说明（.tips）一并删掉，序幕第二张卡已经教过怎么滑。 */
-  d.innerHTML = '<div class="stamp L"></div><div class="stamp R"></div>' +
+     ② 选项不常驻：平时看不见，拖动时对应侧的印章浮现出来（见 bind 的 pointermove）；
+     ③ 既定事实卡没有选项（两边一样，这不是选择题）——连印章都不该出现。 */
+  d.innerHTML = (c.fact ? "" : '<div class="stamp L"></div><div class="stamp R"></div>') +
     artHTML(c) +
     '<div class="txt">' + c.txt + '</div>' +
     (c.fact ? '<div class="fn">已经这样了</div>' : '');
@@ -1494,25 +1765,26 @@ function bind(card){
     var t = clamp(Math.abs(dx) / 90, 0, 1);
     var c = card._c;
     // 拖到哪边，哪边的选项印章就浮现（王权式）：文字提前填好，opacity 跟着拖动距离走
-    card.querySelector(".stamp.L").textContent = labelOf(c.L);
-    card.querySelector(".stamp.R").textContent = labelOf(c.R);
-    card.querySelector(".stamp.L").style.opacity = dx < 0 ? t : 0;
-    card.querySelector(".stamp.R").style.opacity = dx > 0 ? t : 0;
+    // 既定事实卡没有印章，全部走空值保护
+    var sl = card.querySelector(".stamp.L"), sr = card.querySelector(".stamp.R");
+    if(sl){ sl.textContent = stampLabel(c, "L"); sl.style.opacity = dx < 0 ? t : 0; }
+    if(sr){ sr.textContent = stampLabel(c, "R"); sr.style.opacity = dx > 0 ? t : 0; }
   });
   function end(){
     if(!on) return; on = false;
     card.style.transition = "transform .32s cubic-bezier(.3,.9,.3,1), opacity .32s";
     if(Math.abs(dx) > 78) fly(dx > 0 ? "R" : "L");
     else { card.style.transform = "translate(0,0) rotate(0deg)";
-      card.querySelector(".stamp.L").style.opacity = 0; card.querySelector(".stamp.R").style.opacity = 0; }
+      var sl = card.querySelector(".stamp.L"), sr = card.querySelector(".stamp.R");
+      if(sl) sl.style.opacity = 0; if(sr) sr.style.opacity = 0; }
   }
   card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
 }
 function fly(dir){
   if(busy || S.over) return; busy = true;
-  var c = cur._c, sel = dir === "R" ? c.R : c.L;
+  var c = cur._c;
   var stp = cur.querySelector(".stamp." + dir);
-  stp.textContent = sel.s; stp.style.opacity = 1;
+  if(stp){ stp.textContent = stampLabel(c, dir); stp.style.opacity = 1; }   // 既定事实卡没有印章
   cur.style.transition = "transform .34s ease-out, opacity .34s";
   cur.style.transform = "translate(" + (dir === "R" ? 460 : -460) + "px,10px) rotate(" + (dir === "R" ? 26 : -26) + "deg)";
   cur.style.opacity = 0;
@@ -2003,9 +2275,63 @@ CARDS = [
  {id:"debt_limit_01",who:"出差",wid:"chucha",av:"🚄",tag:"风险",when:"has:laolai",cap:2,txt:"客户在两千公里外。名单上的人，买不了高铁和机票。",
   R:{s:"视频会议算了，单子丢了",e:{mind:-4,social:-6}},L:{s:"坐绿皮，硬座两天",e:{energy:-30,mind:-6,social:2}}},
 ];
+/* ============ 布局实测（ui-adaptation §1.5 / §6-2） ============
+   两件事都在启动时量一次、窗口变化重量：
+     ① toast 锚点：--hud-bottom = 导航 + HUD 的实测高度。原来写死 top:112px 是开发框
+        344 布局的 eyeball 值，换机型/上自定义导航必然错位（390 档 112px 正好压图标行）；
+     ② 降级阶梯：按实测 stageH 决定砍哪几块装饰高度（先砍装饰，玩法文字永不砍）。
+   量不到（smoke-ui 的桩 DOM 没有 querySelector）就静默跳过，浏览器里一定走得到。 */
+function phoneEl(){
+  try{ return document.querySelector ? document.querySelector(".phone") : null; }catch(_e){ return null; }
+}
+function layoutAnchor(){
+  var ph = phoneEl(); if(!ph) return;
+  try{
+    var nav = ph.querySelector(".nav"), hud = ph.querySelector(".hud"),
+        strip = ph.querySelector(".strip"), mkt = ph.querySelector(".mkt");
+    if(nav && hud) ph.style.setProperty("--hud-bottom", (nav.offsetHeight + hud.offsetHeight) + "px");
+    // toast 锚在行情面板下缘（= 卡区顶部）：往下 8px。
+    // 不压 HUD、也不压卡面正文（§5.1 两条同时满足）——只有卡面图区顶上这一段是空的，
+    // 胶囊行和净值行都是 1~2 行的小行，装不下一条两行的 toast（实测 390 档会盖住净值）。
+    if(nav && hud && mkt){
+      ph.style.setProperty("--toast-top",
+        (nav.offsetHeight + hud.offsetHeight + (strip ? strip.offsetHeight : 0) + mkt.offsetHeight) + "px");
+    }
+  }catch(_e){}
+}
+/* stageH = 屏高 − 导航 − HUD − 胶囊行 − 行情区 − 底部外边距 */
+function stageBudget(ph){
+  var nav = ph.querySelector(".nav"), hud = ph.querySelector(".hud"),
+      strip = ph.querySelector(".strip"), mkt = ph.querySelector(".mkt");
+  if(!nav || !hud || !mkt) return 9999;
+  var H = ph.clientHeight || ph.offsetHeight || 0;
+  return H - nav.offsetHeight - hud.offsetHeight - (strip ? strip.offsetHeight : 0) - mkt.offsetHeight - 12;
+}
+var DEG = [300, 240, 200, 170, 150];       // ⑤档阈值：tape 缩 → tape 隐 → HUD 缩 → 图区隐 → .fn 隐
+function applyDegrade(){
+  var ph = phoneEl(); if(!ph) return;
+  try{
+    var cls = String(ph.className || "").replace(/\bdeg[1-5]\b/g, " ").replace(/\s+/g, " ").trim();
+    if(cls !== ph.className) ph.className = cls;
+    var h = stageBudget(ph), n = 0;
+    // 一次测量定档：不迭代重测，否则每砍一档又触发下一档，会一路砍到没牌面
+    for(var i = 0; i < DEG.length; i++) if(h < DEG[i]) n = i + 1;
+    for(var j = 1; j <= n; j++) ph.classList.add("deg" + j);
+    ph.setAttribute("data-stage", Math.round(h));
+  }catch(_e){}
+}
+function relayout(){ layoutAnchor(); applyDegrade(); }
+
 $("i-b").onclick = function(){ $("intro").classList.remove("on"); };
-$("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始第一周」关闭）
+$("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始」关闭）
 reset();
+introIcons();                            // 开局页那四个满格小图标
+ensureLedgRow();                         // 账目行常驻占位：第一次出现时不让行情区跳 16px
+relayout();
+try{
+  window.addEventListener("resize", relayout);
+  window.addEventListener("orientationchange", relayout);
+}catch(_e){}
 </script>
 </body>
 </html>
