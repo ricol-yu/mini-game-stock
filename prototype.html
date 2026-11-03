@@ -94,8 +94,8 @@
   .hud{flex:0 0 auto;padding:2px 12px 0}
   .vit{display:flex;justify-content:space-around;align-items:center;height:46px}
   .vit-i{position:relative;width:34px;height:32px;display:block;cursor:pointer}
-  /* 44×44 触达热区（图标视觉不变，ui-adaptation §4.3） */
-  .vit-i::after{content:"";position:absolute;left:-5px;right:-5px;top:-6px;bottom:-6px}
+  /* 44×44 触达热区（34×32 本体，四边外扩 6 → 46×44；图标视觉不变） */
+  .vit-i::after{content:"";position:absolute;inset:-6px}
   .u2-vit-slot,.u2-vit-out{position:absolute;left:0;top:0;width:34px;height:32px;
     background-repeat:no-repeat;background-position:50% 100%;background-size:32px 32px;pointer-events:none}
   .u2-vit-fill{position:absolute;left:0;right:0;bottom:0;height:50%;overflow:hidden;
@@ -139,8 +139,8 @@
   .chip{height:22px;font-size:var(--u2-fs-cap);line-height:1;font-weight:700;color:var(--u2-ink-2);
     background:#fdf3d8;border:1.5px solid rgba(43,31,18,.28);border-radius:var(--u2-r-chip);
     padding:0 9px;display:inline-flex;align-items:center;gap:3px;position:relative;cursor:pointer}
-  /* 32px 触达热区（本体 22，隐形外扩 5px） */
-  .chip::after{content:"";position:absolute;left:-2px;right:-2px;top:-5px;bottom:-5px}
+  /* 44×44 触达热区（本体 22 高，隐形外扩 11+11；左右不用扩，本体已经宽过 44） */
+  .chip::after{content:"";position:absolute;left:-2px;right:-2px;top:-11px;bottom:-11px}
   .chip b{font-weight:800;color:var(--u2-ink);font-variant-numeric:tabular-nums}
   .chip.hot{background:#ffe9bf;border-color:#e0a53a;color:#8a5a12}
   .chip.hot b{color:#8a5a12}
@@ -290,8 +290,10 @@
 
   /* ---- 卡面人物图区：场景 / 调色 / 地面影 / 人物 四层（art-spec v3 合成钩子）----
      文字优先：.txt 自然高度、.art 吃剩余空间，图再大也挤不掉字（AGENTS 铁律）。
-     min-height 取 96 是「文字永不被 overflow 裁掉」的兜底地板（§1.5 阶梯③下限）。 */
-  .card .art{position:relative;flex:1 1 auto;min-height:96px;margin:0 0 10px;border-radius:var(--u2-r-art);
+     min-height 必须是 0：早先写 96 是「图区别太薄」的地板，可它把 flex 的让位规则顶死了——
+     卡高不够时地板不退，文字被挤出卡外（SE1 大字号实测正文第三行切一半）。
+     图区真的被挤到 <64px 就整块收起（JS 挂 .gone/.hide），不再靠地板撑。 */
+  .card .art{position:relative;flex:1 1 auto;min-height:0;margin:0 0 10px;border-radius:var(--u2-r-art);
     overflow:hidden;box-shadow:var(--u2-sh-inset);background:linear-gradient(180deg,#f3e8c9,#e0cfa6)}
   .card .art .u2-art-scene{position:absolute;left:0;top:0;width:100%;height:100%;display:block;
     object-fit:cover;object-position:50% top;-webkit-user-drag:none;user-select:none;pointer-events:none}
@@ -323,6 +325,13 @@
   .card .art.none .u2-art-shade,.card .art.gone .u2-art-shade{opacity:.55}
   .card .art.none .u2-art-ground,.card .art.gone .u2-art-ground{display:none}
   .card .art.gone .u2-art-scene,.card .art.gone .u2-art-person,.card .art.gone .u2-art-prop-img{display:none}
+  /* 图区被文字挤到 <64px：连占位框一起收起。
+     .gone 只撤图（走 72px emoji 占位），在一条 30px 的框里那 72px 也是废画面，
+     所以这一态挂 .hide 整块收掉，文字直接吃满卡面（ui-adaptation §1.5 阶梯③）。 */
+  .card .art.hide{display:none}
+  /* 图区收起后剩下的空带别全堆在正文底下：正文块撑满剩余空间、内容垂直居中，
+     视觉上仍是「一张装得下文字的卡」，不是「文字顶在上面、下面一片空」。 */
+  .card .art.hide + .txt{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center}
   /* 图区实测高 <200px（大字号 96 档 / SE1 降级 181 档）：纵向锚点上移到 16%。
      cover 下 96 档只可见 0~27.6%，脸心 28%、下巴 34% 正好切在边线；改后可见带
      11.6~39.2%，脸完整。常态三档纵向溢出 <1%，加不加像素级一致。 */
@@ -360,7 +369,10 @@
     padding:8px 14px;border:2px solid rgba(253,243,216,.22);border-radius:var(--u2-r-panel);
     box-shadow:0 4px 0 rgba(0,0,0,.28);
     opacity:0;transition:opacity var(--u2-t-base),transform var(--u2-t-base);
-    pointer-events:none;max-width:300px;text-align:center;z-index:30}
+    pointer-events:none;text-align:center;z-index:30;
+    /* 宽度跟内容列走：320 档内容列 296（stage 左右各 12），留 24 才刚好不越界；
+       不设 max-height ——账目信息截断比多占两行图糟得多（UX 终审口径）。 */
+    max-width:min(300px, calc(100% - 24px))}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ---- 开局页 / 结局页：绒布底 + 奶油大卡 ----
@@ -423,10 +435,11 @@
      ===================================================================== */
   .phone.deg1 .tape{height:36px}
   .phone.deg2 .vit{height:40px}
-  /* deg3（stage<260）把图区地板放到 96。96 已是 .art 的默认下限，所以这一步在
-     本版是「确认地板」：再往上留 170 会让 190~260 段的三行正文被 overflow 裁掉，
-     文字优先规则优先于阶梯的字面数值。 */
-  .phone.deg3 .card .art{min-height:96px}
+  /* deg3（stage<260）：图区地板放开到 0。默认就是 0（见 .art 注释），这条只是把意图
+     钉在阶梯上——别再有人把 96 加回来当保底：96 + 3 行正文 83 + fn 17 + 内距+描边 40
+     ≈ 236，stage 落在 190~236 时地板不退，正文第三行直接被裁掉一半。
+     真的只剩一条图缝（<64px）由 JS 挂 .hide 整块收起，不靠地板撑。 */
+  .phone.deg3 .card .art{min-height:0}
   .phone.deg4 .card .art{display:none}
   .phone.deg4 .card .txt{flex:1 1 auto}
   .phone.deg5 .card .fn{display:none}
@@ -1402,8 +1415,20 @@ function render(){
                            (S.debt > 1 ? " · 欠 " + money(S.debt).replace("¥","¥") : "");
 }
 function toast(t){
-  var el = $("toast"); el.textContent = t; el.classList.add("on");
-  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove("on"); }, 2400);
+  var el = $("toast"); if(!el) return;
+  el.textContent = t; el.classList.add("on");
+  /* 时长跟着行数走：1800 + 400×行数，封顶 5s。
+     5 行发报日账目（工资+房租+水电+月供+余额）原来固定 2.4s，读不完就没了；
+     一行的小提示也不必多留。行数用 clientHeight 反推，不靠数 \n（文案里没有换行符）。 */
+  var lines = 1;
+  try{
+    var cs = getComputedStyle(el);
+    var lh = parseFloat(cs.lineHeight) || 17;
+    var inner = (el.clientHeight || 0) - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+    if(lh > 0 && inner > 0) lines = Math.max(1, Math.round(inner / lh));
+  }catch(_e){}
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove("on"); }, Math.min(5000, 1800 + 400 * lines));
 }
 
 /* 资金条闪烁：动了的段亮一下再暗回去（纯展示，桩里 className 也能空跑） */
@@ -1862,6 +1887,8 @@ var TUT = [
 ];
 function nextCard(){
   if(busy) return;
+  closeTips(null);                                   // 换卡就收提示：tip 是挂在 HUD/胶囊上的浮层，
+                                                     // 出牌后还被选中牌的内容占着，读到的是上一张的事
   var old = stage.querySelectorAll(".card");
   for(var i = 0; i < old.length; i++) old[i].remove();
   if(S.tut < TUT.length){                            // 序幕：一次只发一张教程卡，压不住别的卡
@@ -2048,6 +2075,7 @@ function check(){
   }
   if(!e) return;
   S.over = true;
+  closeTips(null);        // 结局页 z-40 只是盖住：不主动收，重开一局 tip 会重新露在 HUD 上
   $("o-em").textContent = e[0]; $("o-t").textContent = e[1]; $("o-s").textContent = e[2]; $("o-q").textContent = e[3];
   var stat = "终局面板：心态 " + Math.round(S.mind) + " · 社会 " + Math.round(S.social) + " · 风险 " + Math.round(S.risk) +
              " · 净值 " + money(n) + (S.debt > 1 ? " · 负债 " + money(S.debt) : "");
@@ -2441,17 +2469,33 @@ function applyDegrade(){
     ph.setAttribute("data-stage", Math.round(h));
   }catch(_e){}
 }
-/* 图区纵向锚点：实测高 <200px 时 cover 只看得见画面上沿一条，
-   脸心/下巴正好被切在边线（96 档可见带 0~27.6%）。加 .short 把锚点挪到 16%，
-   可见带变成 11.6~39.2%，脸完整。阈值写死 200、不做设备判断——常态三档
-   纵向溢出不到 1%，加不加像素级一致（ui-adaptation §1.5 ②）。 */
+/* 图区两件事，一次量完：
+   ① 纵向锚点：实测高 <200px 时 cover 只看得见画面上沿一条，脸心/下巴正好被切在边线
+      （96 档可见带 0~27.6%）。加 .short 把锚点挪到 16%，可见带变成 11.6~39.2%，脸完整。
+      阈值写死 200、不做设备判断——常态三档纵向溢出不到 1%，加不加像素级一致。
+   ② 图区被文字挤到 <64px：挂 .gone/.hide 整块收起，别留一条 30px 的图缝
+      （文字优先是铁律，图区是让位方，不留「一点点图」的半成品）。
+   量高用「卡高 − 内距 − 正文 − fn」反推，不用 art.offsetHeight：
+   一旦挂上 .hide 它就变成 0，用 offsetHeight 会在每次 relayout 里来回翻。
+   反推值在 .hide 状态下仍然 ≈0（正文吃满卡面），所以判定稳定。 */
 function markArtShort(){
   var ph = phoneEl(); if(!ph) return;
   try{
-    var list = ph.querySelectorAll(".card .art") || [];
-    for(var i = 0; i < list.length; i++){
-      var el = list[i], h = el.offsetHeight || 0;
-      toggleCls(el, "short", h > 0 && h < 200);
+    var cards = ph.querySelectorAll(".card") || [];
+    for(var i = 0; i < cards.length; i++){
+      var card = cards[i], art = card.querySelector(".art");
+      if(!art) continue;
+      var txt = card.querySelector(".txt"), fn = card.querySelector(".fn");
+      var cs = null, acs = null;
+      try{ cs = getComputedStyle(card); acs = getComputedStyle(art); }catch(_e){}
+      var pad = cs ? (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0) : 26;
+      var mb = acs ? (parseFloat(acs.marginBottom) || 0) : 10;   // 图区自己还占着 10px 下外边距
+      var sp = (card.clientHeight || 0) - pad - mb -
+               (txt ? txt.offsetHeight : 0) - (fn ? fn.offsetHeight : 0);
+      toggleCls(art, "short", sp > 0 && sp < 200);
+      var thin = sp < 64;                       // 含负数：正文自己就溢出卡面时更该收图
+      toggleCls(art, "gone", thin);
+      toggleCls(art, "hide", thin);
     }
   }catch(_e){}
 }

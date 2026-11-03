@@ -20,6 +20,7 @@ const VIEWS = [[320, 568], [375, 667], [390, 844], [430, 932]];
 const args = process.argv.slice(2);
 const ART0 = args.includes('--art0');
 const ONLY = (args.find((a) => a.indexOf('--only=') === 0) || '').split('=')[1];
+const TIER = args.includes('--tier');   // 扫降级区间（stage 190~236 = deg3 段），验「正文不被裁」
 
 function fileUrl(artOn) {
   return 'file:///' + path.join(ROOT, 'prototype.html').replace(/\\/g, '/') +
@@ -75,6 +76,42 @@ const stats = (page) => page.evaluate(() => {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   const out = [];
+  if (TIER) {
+    /* 降级阶梯回归：375 宽、屏高 470~590 逐档扫，stage 正好落 188~240（deg3 段）的
+       出图存 .shots/_tier-*.png。判据：cardClip / txtClip 必须全 false——
+       96 地板时代的裁字洞（正文第三行切一半）就是在这个区间炸出来的。 */
+    for (const H of [470, 490, 510, 530, 550, 570, 590]) {
+      const ctx = await browser.newContext({ viewport: { width: 375, height: H }, deviceScaleFactor: 2 });
+      const page = await ctx.newPage();
+      await page.goto(fileUrl(true));
+      await page.waitForTimeout(400);
+      await page.click('#i-b');
+      await page.waitForTimeout(400);
+      const s = await page.evaluate(() => {
+        const g = (x) => document.querySelector(x);
+        const ph = g('.phone');
+        const card = g('#stage .card');
+        const txt = card && card.querySelector('.txt');
+        const art = card && card.querySelector('.art');
+        const r = (el) => (el ? Math.round(el.getBoundingClientRect().height) : 0);
+        return {
+          stage: Math.round(ph.getAttribute('data-stage') || 0),
+          deg: ph.className.replace(/\s*clean/, '').trim(),
+          cardH: r(card), artH: r(art), txtH: r(txt),
+          artCls: art ? art.className : '-',
+          cardClip: !!(card && card.scrollHeight > card.clientHeight + 1),
+          txtClip: !!(txt && txt.scrollHeight > txt.clientHeight + 1),
+        };
+      });
+      console.log(`375x${H}`, JSON.stringify(s));
+      if (s.stage >= 188 && s.stage <= 240) {
+        await page.screenshot({ path: path.join(ROOT, '.shots', `_tier-375x${H}-stage${s.stage}.png`) });
+      }
+      await ctx.close();
+    }
+    await browser.close();
+    return;
+  }
   for (const [w, h] of VIEWS) {
     if (ONLY && String(w) !== ONLY) continue;
     for (const artOn of ART0 ? [true, false] : [true]) {
