@@ -519,7 +519,7 @@ step('消息：到期没兑现 = 假消息，风险与心态要付代价', () =>
   if (settled < 36) throw new Error('假消息分支没正确结算：40 次只有 ' + settled + ' 次扣了风险');
 });
 
-step('今日账目轮播：一次只显示一项，带「第几笔/共几笔」计数；超过 7 笔合并成「其他」', () => {
+step('今日账目轮播：一次只显示一项、不带 1/N 计数；超过 7 笔合并成「其他」', () => {
   sandbox.S.tut = 3; sandbox.reset();
   sandbox.led('工资', 9900); sandbox.led('债息', -55); sandbox.led('日用', -380);
   sandbox.ledShow();
@@ -529,7 +529,8 @@ step('今日账目轮播：一次只显示一项，带「第几笔/共几笔」�
   if (!el) throw new Error('ledShow 没有把账目行挂到 mkt 上');
   const h = itmOf(el)._html;
   if ((h.match(/<b /g) || []).length !== 1) throw new Error('轮播一次应只显示一项：' + h);
-  if (h.indexOf('1/3') < 0 || h.indexOf('工资') < 0) throw new Error('缺计数或金额最大项不在第一位：' + h);
+  if (h.indexOf('工资') < 0) throw new Error('金额最大项不在第一位：' + h);
+  if (/\d+\/\d+/.test(h)) throw new Error('不该再显示 1/N 这种进度：' + h);
   // 9 笔 → 前 7 大保留，其余合并「其他」，最多 8 站
   sandbox.led('a', 100); sandbox.led('b', 90); sandbox.led('c', 80); sandbox.led('d', 70);
   sandbox.led('e', 60); sandbox.led('f', 50); sandbox.led('g', 40); sandbox.led('h', 30); sandbox.led('i', 20);

@@ -121,7 +121,6 @@
   .mkt .ledg b.up{color:#e02020}
   .mkt .ledg b.dn{color:#0aa344}
   .mkt .ledg b.tf{color:#8f959e}
-  .mkt .ledg .n{font-weight:400;color:var(--ink-3);margin-left:3px;font-size:10px}
   .mkt .ledg .itm{display:inline-block;opacity:0;
     animation:ledgPop .92s cubic-bezier(.22,.9,.3,1) both}
   /* 18% 处弹到位（和图标 vdup 同一节奏），72% 开始飘散，100% 走完正好接下一笔 */
@@ -1147,8 +1146,7 @@ function ledShow(){
     var k = keys[i], v = k === "其他" ? other : L[k];
     var cls = LED_IO[k] ? (v > 0 ? "up" : "dn") : "tf";  // 真收支红进绿出，借贷/买卖是转账走灰色
     itm.innerHTML = "<em>" + k + "</em><b class='" + cls + "'>" +
-      (v > 0 ? "+" : "−") + money(Math.abs(v)) + "</b>" +
-      (keys.length > 1 ? "<span class='n'>" + (i + 1) + "/" + keys.length + "</span>" : "");
+      (v > 0 ? "+" : "−") + money(Math.abs(v)) + "</b>";
     /* 同一句文案只改 innerHTML 不会重播 CSS 动画，得把 animation 的宿主类摘掉、
        强制回流、再挂回去——否则第一笔之后每一笔都是「静止地换字」。 */
     itm.classList.remove("itm"); void itm.offsetWidth; itm.classList.add("itm");
@@ -1537,10 +1535,11 @@ function fly(dir){
   S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
   setTimeout(function(){
-    /* 「这笔钱从哪来、到哪去」的账（2026-10-27 重写）：
-       ① 主动借（卡面 borrow）→ borrowed > 0；② 主动还 → borrowed < 0；
-       ③ 现金不够花 → 差额记负债（_autoDebt），不卖股票；
-       ④ 现金不够买 → 少买（_buyWant / _buyGot），差多少明说。
+    /* 「这笔钱从哪来、到哪去」的账（2026-11-03 收口）：钱只要真的动了，账目行都会自己
+       弹一笔（工资/借款/还款/消费/日用/债息/行情…），所以这几种提示不再进 popup——
+       同一件事说两遍，popup 就成了天天挡视线的大字报。
+       留下的只有「没发生的事」：借钱被砍、下单没买成。这类没有金额流动，账目行看不见，
+       不说玩家就以为自己点了个寂寞。
        早先 auto 的提示只在 borrowed > 0 时读——没有 borrow 的卡花了钱欠了债，提示被整个吞掉，
        _autoDebt 还残留到下一张，这就是「现金 0 还能一直花钱，钱不知道扣哪了」的体验来源。 */
     var auto = S._autoDebt || 0; S._autoDebt = 0;
@@ -1548,10 +1547,7 @@ function fly(dir){
     S._buyWant = 0; S._buyGot = 0;
     var bcut = S._borrowCut || 0; S._borrowCut = 0;
     var notes = [];
-    if(borrowed > 0) notes.push("💳 借到 " + money(borrowed) + "，已记进负债");
-    if(borrowed < 0) notes.push("✅ 还掉 " + money(-borrowed) + "，负债减少");
     if(bcut > 0) notes.push("⚖️ 失信名单上借不到全款，少借了 " + money(bcut));
-    if(auto > 0) notes.push("💸 现金不够，欠下 " + money(auto) + "（每月要还）");
     if(buyWant - buyGot >= 1 && buyWant > 0){
       notes.push(buyGot >= 1
         ? "💵 现金只够买 " + money(buyGot) + "，还剩 " + money(buyWant - buyGot) + " 没买上"
