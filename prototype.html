@@ -105,27 +105,23 @@
   @keyframes hitDn{0%{color:var(--down);transform:scale(1.07)}60%{color:var(--down)}100%{color:inherit;transform:scale(1)}}
   .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
   .mbar{position:relative;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:5px}
-  /* 今日账目行（2026-10-29，替代散落的分段飘字）：统一展示在净值正下方——
-     「工资 +¥9,900 · 行情 +¥1,300 · 债息 −¥55」多项加减，一项不漏。
+  /* 今日账目行（2026-11-03 改轮播）：多项并列会把进度条和分时图全盖住、红绿灰糊成一片——
+     改成一次只显示一项，每 1.25 秒轮换，右下角小字标「第几笔/共几笔」。
+     单行居中挂在分时图上缘（装饰区），不压净值和资金条。
      红字=进账/涨，绿字=出账/跌，灰字=转账（借贷/买卖，钱没离开你，只是换了个口袋）。
-     项目多时按金额从大到小取、装不下的折成省略号。挂在 .mkt 上（mbar overflow:hidden 会裁字）。 */
-  .mkt .ledg{position:absolute;top:37px;left:2px;right:2px;font-size:11px;line-height:1.32;
-    max-height:30px;overflow:hidden;pointer-events:none;opacity:0;
-    text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9);
-    animation:ledgUp 3s cubic-bezier(.22,.9,.3,1) both}
+     超过 7 笔时小额的合并成「其他」，保证轮完一圈不超过 8 秒。挂在 .mkt 上。 */
+  .mkt .ledg{position:absolute;top:40px;left:2px;right:2px;height:16px;font-size:11px;line-height:16px;
+    text-align:center;pointer-events:none;opacity:0;transition:opacity .25s;
+    text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9)}
+  .mkt .ledg.on{opacity:1}
   .mkt .ledg em{font-style:normal;color:var(--ink-2);margin-right:1px}
-  .mkt .ledg i{font-style:normal;color:var(--ink-3);margin:0 4px}
   .mkt .ledg b{font-weight:700;font-variant-numeric:tabular-nums}
   .mkt .ledg b.up{color:#e02020}
   .mkt .ledg b.dn{color:#0aa344}
   .mkt .ledg b.tf{color:#8f959e}
-  .mkt .ledg u{font-weight:700;text-decoration:none;color:var(--ink-3)}
-  @keyframes ledgUp{
-    0%{opacity:0;transform:translateY(6px)}
-    7%{opacity:1;transform:translateY(0)}
-    78%{opacity:1;transform:translateY(0)}
-    100%{opacity:0;transform:translateY(-6px)}
-  }
+  .mkt .ledg .n{font-weight:400;color:var(--ink-3);margin-left:3px;font-size:10px}
+  .mkt .ledg .itm{display:inline-block;animation:ledgSwap .3s ease-out both}
+  @keyframes ledgSwap{0%{opacity:0;transform:translateY(5px)}100%{opacity:1;transform:translateY(0)}}
   /* 分时图：昨收虚线在中轴，涨红跌绿，线下淡色填充。涨停/跌停封在上下边界 */
   .tape{position:relative;height:46px;margin-top:6px;border-radius:7px;overflow:hidden;
     background:#fcfcfd;border:1px solid #f1f2f5}
@@ -1112,29 +1108,44 @@ function barFlash(el, d){
   el._f = setTimeout(function(){ el.className = el.className.replace(/\s*hit/g, ""); }, 1150);
 }
 
-/* 今日账目行（2026-10-29）：把 S.ledger 里的钱项渲染成多项加减，
-   展示在净值正下方（最多两行），3 秒淡出。项目按金额从大到小排、最多 6 项。
-   只保留最新一行——快速连滑时旧账目直接被新一天的顶掉，不堆 DOM。 */
+/* 今日账目行（2026-11-03 改轮播）：把 S.ledger 里的钱项一次一项轮着显示，
+   每 1.25 秒换下一笔，右下角「第几笔/共几笔」。超过 7 笔时小额的合并成「其他」，
+   轮完一圈自动淡出——最多 8 项 × 1.25s ≈ 10 秒封顶。连滑时旧账目直接被新一天的顶掉。 */
 function ledShow(){
   var host = $("mkt"); if(!host) return;
-  var old = host.querySelector && host.querySelector(".ledg");
+  var old = host.querySelector(".ledg");
   if(old && old.parentNode) old.parentNode.removeChild(old);
+  clearTimeout(ledShow._t);
   var L = S.ledger; S.ledger = {};
   var keys = Object.keys(L).filter(function(k){ return Math.abs(L[k]) >= 1; });
   if(!keys.length) return;
   keys.sort(function(a, b){ return Math.abs(L[b]) - Math.abs(L[a]); });
-  var MAXN = 6, html = "";
-  for(var i = 0; i < keys.length && i < MAXN; i++){
-    var k = keys[i], v = L[k];
-    var cls = LED_IO[k] ? (v > 0 ? "up" : "dn") : "tf";   // 真收支红进绿出，借贷/买卖是转账走灰色
-    html += (i ? "<i>·</i>" : "") + "<em>" + k + "</em><b class='" + cls + "'>" +
-            (v > 0 ? "+" : "−") + money(Math.abs(v)) + "</b>";
+  var other = 0;
+  if(keys.length > 7){                                   // 第 8 笔起都是小钱，合并成「其他」
+    for(var j = 7; j < keys.length; j++) other += L[keys[j]];
+    keys = keys.slice(0, 7);
+    if(Math.abs(other) >= 1) keys.push("其他");
   }
-  if(keys.length > MAXN) html += "<u>…</u>";
   var el = document.createElement("span");
-  el.className = "ledg"; el.innerHTML = html;
+  el.className = "ledg";
+  var itm = document.createElement("span");
+  itm.className = "itm";
+  el.appendChild(itm);
   host.appendChild(el);
-  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 3200);
+  var i = 0;
+  (function one(){
+    var k = keys[i], v = k === "其他" ? other : L[k];
+    var cls = LED_IO[k] ? (v > 0 ? "up" : "dn") : "tf";  // 真收支红进绿出，借贷/买卖是转账走灰色
+    itm.innerHTML = "<em>" + k + "</em><b class='" + cls + "'>" +
+      (v > 0 ? "+" : "−") + money(Math.abs(v)) + "</b>" +
+      (keys.length > 1 ? "<span class='n'>" + (i + 1) + "/" + keys.length + "</span>" : "");
+    i++;
+    ledShow._t = setTimeout(i < keys.length ? one : function(){
+      el.classList.remove("on");                         // 轮完一圈，淡出再拆
+      ledShow._t = setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 260);
+    }, 1250);
+  })();
+  el.classList.add("on");
 }
 
 /* ============ 每天的钱变了多少（2026-10-26） ============

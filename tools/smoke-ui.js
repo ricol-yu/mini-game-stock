@@ -36,6 +36,12 @@ class El {
       toggle: (c, on) => { if (on === undefined) cls.has(c) ? cls.delete(c) : cls.add(c); else on ? cls.add(c) : cls.delete(c); },
       contains: c => cls.has(c),
     };
+    // 真浏览器里 el.className="x" 会同步进 classList；桩也要这样，否则
+    // createElement 出来的元素（innerHTML 解析覆盖不到）永远查不到类名
+    Object.defineProperty(this, 'className', {
+      get: () => [...cls].join(' '),
+      set: v => { cls.clear(); String(v).split(/\s+/).filter(Boolean).forEach(c => cls.add(c)); },
+    });
   }
   get textContent() { return this._t; }
   set textContent(v) { this._t = String(v); }
@@ -52,6 +58,7 @@ class El {
   }
   appendChild(c) { c.parentNode = this; this.children.push(c); return c; }
   remove() { const p = this.parentNode; if (p) p.children = p.children.filter(x => x !== this); }
+  removeChild(c) { if (c) { c.remove(); c.parentNode = null; } return c; }
   addEventListener() {} removeEventListener() {}
   setPointerCapture() {} releasePointerCapture() {}
   getTotalLength() { return 100; }
@@ -510,6 +517,29 @@ step('消息：到期没兑现 = 假消息，风险与心态要付代价', () =>
     if (!sandbox.S.leak && sandbox.S.risk >= r0 + 13) settled++;
   }
   if (settled < 36) throw new Error('假消息分支没正确结算：40 次只有 ' + settled + ' 次扣了风险');
+});
+
+step('今日账目轮播：一次只显示一项，带「第几笔/共几笔」计数；超过 7 笔合并成「其他」', () => {
+  sandbox.S.tut = 3; sandbox.reset();
+  sandbox.led('工资', 9900); sandbox.led('债息', -55); sandbox.led('日用', -380);
+  sandbox.ledShow();
+  const host = getEl('mkt'); 
+  const itmOf = el => el.children.find(c => c.classList.contains('itm'));
+  const el = host.children.find(c => c.classList.contains('ledg'));
+  if (!el) throw new Error('ledShow 没有把账目行挂到 mkt 上');
+  const h = itmOf(el)._html;
+  if ((h.match(/<b /g) || []).length !== 1) throw new Error('轮播一次应只显示一项：' + h);
+  if (h.indexOf('1/3') < 0 || h.indexOf('工资') < 0) throw new Error('缺计数或金额最大项不在第一位：' + h);
+  // 9 笔 → 前 7 大保留，其余合并「其他」，最多 8 站
+  sandbox.led('a', 100); sandbox.led('b', 90); sandbox.led('c', 80); sandbox.led('d', 70);
+  sandbox.led('e', 60); sandbox.led('f', 50); sandbox.led('g', 40); sandbox.led('h', 30); sandbox.led('i', 20);
+  sandbox.ledShow();
+  const el2 = host.children.find(c => c.classList.contains('ledg'));
+  if (!el2) throw new Error('第二次 ledShow 没挂上新账目行（旧的应被 removeChild 摘掉）');
+  if (itmOf(el2)._html.indexOf('其他') >= 0) {
+    // 第一站不该就是「其他」——它金额最小，排最后
+    throw new Error('「其他」不该排在第一位：' + itmOf(el2)._html);
+  }
 });
 
 console.log(fail ? '\n✗ UI 冒烟失败 ' + fail + ' 项\n' : '\n✓ UI 冒烟全绿\n');
