@@ -48,16 +48,26 @@ const stats = (page) => page.evaluate(() => {
   const card = g('#stage .card:last-child');
   const txt = card && card.querySelector('.txt');
   const art = card && card.querySelector('.art');
+  const lab = g('#tape .u2-tape-lab');
+  const labK = lab && lab.querySelector('.u2-lab-k');
   return {
     stage: Math.round(ph.getAttribute('data-stage') || 0),
     deg: ph.className.replace(/\s*clean/, '').trim() || '-',
-    hudBottom: getComputedStyle(ph).getPropertyValue('--hud-bottom').trim(),
     navH: r(g('.nav')), hudH: r(g('.hud')), stripH: r(g('.strip')),
     mktH: r(g('.mkt')), tapeH: r(g('#tape')), stageH: r(g('#stage')),
     cardH: r(card), artH: r(art), txtH: r(txt),
     // 卡面是否溢出（文字被裁 = 版式崩，必须为 false）
     clipped: !!(card && card.scrollHeight > card.clientHeight + 1),
     textClipped: !!(txt && txt.scrollHeight > txt.clientHeight + 1),
+    // 图区三态：模式（flat/person/scene/none）、锚点类 .short、渲染出的图层数
+    artMode: art ? art.getAttribute('data-mode') : '-',
+    artShort: !!(art && /\bshort\b/.test(art.className)),
+    artLayers: art ? art.querySelectorAll('img').length : 0,
+    // 角标：宽 <375 时「今 ▲」这类定语应被 CSS 藏掉，只剩数值
+    lab: lab ? (lab.textContent || '').trim() : '-',
+    labKOn: !!(labK && getComputedStyle(labK).display !== 'none'),
+    // 松手阈值（卡宽 × 0.22，clamp 64~94）：320→65 / 375→75 / 390→79 / 430→88
+    th: typeof dragThreshold === 'function' && card ? dragThreshold(card) : 0,
     day: (g('#v-day') || {}).textContent,
   };
 });

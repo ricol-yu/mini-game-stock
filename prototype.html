@@ -1866,12 +1866,12 @@ function nextCard(){
   for(var i = 0; i < old.length; i++) old[i].remove();
   if(S.tut < TUT.length){                            // 序幕：一次只发一张教程卡，压不住别的卡
     var t = build(TUT[S.tut]);
-    stage.appendChild(t); cur = t; bind(t); return;
+    stage.appendChild(t); cur = t; bind(t); markArtShort(); return;
   }
   var a = build(pick());
   stage.appendChild(deckBack("under2")); stage.appendChild(deckBack("under"));
   stage.appendChild(a);
-  cur = a; bind(a);
+  cur = a; bind(a); markArtShort();                  // 新卡图区要重测：.short 是逐卡的，不随 .phone 走
 }
 /* 松手阈值随卡宽走（ui-adaptation §4.2）：threshold = clamp(卡宽 × 0.22, 64, 94)，
    320 档 296 → 65、375 档 343 → 75、390 档 358 → 79、430 档 398 → 88。
