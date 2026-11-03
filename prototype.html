@@ -105,13 +105,15 @@
   @keyframes hitDn{0%{color:var(--down);transform:scale(1.07)}60%{color:var(--down)}100%{color:inherit;transform:scale(1)}}
   .mkt .d{margin-top:3px;font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
   .mbar{position:relative;height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:5px}
-  /* 今日账目行（2026-11-03 改轮播）：多项并列会把进度条和分时图全盖住、红绿灰糊成一片——
-     改成一次只显示一项，每 1.25 秒轮换，右下角小字标「第几笔/共几笔」。
+  /* 今日账目行（2026-11-03 改轮播 + 弹出）：多项并列会把进度条和分时图全盖住、红绿灰糊成一片——
+     改成一次只显示一项，每 0.95 秒换下一笔，右下角小字标「第几笔/共几笔」。
+     动效跟四条命图标的飘字同一套：从下往上弹出来（带一点放大回弹），停留后继续向上飘散，
+     所以它读起来是「冒出来一笔账」，不是一行字原地换内容。
      单行居中挂在分时图上缘（装饰区），不压净值和资金条。
      红字=进账/涨，绿字=出账/跌，灰字=转账（借贷/买卖，钱没离开你，只是换了个口袋）。
      超过 7 笔时小额的合并成「其他」，保证轮完一圈不超过 8 秒。挂在 .mkt 上。 */
   .mkt .ledg{position:absolute;top:40px;left:2px;right:2px;height:16px;font-size:11px;line-height:16px;
-    text-align:center;pointer-events:none;opacity:0;transition:opacity .25s;
+    text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;
     text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9)}
   .mkt .ledg.on{opacity:1}
   .mkt .ledg em{font-style:normal;color:var(--ink-2);margin-right:1px}
@@ -120,8 +122,16 @@
   .mkt .ledg b.dn{color:#0aa344}
   .mkt .ledg b.tf{color:#8f959e}
   .mkt .ledg .n{font-weight:400;color:var(--ink-3);margin-left:3px;font-size:10px}
-  .mkt .ledg .itm{display:inline-block;animation:ledgSwap .3s ease-out both}
-  @keyframes ledgSwap{0%{opacity:0;transform:translateY(5px)}100%{opacity:1;transform:translateY(0)}}
+  .mkt .ledg .itm{display:inline-block;opacity:0;
+    animation:ledgPop .92s cubic-bezier(.22,.9,.3,1) both}
+  /* 18% 处弹到位（和图标 vdup 同一节奏），72% 开始飘散，100% 走完正好接下一笔 */
+  @keyframes ledgPop{
+    0%{opacity:0;transform:translateY(7px) scale(.92)}
+    18%{opacity:1;transform:translateY(0) scale(1)}
+    22%{transform:translateY(-1px) scale(1.04)}
+    72%{opacity:1;transform:translateY(-4px) scale(1)}
+    100%{opacity:0;transform:translateY(-15px) scale(.98)}
+  }
   /* 分时图：昨收虚线在中轴，涨红跌绿，线下淡色填充。涨停/跌停封在上下边界 */
   .tape{position:relative;height:46px;margin-top:6px;border-radius:7px;overflow:hidden;
     background:#fcfcfd;border:1px solid #f1f2f5}
@@ -1108,9 +1118,9 @@ function barFlash(el, d){
   el._f = setTimeout(function(){ el.className = el.className.replace(/\s*hit/g, ""); }, 1150);
 }
 
-/* 今日账目行（2026-11-03 改轮播）：把 S.ledger 里的钱项一次一项轮着显示，
-   每 1.25 秒换下一笔，右下角「第几笔/共几笔」。超过 7 笔时小额的合并成「其他」，
-   轮完一圈自动淡出——最多 8 项 × 1.25s ≈ 10 秒封顶。连滑时旧账目直接被新一天的顶掉。 */
+/* 今日账目行（2026-11-03 轮播 + 弹出）：把 S.ledger 里的钱项一次一项弹出来，
+   每 0.95 秒换下一笔，右下角「第几笔/共几笔」。超过 7 笔时小额的合并成「其他」，
+   轮完一圈自动淡出——最多 8 项 × 0.95s ≈ 8 秒封顶。连滑时旧账目直接被新一天的顶掉。 */
 function ledShow(){
   var host = $("mkt"); if(!host) return;
   var old = host.querySelector(".ledg");
@@ -1139,11 +1149,14 @@ function ledShow(){
     itm.innerHTML = "<em>" + k + "</em><b class='" + cls + "'>" +
       (v > 0 ? "+" : "−") + money(Math.abs(v)) + "</b>" +
       (keys.length > 1 ? "<span class='n'>" + (i + 1) + "/" + keys.length + "</span>" : "");
+    /* 同一句文案只改 innerHTML 不会重播 CSS 动画，得把 animation 的宿主类摘掉、
+       强制回流、再挂回去——否则第一笔之后每一笔都是「静止地换字」。 */
+    itm.classList.remove("itm"); void itm.offsetWidth; itm.classList.add("itm");
     i++;
     ledShow._t = setTimeout(i < keys.length ? one : function(){
       el.classList.remove("on");                         // 轮完一圈，淡出再拆
-      ledShow._t = setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 260);
-    }, 1250);
+      ledShow._t = setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 220);
+    }, 950);
   })();
   el.classList.add("on");
 }
