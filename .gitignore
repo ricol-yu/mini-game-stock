@@ -21,3 +21,6 @@ assets/char/raw/
 
 # 截图自检产物（本地看，不进仓库）
 .shots/
+
+# 生图原始 PNG（1.4MB/张，只留转好的 webp；源图留着本地复核）
+assets/bg/*.png
