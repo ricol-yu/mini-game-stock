@@ -428,21 +428,31 @@
   .legend{margin-top:14px;font-size:11px;color:#7d8794;text-align:center;line-height:1.9;max-width:540px}
 
   /* =====================================================================
-     降级阶梯（ui-adaptation §1.5 最新版）：由 applyDegrade() 按启动实测 stageH
-     挂类，只从 deg1 累加到 degN，不递推（递推会在临界值来回抖）。
+     降级阶梯（ui-adaptation §1.5 六档，唯一权威）：由 applyDegrade() 按启动实测
+     stageH 挂类，只从 deg1 累加到 degN，不递推（递推会在临界值来回抖）。
      砍的永远是装饰高度，玩法文字与选项永不砍。
-     实测命中：SE1 250→前三档 / 375 349 / 390 465 / 430 546 / 安卓360 466（后四档都不触发）。
+       ① <300 tape 46→36    ② <270 tape 整块隐藏    ③ <260 图区地板放开为 0
+       ④ <230 HUD 行 48→42  ⑤ <190 图区整块隐藏     ⑥ <170 .fn 行隐藏
+     实测命中：SE1 292→①（②由 <360 宽度规则先接管）/ 375 339 / 390 516 / 430 604 一档不触。
      ===================================================================== */
   .phone.deg1 .tape{height:36px}
-  .phone.deg2 .vit{height:40px}
-  /* deg3（stage<260）：图区地板放开到 0。默认就是 0（见 .art 注释），这条只是把意图
+  /* ② stage<270：tape 整块隐藏，mkt 158→112。这一档是给「砍完高度、宽度还 ≥360」的
+     场景兜底的（折叠屏半开态、分屏 webview）：<360 宽由下面的宽度规则先接管，
+     宽度够但高度不够时就得靠这条，别再把它当成「SE1 专用的重复规则」删掉。 */
+  .phone.deg2 .tape{display:none}
+  /* ③ stage<260：图区地板放开到 0。默认就是 0（见 .art 注释），这条只是把意图
      钉在阶梯上——别再有人把 96 加回来当保底：96 + 3 行正文 83 + fn 17 + 内距+描边 40
      ≈ 236，stage 落在 190~236 时地板不退，正文第三行直接被裁掉一半。
      真的只剩一条图缝（<64px）由 JS 挂 .hide 整块收起，不靠地板撑。 */
   .phone.deg3 .card .art{min-height:0}
-  .phone.deg4 .card .art{display:none}
-  .phone.deg4 .card .txt{flex:1 1 auto}
-  .phone.deg5 .card .fn{display:none}
+  /* ④ stage<230：HUD 行 48→42（图标本体仍 34×32，只压行高）。阈值压到 230 是故意的：
+     四条命是玩家唯一的生存读数，能不动就不动，这一档只留给砍完 tape 仍不构的屏。 */
+  .phone.deg4 .vit{height:40px}
+  /* ⑤ stage<190：图区整块隐藏（此时卡高恰在 170 红线），文字顶满。 */
+  .phone.deg5 .card .art{display:none}
+  .phone.deg5 .card .txt{flex:1 1 auto}
+  /* ⑥ stage<170：卡底「——」行隐藏。 */
+  .phone.deg6 .card .fn{display:none}
 
   /* 窄屏（<360，仅 SE1 一档）：tape 是装饰，无条件隐藏——不依赖 stage 测量，不会抖。
      省下的 52px 全还给卡区（实测终态 stage 296 / 卡 276 / 图区 181，守住 170 红线）。
@@ -2454,13 +2464,13 @@ function stageBudget(ph){
   var H = ph.clientHeight || ph.offsetHeight || 0;
   return H - nav.offsetHeight - hud.offsetHeight - (strip ? strip.offsetHeight : 0) - mkt.offsetHeight - 12;
 }
-/* 五档阈值（§1.5）：tape 缩 → tape 隐 → 图区地板 → 图区隐 → .fn 隐。
-   实测命中：SE1 250 → 前两档；375 339 / 390 465 / 430 604 / 安卓360 466 一档都不触发。 */
-var DEG = [300, 280, 260, 190, 170];
+/* 六档阈值（§1.5）：tape 缩 → tape 隐 → 图区地板 → HUD 缩 → 图区隐 → .fn 隐。
+   实测命中：SE1 292 → ①（②由 <360 宽度规则先接管）；375 339 / 390 516 / 430 604 一档不触。 */
+var DEG = [300, 270, 260, 230, 190, 170];
 function applyDegrade(){
   var ph = phoneEl(); if(!ph) return;
   try{
-    var cls = String(ph.className || "").replace(/\bdeg[1-5]\b/g, " ").replace(/\s+/g, " ").trim();
+    var cls = String(ph.className || "").replace(/\bdeg[1-6]\b/g, " ").replace(/\s+/g, " ").trim();
     if(cls !== ph.className) ph.className = cls;
     var h = stageBudget(ph), n = 0;
     // 一次测量定档：不迭代重测，否则每砍一档又触发下一档，会一路砍到没牌面
@@ -2469,15 +2479,31 @@ function applyDegrade(){
     ph.setAttribute("data-stage", Math.round(h));
   }catch(_e){}
 }
+/* 正文的自然高度（不是被拉伸后的高度）。
+   挂了 .hide 时 .art.hide + .txt 会 flex:1 撑满卡面、内容垂直居中，这时 offsetHeight
+   是整块卡面（196），拿它反推图区会算出负数、.hide 就永远摘不掉了（470 高的卡缩回 530
+   也还是藏着）。Range 量的是文字本身的盒子，跟容器拉伸无关；量不到再退回 offsetHeight。 */
+function textNatH(txt){
+  if(!txt) return 0;
+  try{
+    if(document.createRange && txt.nodeType === 1){
+      var rg = document.createRange();
+      rg.selectNodeContents(txt);
+      var h = rg.getBoundingClientRect().height;
+      if(h > 0) return h;
+    }
+  }catch(_e){}
+  return txt.offsetHeight || 0;
+}
 /* 图区两件事，一次量完：
    ① 纵向锚点：实测高 <200px 时 cover 只看得见画面上沿一条，脸心/下巴正好被切在边线
       （96 档可见带 0~27.6%）。加 .short 把锚点挪到 16%，可见带变成 11.6~39.2%，脸完整。
       阈值写死 200、不做设备判断——常态三档纵向溢出不到 1%，加不加像素级一致。
    ② 图区被文字挤到 <64px：挂 .gone/.hide 整块收起，别留一条 30px 的图缝
       （文字优先是铁律，图区是让位方，不留「一点点图」的半成品）。
-   量高用「卡高 − 内距 − 正文 − fn」反推，不用 art.offsetHeight：
-   一旦挂上 .hide 它就变成 0，用 offsetHeight 会在每次 relayout 里来回翻。
-   反推值在 .hide 状态下仍然 ≈0（正文吃满卡面），所以判定稳定。 */
+   量高用「卡高 − 内距 − 正文自然高 − fn」反推，不用 art.offsetHeight：
+   一旦挂上 .hide 它就变成 0，用 offsetHeight 会在每次 relayout 里来回翻；
+   正文用 textNatH 而不是 offsetHeight，理由见上面那个函数。 */
 function markArtShort(){
   var ph = phoneEl(); if(!ph) return;
   try{
@@ -2490,8 +2516,7 @@ function markArtShort(){
       try{ cs = getComputedStyle(card); acs = getComputedStyle(art); }catch(_e){}
       var pad = cs ? (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0) : 26;
       var mb = acs ? (parseFloat(acs.marginBottom) || 0) : 10;   // 图区自己还占着 10px 下外边距
-      var sp = (card.clientHeight || 0) - pad - mb -
-               (txt ? txt.offsetHeight : 0) - (fn ? fn.offsetHeight : 0);
+      var sp = (card.clientHeight || 0) - pad - mb - textNatH(txt) - textNatH(fn);
       toggleCls(art, "short", sp > 0 && sp < 200);
       var thin = sp < 64;                       // 含负数：正文自己就溢出卡面时更该收图
       toggleCls(art, "gone", thin);

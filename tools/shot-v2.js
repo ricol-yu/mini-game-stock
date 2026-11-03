@@ -20,7 +20,7 @@ const VIEWS = [[320, 568], [375, 667], [390, 844], [430, 932]];
 const args = process.argv.slice(2);
 const ART0 = args.includes('--art0');
 const ONLY = (args.find((a) => a.indexOf('--only=') === 0) || '').split('=')[1];
-const TIER = args.includes('--tier');   // 扫降级区间（stage 190~236 = deg3 段），验「正文不被裁」
+const TIER = args.includes('--tier');   // 扫降级区间（stage 140~260），验「正文不被裁 + tape 显隐正确」
 
 function fileUrl(artOn) {
   return 'file:///' + path.join(ROOT, 'prototype.html').replace(/\\/g, '/') +
@@ -77,9 +77,13 @@ const stats = (page) => page.evaluate(() => {
   const browser = await chromium.launch({ executablePath: CHROME });
   const out = [];
   if (TIER) {
-    /* 降级阶梯回归：375 宽、屏高 470~590 逐档扫，stage 正好落 188~240（deg3 段）的
-       出图存 .shots/_tier-*.png。判据：cardClip / txtClip 必须全 false——
-       96 地板时代的裁字洞（正文第三行切一半）就是在这个区间炸出来的。 */
+    /* 降级阶梯回归：375 宽、屏高 470~590 逐档扫，stage 落在 140~240（deg1~deg6 全都可能踩到）
+       的档位出图存 .shots/_tier-*.png。判据：cardClip / txtClip 必须全 false——
+       96 地板时代的裁字洞（正文第三行切一半）就是在这个区间炸出来的。
+       口径提醒：本模式用的是**真 viewport**（newContext 的 viewport，不是改 .phone 高度），
+       而 stageH 由 .phone.clientHeight 反推，两种方式实测同值（375×530 都是 stage 202）；
+       所以图里的 tape 显隐、deg 类都是真判定结果，可以直接拿这张图对账阶梯——
+       375 档 tape 归 deg2（stage<270）管，不是 <360 的宽度规则（那条只管 320 档）。 */
     for (const H of [470, 490, 510, 530, 550, 570, 590]) {
       const ctx = await browser.newContext({ viewport: { width: 375, height: H }, deviceScaleFactor: 2 });
       const page = await ctx.newPage();
@@ -97,6 +101,8 @@ const stats = (page) => page.evaluate(() => {
         return {
           stage: Math.round(ph.getAttribute('data-stage') || 0),
           deg: ph.className.replace(/\s*clean/, '').trim(),
+          tape: getComputedStyle(g('#tape')).display,
+          mktH: r(g('.mkt')),
           cardH: r(card), artH: r(art), txtH: r(txt),
           artCls: art ? art.className : '-',
           cardClip: !!(card && card.scrollHeight > card.clientHeight + 1),
