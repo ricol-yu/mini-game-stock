@@ -74,7 +74,7 @@
         "miss": "lover"
       },
       "right": {
-        "label": "说实话，转 {} 给她",
+        "label": "说实话，转 {} 给老婆",
         "effects": {
           "mind": 4,
           "social": 5,
@@ -180,7 +180,7 @@
       "when": "has:baby",
       "alwaysStatus": null,
       "left": {
-        "label": "陪她玩一会儿",
+        "label": "陪孩子玩一会儿",
         "effects": {
           "mind": 9,
           "social": 5,
@@ -342,11 +342,11 @@
       "whoId": "haizi",
       "avatar": "👶",
       "tag": "孩子",
-      "text": "他第一次叫爸爸。你正在看盘。",
+      "text": "孩子第一次叫爸爸。你正在看盘。",
       "when": "has:baby",
       "alwaysStatus": null,
       "left": {
-        "label": "把他抱起来",
+        "label": "把孩子抱起来",
         "effects": {
           "mind": 10,
           "social": 7,
@@ -1333,7 +1333,7 @@
       "whoId": "suoyouren",
       "avatar": "🫧",
       "tag": "市场",
-      "text": "菜市场的阿姨开始给你推荐了。她说她也不懂，就是一直在涨。",
+      "text": "菜市场的阿姨开始给你推荐了，说她也不懂，就是一直在涨。",
       "when": "has:bubble",
       "alwaysStatus": null,
       "left": {
@@ -1649,7 +1649,7 @@
       "when": "risk>34 | debt>8000",
       "alwaysStatus": null,
       "left": {
-        "label": "认了，让他们卖",
+        "label": "认了，让券商卖",
         "effects": {
           "sell": 0.6,
           "mind": -8,
@@ -1877,7 +1877,7 @@
       "whoId": "laopo",
       "avatar": "💍",
       "tag": "伴侣",
-      "text": "「今晚吃什么？」她站在门口问。你的眼睛还黏在行情图上。",
+      "text": "「今晚吃什么？」老婆站在门口问。你的眼睛还黏在行情图上。",
       "when": "did:fam_hunli_01",
       "alwaysStatus": null,
       "left": {
@@ -1890,7 +1890,7 @@
         "miss": "lover"
       },
       "right": {
-        "label": "放下手机问她",
+        "label": "放下手机问老婆",
         "effects": {
           "mind": -2,
           "social": 7,
@@ -1942,7 +1942,7 @@
         }
       },
       "right": {
-        "label": "把持仓给他看",
+        "label": "把持仓给小王看",
         "effects": {
           "social": 7,
           "risk": 8
@@ -2112,11 +2112,11 @@
       "whoId": "suoyouren",
       "avatar": "🚕",
       "tag": "市场",
-      "text": "出租车司机在跟你聊 K 线，说他上月辞职了。",
+      "text": "出租车司机在跟你聊 K 线：上月刚辞职，现在全职。",
       "when": "has:bull",
       "alwaysStatus": null,
       "left": {
-        "label": "劝他见好就收",
+        "label": "劝司机见好就收",
         "effects": {
           "social": -5,
           "mind": 3
@@ -2319,7 +2319,7 @@
       "whoId": "taxi",
       "avatar": "🚕",
       "tag": "市场",
-      "text": "那司机又发来一只票：这回他压上全部了。",
+      "text": "那司机又发来一只票：这回压上全部了。",
       "when": "did:mkt_bull_taxi_01.r; has:bull",
       "alwaysStatus": null,
       "left": {
@@ -2442,7 +2442,7 @@
         "miss": "fam"
       },
       "right": {
-        "label": "回厨房看她",
+        "label": "回厨房看老妈",
         "effects": {
           "social": 7,
           "mind": -2,
@@ -2457,11 +2457,11 @@
       "whoId": "laoma",
       "avatar": "📞",
       "tag": "家人",
-      "text": "老妈拍来一张体检单：她血压也高了。",
+      "text": "老妈拍来一张体检单：血压也高了。",
       "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
-        "label": "让她别操心",
+        "label": "让老妈别操心",
         "effects": {
           "mind": -4,
           "social": -4
@@ -2563,7 +2563,7 @@
       "whoId": "haizi",
       "avatar": "🧒",
       "tag": "孩子",
-      "text": "兴趣班该交钱了，4,500。他说，其实不想去了。",
+      "text": "兴趣班该交钱了，4,500。孩子说，其实不想去了。",
       "when": "has:baby",
       "alwaysStatus": null,
       "left": {
@@ -2577,7 +2577,7 @@
         "miss": "child"
       },
       "right": {
-        "label": "退班，陪他玩",
+        "label": "退班，陪孩子玩",
         "effects": {
           "social": 5,
           "mind": -2,
@@ -2591,11 +2591,11 @@
       "whoId": "laopo",
       "avatar": "💍",
       "tag": "伴侣",
-      "text": "产检约在周四上午。她说：你来吧。",
+      "text": "产检约在周四上午。老婆说：你来吧。",
       "when": "has:baby",
       "alwaysStatus": null,
       "left": {
-        "label": "陪她去，花 {}",
+        "label": "陪老婆去，花 {}",
         "effects": {
           "spend": 1200,
           "social": 7,
@@ -2604,7 +2604,7 @@
         }
       },
       "right": {
-        "label": "让她妈陪",
+        "label": "让丈母娘陪",
         "effects": {
           "social": -8,
           "mind": 1
@@ -2645,7 +2645,7 @@
       "whoId": "laopo",
       "avatar": "💍",
       "tag": "伴侣",
-      "text": "那家店她说还想再去一次。",
+      "text": "老婆说那家店还想再去一次。",
       "when": "did:fam_anniv_01.l",
       "alwaysStatus": null,
       "window": [
@@ -2771,7 +2771,7 @@
       "whoId": "laoma",
       "avatar": "📞",
       "tag": "家人",
-      "text": "复查稳住了。她把一罐腌笋塞进你后备箱。",
+      "text": "复查稳住了。老妈把一罐腌笋塞进你后备箱。",
       "when": "no:has:momgone; did:fam_momhealth_01.r",
       "alwaysStatus": null,
       "window": [
@@ -2832,7 +2832,7 @@
       "whoId": "haizi",
       "avatar": "🧒",
       "tag": "孩子",
-      "text": "她画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
+      "text": "孩子画了幅画：爸爸、妈妈，中间还有一条红色的股票涨跌线。",
       "when": "did:fam_child_01.l",
       "alwaysStatus": null,
       "window": [
@@ -2911,7 +2911,7 @@
         }
       },
       "right": {
-        "label": "做投资也是为了他",
+        "label": "做投资也是为了孩子",
         "effects": {
           "social": -12,
           "mind": -8
@@ -2964,7 +2964,7 @@
         100
       ],
       "left": {
-        "label": "陪她走一走，{}",
+        "label": "陪女友走一走，{}",
         "effects": {
           "spend": 300,
           "social": 6,
@@ -2988,7 +2988,7 @@
       "whoId": "laopo",
       "avatar": "🎬",
       "tag": "伴侣",
-      "text": "她发来消息：新上的电影，一起？",
+      "text": "女友发来消息：新上的电影，一起？",
       "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -2996,7 +2996,7 @@
         80
       ],
       "left": {
-        "label": "陪她看，{} 两张票",
+        "label": "陪女友看，{} 两张票",
         "effects": {
           "spend": 400,
           "social": 6,
@@ -3020,7 +3020,7 @@
       "whoId": "laopo",
       "avatar": "🥟",
       "tag": "伴侣",
-      "text": "她说家里包了饺子，喊你回去吃。",
+      "text": "女友说家里包了饺子，喊你回去吃。",
       "when": "no:did:fam_queding_01; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3052,7 +3052,7 @@
       "whoId": "laopo",
       "avatar": "🎂",
       "tag": "伴侣",
-      "text": "她生日。想要一顿像样的晚饭。",
+      "text": "女友生日。想要一顿像样的晚饭。",
       "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3085,7 +3085,7 @@
       "whoId": "laopo",
       "avatar": "💭",
       "tag": "伴侣",
-      "text": "她问你：「股票和我，到底哪个重要？」",
+      "text": "女友问你：「股票和我，到底哪个重要？」",
       "when": "did:fam_yuehui_01.r; no:did:fam_hunli_01|did:fam_shengri_01.r; no:did:fam_hunli_01|did:fam_zhaohu_01.r; no:did:fam_hunli_01|did:fam_zhoumo_01.r; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3116,7 +3116,7 @@
       "whoId": "laopo",
       "avatar": "🤝",
       "tag": "伴侣",
-      "text": "她认真地看着你，等你一句话：这段感情，要不要定下来？",
+      "text": "女友认真地看着你，等你一句话：这段感情，要不要定下来？",
       "when": "did:fam_yuehui_01.l; no:did:fam_hunli_01|did:fam_zhaohu_01.l; no:did:fam_hunli_01|did:fam_zhoumo_01.l; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3147,7 +3147,7 @@
       "whoId": "laopo",
       "avatar": "🥀",
       "tag": "伴侣",
-      "text": "她不再问你周末有没有空了。",
+      "text": "女友不再问你周末有没有空了。",
       "when": "did:fam_yuehui_01.l; no:did:fam_queding_01|did:fam_zhaohu_01.l; no:did:fam_queding_01|did:fam_zhoumo_01.l; no:did:fam_queding_01",
       "alwaysStatus": null,
       "window": [
@@ -3179,7 +3179,7 @@
       "whoId": "laopo",
       "avatar": "🎁",
       "tag": "伴侣",
-      "text": "见她爸妈。烟酒礼盒摆一桌。",
+      "text": "见女友爸妈。烟酒礼盒摆一桌。",
       "when": "did:fam_queding_01.l; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3240,7 +3240,7 @@
       "whoId": "laopo",
       "avatar": "🏡",
       "tag": "伴侣",
-      "text": "她说：我们什么时候有自己的家？",
+      "text": "女友说：我们什么时候有自己的家？",
       "when": "did:fam_queding_01.l; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3272,7 +3272,7 @@
       "whoId": "laopo",
       "avatar": "📵",
       "tag": "伴侣",
-      "text": "她三天没回你消息了。",
+      "text": "女友三天没回你消息了。",
       "when": "did:fam_queding_01.l; did:fam_jiazhang_01.r; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3288,7 +3288,7 @@
         }
       },
       "right": {
-        "label": "等她消气",
+        "label": "等女友消气",
         "effects": {
           "social": -8,
           "mind": -3
@@ -3303,7 +3303,7 @@
       "whoId": "laopo",
       "avatar": "💍",
       "tag": "伴侣",
-      "text": "她家开口：彩礼八万八。",
+      "text": "女友家开口：彩礼八万八。",
       "when": "did:fam_jiazhang_01.l; social>35; cash>10000; no:did:fam_hunli_01|did:fam_zanqian_01.l; social>35; cash>10000; no:did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -3337,7 +3337,7 @@
       "whoId": "laopo",
       "avatar": "👰",
       "tag": "伴侣",
-      "text": "婚礼这天。她哭着笑了。",
+      "text": "婚礼这天。老婆哭着笑了。",
       "when": "did:fam_caili_01.l",
       "alwaysStatus": null,
       "window": [
@@ -3404,7 +3404,7 @@
       "whoId": "laopo",
       "avatar": "🫂",
       "tag": "伴侣",
-      "text": "她说：钱没了可以再赚，你在就好。",
+      "text": "老婆说：钱没了可以再赚，你在就好。",
       "when": "did:fam_hunli_01.l; did:fam_jiazhang_01.l",
       "alwaysStatus": null,
       "window": [
@@ -3412,7 +3412,7 @@
         300
       ],
       "left": {
-        "label": "抱抱她，请天假",
+        "label": "抱抱老婆，请天假",
         "effects": {
           "mind": 9,
           "social": 6,
@@ -3436,12 +3436,12 @@
       "whoId": "laopo",
       "avatar": "🌙",
       "tag": "伴侣",
-      "text": "她说：今晚先不聊股票，行吗？",
+      "text": "女友说：今晚先不聊股票，行吗？",
       "when": "did:fam_queding_01",
       "alwaysStatus": null,
       "cap": 2,
       "left": {
-        "label": "陪她早睡，今晚不看盘",
+        "label": "陪女友早睡，不看盘",
         "effects": {
           "energy": 16,
           "social": 6,
@@ -3631,7 +3631,7 @@
         }
       },
       "right": {
-        "label": "去找他谈",
+        "label": "去找老板谈",
         "effects": {
           "social": 3,
           "mind": -3,
@@ -3669,7 +3669,7 @@
       "whoId": "laotongshi",
       "avatar": "🤝",
       "tag": "职场",
-      "text": "老同事内推：他那边在招人，问你要不要投。",
+      "text": "老同事内推：那边在招人，问你要不要投。",
       "when": null,
       "alwaysStatus": null,
       "left": {
@@ -3698,7 +3698,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "{} 借给他",
+        "label": "{} 借给小王",
         "effects": {
           "spend": 3000,
           "social": 9,
@@ -3805,7 +3805,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "陪她回，带上 {}",
+        "label": "陪老婆回，带上 {}",
         "effects": {
           "spend": 600,
           "social": 8,
@@ -4005,7 +4005,7 @@
       "whoId": "pengyou",
       "avatar": "🤝",
       "tag": "人情",
-      "text": "朋友开口：借两万。他说，这次一定还。",
+      "text": "朋友开口借两万，说这次一定还。",
       "when": null,
       "alwaysStatus": null,
       "left": {
@@ -4031,7 +4031,7 @@
       "whoId": "tuangjian",
       "avatar": "🍺",
       "tag": "职场",
-      "text": "部门团建，火锅局。你知道他们想聊年终评。",
+      "text": "部门团建，火锅局。你知道同事想聊年终评。",
       "when": "no:fired",
       "alwaysStatus": null,
       "window": [
@@ -4257,7 +4257,7 @@
       "when": null,
       "alwaysStatus": null,
       "left": {
-        "label": "跟他掰扯半天",
+        "label": "跟房东掰扯半天",
         "effects": {
           "mind": -6,
           "social": -5,
@@ -4283,7 +4283,7 @@
       "when": "no:has:momgone",
       "alwaysStatus": null,
       "left": {
-        "label": "教她清内存",
+        "label": "教我妈清内存",
         "effects": {
           "social": 3,
           "mind": -3,
@@ -4305,7 +4305,7 @@
       "whoId": "laopo",
       "avatar": "💍",
       "tag": "伴侣",
-      "text": "她说年假再不休就作废了。",
+      "text": "老婆说年假再不休就作废了。",
       "when": "did:fam_hunli_01",
       "alwaysStatus": null,
       "window": [
@@ -4313,7 +4313,7 @@
         320
       ],
       "left": {
-        "label": "让她自己去吧",
+        "label": "让老婆自己去吧",
         "effects": {
           "mind": -6,
           "social": -9
@@ -4390,7 +4390,7 @@
       "who": "老妈",
       "avatar": "📵",
       "tag": "家人",
-      "text": "这个月她一个电话都没打。你打回去，响到自动挂断。",
+      "text": "这个月老妈一个电话都没打。你打回去，响到自动挂断。",
       "when": "miss.fam>=3; day>=45; day<65|miss.fam>=4; day>=65; day<95|miss.fam>=5; day>=95",
       "cap": 1,
       "urgent": true,
@@ -4419,7 +4419,7 @@
       "who": "孩子",
       "avatar": "🎓",
       "tag": "孩子",
-      "text": "毕业照寄到了。他站在中间，旁边是他妈。你从头看到尾，没有自己。",
+      "text": "毕业照寄到了。孩子站中间，旁边是前妻。你从头看到尾，没有自己。",
       "when": "miss.child>=3; day>=45; day<70|miss.child>=4; day>=70; day<100|miss.child>=5; day>=100",
       "cap": 1,
       "urgent": true,
@@ -4448,7 +4448,7 @@
       "who": "你妈",
       "avatar": "🐈",
       "tag": "宠物",
-      "text": "猫被送到你妈家了。她说，它在你家总是一个人蹲在门口。",
+      "text": "猫被送到你妈家了。你妈说，它在你家总一个人蹲在门口。",
       "when": "miss.pet>=2; day>=38; day<60|miss.pet>=3; day>=60; day<85|miss.pet>=4; day>=85",
       "cap": 1,
       "urgent": true,
@@ -4474,10 +4474,10 @@
     },
     {
       "id": "fam_gone_01",
-      "who": "她",
+      "who": "女友",
       "avatar": "🚪",
       "tag": "伴侣",
-      "text": "她搬走了。衣柜空了一半，钥匙放在鞋柜上。",
+      "text": "女友搬走了。衣柜空了一半，钥匙放在鞋柜上。",
       "when": "miss.lover>=4; day>=38; day<60; no:did:fam_hunli_01|miss.lover>=5; day>=60; day<85; no:did:fam_hunli_01|miss.lover>=6; day>=85; no:did:fam_hunli_01",
       "cap": 1,
       "urgent": true,
@@ -4486,14 +4486,14 @@
         "lovergone": -1
       },
       "left": {
-        "label": "打给她",
+        "label": "打给女友",
         "effects": {
           "mind": -10,
           "social": -12
         }
       },
       "right": {
-        "label": "让她静静",
+        "label": "让女友静静",
         "effects": {
           "mind": -10,
           "social": -12
@@ -4507,11 +4507,11 @@
       "whoId": "cuishou",
       "avatar": "📞",
       "tag": "风险",
-      "text": "电话打到你妈那儿。她问：「你是不是在外面欠钱了？」",
+      "text": "电话打到你妈那儿。你妈问：「你是不是在外面欠钱了？」",
       "when": "has:laolai",
       "cap": 2,
       "left": {
-        "label": "跟她说了实话",
+        "label": "跟你妈说了实话",
         "effects": {
           "mind": -4,
           "social": -2,
