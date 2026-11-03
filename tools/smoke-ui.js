@@ -493,17 +493,40 @@ step('消息：卡面上的 leak 能通过 resolve 挂到 S.leak', () => {
 });
 
 step('消息：兑现时真的连拉涨停（不是一句空话）', () => {
-  sandbox.S.tut = 3; sandbox.reset();
-  sandbox.S.st = {}; sandbox.S.cash = 50000; sandbox.S.debt = 0;
-  sandbox.S.leak = { left: 6, p: 0.5, total: 3, run: 0 };      // p=0.5：一半真一半假，两种结局都合法
-  let ups = 0;
-  for (let i = 0; i < 10 && sandbox.S.leak; i++) {
-    sandbox.S.day++; sandbox.tick();
-    if (sandbox.S.intra.lim === 'up') ups++;
+  /* 旧断言数的是「窗口里涨停的天数」并要求 === 设定连板数。可窗口里行情自己也会随机
+     撞出涨停（pUp 1.2%~6.4%），于是「兑现 3 天 + 随机撞出 1 天 = 4」就假红——CI 上
+     实测撞到过（连板数不对：4）。毛病在把「涨停天数」当成了「消息带来的天数」。
+     改成逐日验语义，只数消息自己那几天：
+       ① 连板中（tick 前 run>0）当天必须封板；
+       ② 兑现当天（run 从 0 跳到 total-1）必须封板；
+       ③ 兑现且只兑现一次，连板总天数正好等于设定值。
+     p 提到 0.9 并「没兑现就重来」，最多 20 轮：p=0.5 时一半的运行直接判假、
+     连板分支根本没被测到（旧版就是这么放过自己的）。随机行情撞出的额外涨停
+     现在只影响 intra 的展示，不再影响断言。 */
+  const total = 3;
+  let fired = 0, chain = 0;
+  for (let round = 0; round < 20 && !fired; round++) {
+    sandbox.S.tut = 3; sandbox.reset();
+    sandbox.S.st = {}; sandbox.S.cash = 50000; sandbox.S.debt = 0;
+    sandbox.S.leak = { left: 6, p: 0.9, total: total, run: 0 };
+    chain = 0;
+    for (let i = 0; i < 10 && sandbox.S.leak; i++) {
+      const before = sandbox.S.leak.run;
+      sandbox.S.day++; sandbox.tick();
+      const after = sandbox.S.leak;
+      const isFire = before === 0 && after && after.run === total - 1;   // 兑现当天
+      const isChain = before > 0;                                       // 连板续板
+      if (isFire) fired++;
+      if (isFire || isChain) {
+        chain++;
+        if (sandbox.S.intra.lim !== 'up')
+          throw new Error('兑现/连板当天没封板：第 ' + i + ' 天 lim=' + sandbox.S.intra.lim);
+      }
+    }
+    if (sandbox.S.leak) throw new Error('10 天过去消息还挂着，没有结案');
   }
-  // p=0.5 的消息：要么兑现（连板），要么判假，不会悬着不结案
-  if (sandbox.S.leak) throw new Error('10 天过去消息还挂着，没有结案');
-  if (ups > 0 && ups !== 3) throw new Error('兑现了但连板数不对：' + ups);
+  if (!fired) throw new Error('20 轮都没兑现（p=0.9），随机源可能坏了');
+  if (chain !== total) throw new Error('兑现了但连板数不对：' + chain + '（应为 ' + total + '）');
 });
 
 step('消息：到期没兑现 = 假消息，风险与心态要付代价', () => {
