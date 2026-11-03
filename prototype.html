@@ -45,10 +45,8 @@
     /* 动效：只改 transform / opacity / width / height */
     --u2-t-fast:120ms; --u2-t-base:280ms; --u2-t-slow:550ms;
     --u2-e-out:cubic-bezier(.3,.8,.35,1); --u2-e-deal:cubic-bezier(.34,1.3,.4,1);
-    /* 布局变量：--nav-status 是状态栏占位（小程序落地时换成 statusBarHeight）；
-       --hud-bottom 由启动 JS 实测写回，toast 锚在它下面（不再写死 112px） */
+    /* 布局变量：--nav-status 是状态栏占位（小程序落地时换成 statusBarHeight） */
     --nav-status:44px;
-    --hud-bottom:132px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--u2-felt-bg);color:var(--u2-ink);
@@ -153,12 +151,13 @@
   .u2-freeze{border-color:#e0a53a}
 
   /* 提示卡：触屏 tap 弹出（.tip.on），桌面 hover 保留；
-     本体 pointer-events:none，不抢滑卡手势（ui-adaptation §4.3） */
+     本体 pointer-events:none，不抢滑卡手势（ui-adaptation §4.3）。
+     z-index 35：在 toast(30) 之上、结局页(40) 之下。 */
   .chip .tip,.vit-i .tip{position:absolute;top:calc(100% + 8px);left:0;transform:translateY(-4px);
     background:rgba(36,26,14,.96);color:var(--u2-on-felt);font-size:10.5px;line-height:1.7;
     padding:8px 11px;border-radius:10px;border:1px solid rgba(253,243,216,.18);
     max-width:230px;width:max-content;white-space:normal;text-align:left;
-    opacity:0;pointer-events:none;transition:opacity var(--u2-t-fast),transform var(--u2-t-fast);z-index:40}
+    opacity:0;pointer-events:none;transition:opacity var(--u2-t-fast),transform var(--u2-t-fast);z-index:35}
   .chip .tip b,.vit-i .tip b{display:block;font-size:11.5px;margin-bottom:2px;color:#fff}
   .chip .tip.on,.vit-i .tip.on{opacity:1;transform:translateY(0)}
   @media (hover:hover){
@@ -252,6 +251,7 @@
   @keyframes tapeFade{from{opacity:0}to{opacity:1}}
   .u2-tape-lab{position:absolute;top:3px;right:4px;font-size:var(--u2-fs-tag);line-height:1.7;
     font-weight:800;padding:0 5px;border-radius:var(--u2-r-tag);
+    display:inline-flex;align-items:baseline;gap:.3em;
     font-variant-numeric:tabular-nums;letter-spacing:.2px;
     background:var(--u2-up-deep);color:#fff}
   .u2-tape-lab.down{background:var(--u2-down)}
@@ -288,10 +288,9 @@
   .card.under2{z-index:0;bottom:0;border-width:2px;border-color:rgba(36,26,14,.55);
     transform:scale(.93);opacity:.80}
 
-  /* ---- 卡面人物图区：场景 / 调色 / 地面影 / 人物 四层 ----
+  /* ---- 卡面人物图区：场景 / 调色 / 地面影 / 人物 四层（art-spec v3 合成钩子）----
      文字优先：.txt 自然高度、.art 吃剩余空间，图再大也挤不掉字（AGENTS 铁律）。
-     min-height 取 96（§1.5 阶梯③的下限）——target 机型实测图区 ≥187，
-     96 是保证「文字永不被 overflow 裁掉」的兜底地板。 */
+     min-height 取 96 是「文字永不被 overflow 裁掉」的兜底地板（§1.5 阶梯③下限）。 */
   .card .art{position:relative;flex:1 1 auto;min-height:96px;margin:0 0 10px;border-radius:var(--u2-r-art);
     overflow:hidden;box-shadow:var(--u2-sh-inset);background:linear-gradient(180deg,#f3e8c9,#e0cfa6)}
   .card .art .u2-art-scene{position:absolute;left:0;top:0;width:100%;height:100%;display:block;
@@ -301,14 +300,33 @@
                radial-gradient(70% 50% at 50% 18%,rgba(255,255,255,.22),transparent 70%)}
   .card .art .u2-art-ground{position:absolute;left:50%;bottom:4px;margin-left:-70px;width:140px;height:16px;
     border-radius:50%;background:radial-gradient(closest-side,rgba(90,40,10,.35),transparent);pointer-events:none}
-  .card .art .u2-art-person{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
-    font-size:108px;line-height:1;display:none;pointer-events:none;
-    filter:sepia(.2) saturate(.95)}
-  /* 无图 / 单图 404：场景层收起，emoji 顶上——图框、圆角、内衬线、高度、暗层全不变 */
-  .card .art.no-img .u2-art-person,.card .art.gone .u2-art-person{display:block}
-  .card .art.no-img .u2-art-shade,.card .art.gone .u2-art-shade{opacity:.55}
-  .card .art.gone .u2-art-scene{display:none}
-  .card .art.gone{background:linear-gradient(180deg,#f3e8c9,#e0cfa6)}
+  /* 人物层钩子：透明抠图 <img>（底边对齐、占图区 78% 高，与场景共用 640×720 画布）。
+     百分比定位而不是写死 px：导出图 640×720，人物底边落在画布 ~96% 处，
+     这里按图区高度百分比对齐，图区被降级阶梯压缩时人物跟着缩，不会掉出框。
+     素材未到位时这层不渲染（artOf 返回 mode:scene），留钩子不留空节点。 */
+  .card .art .u2-art-person{position:absolute;left:50%;bottom:-4px;height:78%;transform:translateX(-50%);
+    object-fit:contain;object-position:50% 100%;display:block;pointer-events:none;
+    -webkit-user-drag:none;user-select:none}
+  /* 无人物 + 焦点物件态（165 卡里 40.6% 走这条）：emoji 72px、锚点 (50%,62%)，
+     硬投影与 --u2-sh-hard 同族（零模糊），和桌面光源一致。 */
+  .card .art .u2-art-prop{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);
+    font-size:72px;line-height:1;display:none;pointer-events:none;
+    filter:sepia(.2) saturate(.95) drop-shadow(0 6px 0 rgba(43,31,18,.18))}
+  /* 道具层（art-spec v3 可选 640×420 透明图）：与 emoji 占位同一锚点，两者互斥不叠。
+     素材没到货时 props 表为空 → 不渲染，版式与纯场景态一致。 */
+  .card .art .u2-art-prop-img{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);
+    height:46%;max-width:76%;object-fit:contain;display:block;pointer-events:none;
+    filter:drop-shadow(0 6px 0 rgba(43,31,18,.18))}
+  /* 无图 / 全层 404：场景层收起，物件顶上——图框、圆角、内衬线、高度、暗层全不变。
+     物件不在底边，底边那道椭圆地面影会脱节，这一态一并收起（物件自带硬投影）。 */
+  .card .art.none .u2-art-prop,.card .art.gone .u2-art-prop{display:block}
+  .card .art.none .u2-art-shade,.card .art.gone .u2-art-shade{opacity:.55}
+  .card .art.none .u2-art-ground,.card .art.gone .u2-art-ground{display:none}
+  .card .art.gone .u2-art-scene,.card .art.gone .u2-art-person,.card .art.gone .u2-art-prop-img{display:none}
+  /* 图区实测高 <200px（大字号 96 档 / SE1 降级 181 档）：纵向锚点上移到 16%。
+     cover 下 96 档只可见 0~27.6%，脸心 28%、下巴 34% 正好切在边线；改后可见带
+     11.6~39.2%，脸完整。常态三档纵向溢出 <1%，加不加像素级一致。 */
+  .card .art.short .u2-art-scene{object-position:50% 16%}
   .card .txt{font-size:var(--u2-fs-body);line-height:1.72;font-weight:600;letter-spacing:.3px;
     color:var(--u2-ink);flex:0 0 auto}
   /* 既定事实卡：无印章、无红绿提示——这不是选择题，是账单 */
@@ -328,10 +346,15 @@
   /* 奶油底上的红印章用 up-deep（up 只有 4.3:1，读不清） */
   .stamp.R{right:20%;color:var(--u2-up-deep);border-color:var(--u2-up-deep);transform:rotate(10deg)}
 
-  /* ---- toast：锚点由 JS 实测写回（--toast-top，落在行情面板下缘 = 卡区顶部）----
-     不写死 112px（那是开发框 344 布局的 eyeball 值，390 档正好压 HUD 图标行）；
-     JS 量不到时退回 --hud-bottom（ui-adaptation §6-2 的原始锚点）。 */
-  .toast{position:absolute;left:50%;top:var(--toast-top, calc(var(--hud-bottom) + 8px));
+  /* ---- toast：结构解，不用测量值 ----
+     nav/hud/strip/mkt 包在 .u2-top 里，toast 用 top:100% 挂在它下缘：
+     胶囊换行、HUD 高度变化、大字号切换都会自动跟随，不需要 JS 写 --hud-bottom。
+     落点是行情面板下缘（= 卡区顶部）：胶囊行和净值行都是 1~2 行小行，装不下一条
+     两行的发报日 toast（实测 390 档会盖住 ¥净值），卡区顶部是唯一
+     「不压 HUD、也不压卡面正文」的空档（ui-adaptation §5.1 两条同时满足）。
+     mkt 自带 6px 下外边距，这里补 2px 凑成 8px 视觉间距。 */
+  .u2-top{position:relative;flex:0 0 auto;display:flex;flex-direction:column}
+  .toast{position:absolute;left:50%;top:100%;margin-top:2px;
     transform:translateX(-50%) translateY(-8px);
     background:#2b1f12;color:var(--u2-on-felt);font-size:var(--u2-fs-cap);line-height:1.6;font-weight:700;
     padding:8px 14px;border:2px solid rgba(253,243,216,.22);border-radius:var(--u2-r-panel);
@@ -340,8 +363,9 @@
     pointer-events:none;max-width:300px;text-align:center;z-index:30}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* ---- 开局页 / 结局页：绒布底 + 奶油大卡 ---- */
-  .over{position:absolute;inset:0;background:var(--u2-felt-bg);z-index:20;display:none;
+  /* ---- 开局页 / 结局页：绒布底 + 奶油大卡 ----
+     z-index 40：压住 toast(30) 和 tip(35)，结局页弹出时不许有残留的提示层漏出来 */
+  .over{position:absolute;inset:0;background:var(--u2-felt-bg);z-index:40;display:none;
     flex-direction:column;align-items:center;justify-content:center;text-align:center;
     padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
   .over.on{display:flex}
@@ -392,26 +416,36 @@
   .legend{margin-top:14px;font-size:11px;color:#7d8794;text-align:center;line-height:1.9;max-width:540px}
 
   /* =====================================================================
-     降级阶梯（ui-adaptation §1.5）：由 applyDegrade() 按启动实测 stageH 挂类，
-     只会从 deg1 累加到 degN。砍的永远是装饰高度，玩法文字与选项永不砍。
+     降级阶梯（ui-adaptation §1.5 最新版）：由 applyDegrade() 按启动实测 stageH
+     挂类，只从 deg1 累加到 degN，不递推（递推会在临界值来回抖）。
+     砍的永远是装饰高度，玩法文字与选项永不砍。
+     实测命中：SE1 250→前三档 / 375 349 / 390 465 / 430 546 / 安卓360 466（后四档都不触发）。
      ===================================================================== */
   .phone.deg1 .tape{height:36px}
-  .phone.deg2 .tape{display:none}
-  .phone.deg3 .vit{height:40px}
-  /* deg3 把图区地板撤掉（而不是压到 96）：170~200 这段卡高装不下「96 图 + 三行正文」，
-     文字优先规则在这里生效——图先让到只剩一条边，文字永远不被裁（AGENTS 铁律） */
-  .phone.deg3 .card .art{min-height:0}
+  .phone.deg2 .vit{height:40px}
+  /* deg3（stage<260）把图区地板放到 96。96 已是 .art 的默认下限，所以这一步在
+     本版是「确认地板」：再往上留 170 会让 190~260 段的三行正文被 overflow 裁掉，
+     文字优先规则优先于阶梯的字面数值。 */
+  .phone.deg3 .card .art{min-height:96px}
   .phone.deg4 .card .art{display:none}
   .phone.deg4 .card .txt{flex:1 1 auto}
   .phone.deg5 .card .fn{display:none}
 
-  /* 窄屏（仅 SE1 一档）：只收紧边距，字号与间距不缩（可读性优先，§1.2） */
+  /* 窄屏（<360，仅 SE1 一档）：tape 是装饰，无条件隐藏——不依赖 stage 测量，不会抖。
+     省下的 52px 全还给卡区（实测终态 stage 296 / 卡 276 / 图区 181，守住 170 红线）。
+     字号与间距不缩（可读性优先，§1.2）。 */
   @media (max-width:359px){
+    .tape{display:none}
     .stage{margin-left:12px;margin-right:12px}
     .mkt{margin-left:10px;margin-right:10px}
     .card{padding:12px}
     .strip{padding-left:12px;padding-right:12px}
     .hud{padding-left:10px;padding-right:10px}
+  }
+  /* 360~374 这一窄带 tape 还在（宽 ≥360），角标只留百分比、去掉「今」与前缀，
+     免得它占掉图框 1/3（320 档已整块隐藏，不受影响）。 */
+  @media (max-width:374px){
+    .u2-tape-lab .u2-lab-k{display:none}
   }
 </style>
 </head>
@@ -424,27 +458,33 @@
   </div>
 
   <div class="phone">
-    <div class="nav">
-      <div class="u2-nav-bar">
-        <div class="title">韭菜之王</div>
-        <!-- 微信胶囊占位：真机上这块由微信绘制，代码里只留 78×30 的空位（spec §3.1） -->
-        <div class="capsule"><i></i><span class="dot"></span></div>
+    <!-- .u2-top = 导航 + HUD + 胶囊行 + 行情区 的包裹层：
+         toast 用 top:100% 挂在它下缘，HUD/胶囊换行、大字号切换时自动跟随，
+         不需要 JS 写死任何像素锚点（ui-adaptation §6-2 的结构解） -->
+    <div class="u2-top">
+      <div class="nav">
+        <div class="u2-nav-bar">
+          <div class="title">韭菜之王</div>
+          <!-- 微信胶囊占位：真机上这块由微信绘制，代码里只留 78×30 的空位（spec §3.1） -->
+          <div class="capsule"><i></i><span class="dot"></span></div>
+        </div>
       </div>
-    </div>
 
-    <div class="hud"><div class="vit" id="vit"></div></div>
+      <div class="hud"><div class="vit" id="vit"></div></div>
 
-    <div class="strip" id="strip"></div>
+      <div class="strip" id="strip"></div>
 
-    <div class="mkt" id="mkt">
-      <div class="t"><span class="amt"><b id="v-net">¥18,000</b><i class="dlt" id="v-delta"></i></span> <small id="v-pnl" class="flat">0.0%</small></div>
-      <div class="mbar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></div>
-      <div class="tape" id="tape"></div>
-      <div class="d"><span>第 <b id="v-day">1</b> 天 <b id="v-det"></b></span><span id="v-tr5">近五日 —</span></div>
+      <div class="mkt" id="mkt">
+        <div class="t"><span class="amt"><b id="v-net">¥18,000</b><i class="dlt" id="v-delta"></i></span> <small id="v-pnl" class="flat">0.0%</small></div>
+        <div class="mbar"><i class="s-cash" id="b-cash"></i><i class="s-eq" id="b-eq"></i><i class="s-debt" id="b-debt"></i></div>
+        <div class="tape" id="tape"></div>
+        <div class="d"><span>第 <b id="v-day">1</b> 天 <b id="v-det"></b></span><span id="v-tr5">近五日 —</span></div>
+      </div>
+
+      <div class="toast" id="toast"></div>
     </div>
 
     <div class="stage" id="stage"></div>
-    <div class="toast" id="toast"></div>
 
     <div class="over intro" id="intro">
       <div class="intro-card">
@@ -1089,13 +1129,16 @@ function tapeHTML(){
     if(i === n - 1) lastY = y;
   }
   var area = ln + "L" + W + "," + mid + "L0," + mid + "Z";
-  var dp = (dev >= 0 ? "+" : "") + (dev * 100).toFixed(1) + "%", tag, cls;
-  if(lim === "halt"){ tag = "停牌"; cls = "halt"; }
-  else if(lim === "up"){ tag = "涨停 ▲10%"; cls = ""; }
-  else if(lim === "down"){ tag = "跌停 ▼10%"; cls = "down"; }
-  else if(lim === "crash"){ tag = "崩 " + dp.replace("-", "−"); cls = "down"; }   // 泡沫破：一天崩掉 30%+
-  else if(flat){ tag = "今 0.0%"; cls = "halt"; }
-  else { tag = (dn ? "今 ▼ " : "今 ▲ ") + dp.replace("-", "−").replace("+", ""); cls = dn ? "down" : ""; }
+  /* 角标拆两段：「今 ▲」这类定语（k）与数值（v）。
+     360~374 窄带只留 v（去掉 k），否则一个角标吃掉图框三分之一；
+     两段都是行内 span，读屏连读成一整句，屏宽够时文案与整句一致。 */
+  var dp = (dev >= 0 ? "+" : "") + (dev * 100).toFixed(1) + "%", k, v, cls;
+  if(lim === "halt"){ k = "停牌"; v = ""; cls = "halt"; }
+  else if(lim === "up"){ k = "涨停 ▲"; v = "10%"; cls = ""; }
+  else if(lim === "down"){ k = "跌停 ▼"; v = "10%"; cls = "down"; }
+  else if(lim === "crash"){ k = "崩 ▼"; v = dp.replace("-", "−"); cls = "down"; }   // 泡沫破：一天崩掉 30%+
+  else if(flat){ k = "今"; v = "0.0%"; cls = "halt"; }
+  else { k = dn ? "今 ▼" : "今 ▲"; v = dp.replace("-", "−").replace("+", ""); cls = dn ? "down" : ""; }
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
       '<path class="fill ar" d="' + area + '"/>' +
       '<line class="mid" x1="0" y1="' + mid + '" x2="' + W + '" y2="' + mid +
@@ -1103,7 +1146,10 @@ function tapeHTML(){
       '<path class="ln" d="' + ln + '" vector-effect="non-scaling-stroke"/>' +
       '<line class="end" x1="' + (W - 2) + '" y1="' + (lastY - 3) + '" x2="' + (W - 2) + '" y2="' + (lastY + 3) +
         '" vector-effect="non-scaling-stroke"/>' +
-    '</svg><span class="u2-tape-lab ' + cls + '">' + tag + '</span>';
+    '</svg><span class="u2-tape-lab ' + cls + '">' +
+      '<span class="u2-lab-k">' + k + '</span>' +
+      (v ? '<span class="u2-lab-v">' + v + '</span>' : '') +
+    '</span>';
 }
 
 /* ============ 渲染 ============ */
@@ -1662,12 +1708,80 @@ function deckBack(cls){
   d.className = "card " + cls + " back";
   return d;
 }
-/* 人物图区（v2 四层，自下而上）：场景 → 调色 → 地面影 → 人物。
-   有图：场景层用 cover 铺满（导出图是人物+场景合成的一张 560×640）；
-   无图 / 单图 404：场景收起，emoji 顶上——图框、圆角、内衬线、高度、下沿暗层全不变，
-   占位与真图逐像素对齐（spec §5.3，占位不许塌版）。
+/* 人物图区（art-spec v3 两层合成）：场景 → 调色 → 地面影 → 人物（道具层可选）。
+   图层自下而上：.u2-art-scene（场景底图 cover 铺满）→ .u2-art-shade（调色/下沿暗层）
+   → .u2-art-ground（椭圆地面影）→ .u2-art-person / .u2-art-prop（人物抠图或道具图）。
    ART_ON 默认开：素材直接显示，不用带参数；?art=0 强制走占位（调占位版式用）。 */
 var ART_ON = !(typeof location !== "undefined" && /[?&]art=0/.test(location.search));
+
+/* 素材清单 = art-spec v3 §7 的 data/art.json，就地内联。
+   原型是单文件、file:// 打开下 fetch 会直接挂，所以查表数据先跟着代码走；
+   正式小程序版把 ART 换成 fetch('/data/art.json') 即可，下面 artOf() 一行不用改。
+   ready 是「导出批次到位开关」：场景/人物/剪影/道具四类素材还没导出的，置 false，
+   缺图的卡直接走占位（不发 404 请求、控制台干净）；哪类素材到货就把哪项改成 true。
+   现有 5 张 assets/char/laopo*.webp 是「人物+场景」already 合成好的整图、没有透明通道，
+   所以 laopo 走 flat 模式（整图铺满，不再叠场景层）——v3 §6 的过渡画法。 */
+var ART = {
+  version: 3,
+  canvas: [640, 720],
+  scenes: { "伴侣": "living_night", "家人": "living_night", "孩子": "kid_room", "宠物": "kid_room",
+    "市场": "trading_desk", "风险": "trading_desk", "职场": "office", "自己": "bathroom_mirror",
+    "收入": "kitchen_table", "决策": "kitchen_table", "人情": "banquet", "房子": "doorway",
+    "意外": "street_night" },
+  sceneDefault: "rain_window",
+  roster: ["laopo", "laoma", "haizi", "laoban", "laoshi", "zhangmuniang", "fangdong",
+           "tongshi_xiaowang", "pengyou", "hr", "laotongshi", "zhangayi", "yisheng"],
+  flat: ["laopo"],                                   // 无 alpha 的合成整图：只有这一种正确画法
+  reuse: { "nima": "laoma", "tongshi": "tongshi_xiaowang", "tongxue": "pengyou", "laotongxue": "pengyou" },
+  silhouette: { "ziji": "_sil_single", "dawei": "_sil_single", "taxi": "_sil_single", "suoyouren": "_sil_group" },
+  props: { "xinwen": "prop_news", "nidemao": "prop_cat", "nidepiao": "prop_chart",
+           "tijian": "prop_report", "xinyongka": "prop_bill", "shouji": "prop_phone" },
+  overrides: {},
+  ready: { scene: false, person: false, sil: false, prop: false }
+};
+
+/* 逐卡解析（顺序照抄 §7，不许改）：
+   overrides → flat → reuse → roster → silhouette → 纯场景（道具只在无人物时出现）。 */
+function artOf(c){
+  var o = (ART.overrides && ART.overrides[c.id]) || {};
+  var wid = c.wid || "", tag = c.tag || "";
+  var emo = c.emo ? "_" + c.emo : "";
+  // ① flat：整图铺满，不叠场景层（v3 §6 过渡模式）
+  if(!o.char && wid && ART.flat.indexOf(wid) > -1){
+    return { mode: "flat",
+      src: "assets/char/" + wid + emo + ".webp",
+      base: "assets/char/" + wid + ".webp" };       // 差分缺图 → 先退 base 整图，base 也没才转占位
+  }
+  var sceneKey = o.scene || ART.scenes[tag] || ART.sceneDefault;
+  var scene = "assets/bg/scene_" + sceneKey + ".webp";
+  var who = o.char || ART.reuse[wid] || (ART.roster.indexOf(wid) > -1 ? wid : null);
+  var person = (who && ART.ready.person) ? "assets/char/" + who + emo + ".webp" : null;
+  var sil = (!person && ART.silhouette[wid] && ART.ready.sil) ? "assets/char/" + ART.silhouette[wid] + ".webp" : null;
+  if(!ART.ready.scene) return { mode: "none" };     // 场景底图未到货：整块走占位
+  return { mode: person ? "person" : (sil ? "sil" : "scene"),
+    scene: scene, person: person, sil: sil,
+    base: person ? "assets/char/" + who + ".webp" : null,
+    prop: (!person && !sil && ART.props[wid] && ART.ready.prop) ? "assets/prop/" + ART.props[wid] + ".webp" : null };
+}
+
+/* 单层 404 的回落（v3 §7）：逐层置空，绝不出现破图标。
+   · flat：先退回不带 _emo 的 base 整图（只退一次），base 也挂了才整块转占位；
+   · 场景层：整块转占位（图框/圆角/高度/暗层都不变，只是 emoji 顶上）；
+   · 人物/剪影/道具层：只丢这一层，场景照旧——人物没到不影响画面成立。 */
+function u2ArtErr(img){
+  try{
+    var box = img.parentNode; if(!box) return;
+    var base = img.getAttribute("data-base") || "";
+    if(base && img.getAttribute("src") !== base){
+      img.setAttribute("data-base", "");
+      img.setAttribute("src", base);
+      return;
+    }
+    if(box.getAttribute("data-mode") === "flat" || /u2-art-scene/.test(img.className)) box.className += " gone";
+    else box.removeChild(img);
+  }catch(_e){}
+}
+
 /* 干净模式开关：?clean=1 强制开；微信小程序 webview 的 UA 带 miniProgram，自动开。
    开了之后手机框外的开发包装（标题/说明）不渲染，游戏全屏——
    小程序页面里本来就是只有游戏，那层包装只活在浏览器里。 */
@@ -1678,15 +1792,23 @@ if (typeof document !== "undefined" && document.documentElement) {
 }
 function artHTML(c){
   var ph = c.av || "🖼";
-  var hasImg = ART_ON && c.wid;
-  var file = c.wid + (c.emo ? "_" + c.emo : "") + ".webp";   // 素材规范：WebP（单张 ≤45KB 预算内）
-  return '<div class="art ' + (hasImg ? 'img' : 'no-img') + '" data-ph="' + ph + '">' +
-    (hasImg ? '<img class="u2-art-scene" src="assets/char/' + file + '" alt="" ' +
-              'onerror="this.parentNode.classList.add(\'gone\')">' : '') +
-    '<span class="u2-art-shade"></span>' +
-    '<span class="u2-art-ground"></span>' +
-    '<span class="u2-art-person">' + ph + '</span>' +
-  '</div>';
+  var a = ART_ON ? artOf(c) : { mode: "none" };
+  /* DOM 顺序 = 图层顺序（同层叠上下文里后者盖前者）：
+     场景 → 调色 → 地面影 → 人物/剪影/道具 → 占位 emoji。
+     占位 emoji 常驻最后、只在 none/gone 两态显示——404 时零延迟接管，不闪白框。 */
+  var h = '<div class="art ' + a.mode + '" data-mode="' + a.mode + '" data-ph="' + ph + '">';
+  if(a.mode === "flat"){
+    h += '<img class="u2-art-scene" src="' + a.src + '" data-base="' + a.base + '" alt="" ' +
+         'onerror="u2ArtErr(this)">';
+  } else if(a.scene){
+    h += '<img class="u2-art-scene" src="' + a.scene + '" alt="" onerror="u2ArtErr(this)">';
+  }
+  h += '<span class="u2-art-shade"></span><span class="u2-art-ground"></span>';
+  if(a.person) h += '<img class="u2-art-person" src="' + a.person + '" data-base="' + a.base + '" alt="" ' +
+                    'onerror="u2ArtErr(this)">';
+  if(a.sil) h += '<img class="u2-art-person sil" src="' + a.sil + '" alt="" onerror="u2ArtErr(this)">';
+  if(a.prop) h += '<img class="u2-art-prop-img" src="' + a.prop + '" alt="" onerror="u2ArtErr(this)">';
+  return h + '<span class="u2-art-prop">' + ph + '</span></div>';
 }
 /* 印章文案：色弱双保险——左边永远是「←」开头、右边永远是「→」结尾（形状+符号+颜色三重编码） */
 function stampLabel(c, dir){
@@ -1751,10 +1873,22 @@ function nextCard(){
   stage.appendChild(a);
   cur = a; bind(a);
 }
+/* 松手阈值随卡宽走（ui-adaptation §4.2）：threshold = clamp(卡宽 × 0.22, 64, 94)，
+   320 档 296 → 65、375 档 343 → 75、390 档 358 → 79、430 档 398 → 88。
+   固定 78px 是 344 开发框上量出来的，换算比例正是 0.227——写死会在小屏上「轻轻一滑就飞出去」。
+   印章透明度也用同一个阈值：拖到刚好能松手的位置，印章正好不透明。 */
+function dragThreshold(el){
+  var w = 0;
+  try{ w = el.getBoundingClientRect ? el.getBoundingClientRect().width : 0; }catch(_e){}
+  if(!w) w = (el && (el.offsetWidth || el.clientWidth)) || 0;
+  if(!w) w = 312;                                     // 桩 DOM：344 开发框减去左右各 16
+  return Math.max(64, Math.min(94, Math.round(w * 0.22)));
+}
 function bind(card){
-  var x0 = 0, y0 = 0, dx = 0, on = false;
+  var x0 = 0, y0 = 0, dx = 0, on = false, th = 78;
   card.addEventListener("pointerdown", function(e){
     if(S.over) return; on = true; x0 = e.clientX; y0 = e.clientY;
+    th = dragThreshold(card);
     card.setPointerCapture(e.pointerId); card.style.transition = "none";
   });
   card.addEventListener("pointermove", function(e){
@@ -1762,7 +1896,7 @@ function bind(card){
     dx = e.clientX - x0;
     var dy = (e.clientY - y0) * 0.25;
     card.style.transform = "translate(" + dx + "px," + dy + "px) rotate(" + (dx * 0.045) + "deg)";
-    var t = clamp(Math.abs(dx) / 90, 0, 1);
+    var t = clamp(Math.abs(dx) / th, 0, 1);
     var c = card._c;
     // 拖到哪边，哪边的选项印章就浮现（王权式）：文字提前填好，opacity 跟着拖动距离走
     // 既定事实卡没有印章，全部走空值保护
@@ -1773,7 +1907,7 @@ function bind(card){
   function end(){
     if(!on) return; on = false;
     card.style.transition = "transform .32s cubic-bezier(.3,.9,.3,1), opacity .32s";
-    if(Math.abs(dx) > 78) fly(dx > 0 ? "R" : "L");
+    if(Math.abs(dx) > th) fly(dx > 0 ? "R" : "L");
     else { card.style.transform = "translate(0,0) rotate(0deg)";
       var sl = card.querySelector(".stamp.L"), sr = card.querySelector(".stamp.R");
       if(sl) sl.style.opacity = 0; if(sr) sr.style.opacity = 0; }
@@ -2275,29 +2409,14 @@ CARDS = [
  {id:"debt_limit_01",who:"出差",wid:"chucha",av:"🚄",tag:"风险",when:"has:laolai",cap:2,txt:"客户在两千公里外。名单上的人，买不了高铁和机票。",
   R:{s:"视频会议算了，单子丢了",e:{mind:-4,social:-6}},L:{s:"坐绿皮，硬座两天",e:{energy:-30,mind:-6,social:2}}},
 ];
-/* ============ 布局实测（ui-adaptation §1.5 / §6-2） ============
-   两件事都在启动时量一次、窗口变化重量：
-     ① toast 锚点：--hud-bottom = 导航 + HUD 的实测高度。原来写死 top:112px 是开发框
-        344 布局的 eyeball 值，换机型/上自定义导航必然错位（390 档 112px 正好压图标行）；
-     ② 降级阶梯：按实测 stageH 决定砍哪几块装饰高度（先砍装饰，玩法文字永不砍）。
+/* ============ 布局实测（ui-adaptation §1.5 / §4.3） ============
+   启动量一次、窗口变化重量，就两件事：
+     ① 降级阶梯：按实测 stageH 一次定档（不递推），只砍装饰高度，玩法文字永不砍；
+     ② 图区锚点：实测图区高 <200px 给 .art 挂 .short，纵向焦点从 top 挪到 16%。
+   toast 不走测量了——结构解（.u2-top + top:100%）由浏览器自己算，改字号/换机型自动跟随。
    量不到（smoke-ui 的桩 DOM 没有 querySelector）就静默跳过，浏览器里一定走得到。 */
 function phoneEl(){
   try{ return document.querySelector ? document.querySelector(".phone") : null; }catch(_e){ return null; }
-}
-function layoutAnchor(){
-  var ph = phoneEl(); if(!ph) return;
-  try{
-    var nav = ph.querySelector(".nav"), hud = ph.querySelector(".hud"),
-        strip = ph.querySelector(".strip"), mkt = ph.querySelector(".mkt");
-    if(nav && hud) ph.style.setProperty("--hud-bottom", (nav.offsetHeight + hud.offsetHeight) + "px");
-    // toast 锚在行情面板下缘（= 卡区顶部）：往下 8px。
-    // 不压 HUD、也不压卡面正文（§5.1 两条同时满足）——只有卡面图区顶上这一段是空的，
-    // 胶囊行和净值行都是 1~2 行的小行，装不下一条两行的 toast（实测 390 档会盖住净值）。
-    if(nav && hud && mkt){
-      ph.style.setProperty("--toast-top",
-        (nav.offsetHeight + hud.offsetHeight + (strip ? strip.offsetHeight : 0) + mkt.offsetHeight) + "px");
-    }
-  }catch(_e){}
 }
 /* stageH = 屏高 − 导航 − HUD − 胶囊行 − 行情区 − 底部外边距 */
 function stageBudget(ph){
@@ -2307,7 +2426,9 @@ function stageBudget(ph){
   var H = ph.clientHeight || ph.offsetHeight || 0;
   return H - nav.offsetHeight - hud.offsetHeight - (strip ? strip.offsetHeight : 0) - mkt.offsetHeight - 12;
 }
-var DEG = [300, 240, 200, 170, 150];       // ⑤档阈值：tape 缩 → tape 隐 → HUD 缩 → 图区隐 → .fn 隐
+/* 五档阈值（§1.5）：tape 缩 → tape 隐 → 图区地板 → 图区隐 → .fn 隐。
+   实测命中：SE1 250 → 前两档；375 339 / 390 465 / 430 604 / 安卓360 466 一档都不触发。 */
+var DEG = [300, 280, 260, 190, 170];
 function applyDegrade(){
   var ph = phoneEl(); if(!ph) return;
   try{
@@ -2320,7 +2441,31 @@ function applyDegrade(){
     ph.setAttribute("data-stage", Math.round(h));
   }catch(_e){}
 }
-function relayout(){ layoutAnchor(); applyDegrade(); }
+/* 图区纵向锚点：实测高 <200px 时 cover 只看得见画面上沿一条，
+   脸心/下巴正好被切在边线（96 档可见带 0~27.6%）。加 .short 把锚点挪到 16%，
+   可见带变成 11.6~39.2%，脸完整。阈值写死 200、不做设备判断——常态三档
+   纵向溢出不到 1%，加不加像素级一致（ui-adaptation §1.5 ②）。 */
+function markArtShort(){
+  var ph = phoneEl(); if(!ph) return;
+  try{
+    var list = ph.querySelectorAll(".card .art") || [];
+    for(var i = 0; i < list.length; i++){
+      var el = list[i], h = el.offsetHeight || 0;
+      toggleCls(el, "short", h > 0 && h < 200);
+    }
+  }catch(_e){}
+}
+/* className 手改而不是 classList.toggle(el,name,force)：后者在老 webview 里不支持第二参数，
+   桩 DOM 也没有 classList。改完顺手压掉多余空格，避免字符串一直变长。 */
+function toggleCls(el, name, on){
+  if(!el) return;
+  var cur = " " + String(el.className || "") + " ";
+  var has = cur.indexOf(" " + name + " ") > -1;
+  if(on === has) return;
+  if(on) el.className = String(el.className || "").replace(/\s+$/, "") + " " + name;
+  else el.className = cur.replace(" " + name + " ", " ").replace(/\s+/g, " ").trim();
+}
+function relayout(){ applyDegrade(); markArtShort(); }
 
 $("i-b").onclick = function(){ $("intro").classList.remove("on"); };
 $("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始」关闭）
