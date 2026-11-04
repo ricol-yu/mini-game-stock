@@ -25,8 +25,9 @@
     --u2-card:#fdf6e1; --u2-card-2:#f0e2be;
     --u2-edge:#241a0e; --u2-ink:#2b1f12; --u2-ink-2:#6b5a44; --u2-ink-3:#857356;
     --u2-on-felt:#fdf3d8; --u2-on-felt-2:rgba(253,243,216,.68);
-    /* 语义色：奶油底上的红字/红印章一律 up-deep（5.1:1），up 只给深底和图形 */
-    --u2-up:#e23c30; --u2-up-deep:#c9302a; --u2-down:#1e9e5a;
+    /* 语义色：奶油底上的红字/红印章一律 up-deep（5.1:1），up 只给深底和图形；
+       绿对称处理：down-deep（#157a44，对白/奶油均 5.4:1）用于文字与胶囊底，down 只给深底和曲线 */
+    --u2-up:#e23c30; --u2-up-deep:#c9302a; --u2-down:#1e9e5a; --u2-down-deep:#157a44;
     --u2-gold:#f2b01e; --u2-warn:#ff9426;
     --u2-due-bg:#ffd9cf; --u2-due-line:#c93a28; --u2-due-ink:#8c1f12;
     --u2-felt-line:rgba(253,243,216,.50); --u2-shadow-ink:rgba(11,32,22,.45);
@@ -200,7 +201,7 @@
   .mkt .t b#v-net.hit-up{animation:hitUp .95s ease-out both}
   .mkt .t b#v-net.hit-dn{animation:hitDn .95s ease-out both}
   @keyframes hitUp{0%{color:var(--u2-up-deep);transform:scale(.94)}32%{color:var(--u2-up-deep);transform:scale(1.10)}72%{color:var(--u2-up-deep);transform:scale(.985)}100%{color:inherit;transform:none}}
-  @keyframes hitDn{0%{color:var(--u2-down);transform:scale(.94)}32%{color:var(--u2-down);transform:scale(1.10)}72%{color:var(--u2-down);transform:scale(.985)}100%{color:inherit;transform:none}}
+  @keyframes hitDn{0%{color:var(--u2-down-deep);transform:scale(.94)}32%{color:var(--u2-down-deep);transform:scale(1.10)}72%{color:var(--u2-down-deep);transform:scale(.985)}100%{color:inherit;transform:none}}
   /* 收益率：形状(▲▼) + 符号 + 颜色三重编码，色弱也读得出（::before 不污染 textContent） */
   #v-pnl{font-size:var(--u2-fs-num);line-height:1;font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto}
   #v-pnl.up::before{content:"▲\00a0"}
@@ -236,7 +237,7 @@
   .mkt .ledg em{font-style:normal;color:var(--u2-ink-2);margin-right:2px}
   .mkt .ledg b{font-weight:800;font-variant-numeric:tabular-nums}
   .mkt .ledg b.up{color:var(--u2-up-deep)}
-  .mkt .ledg b.dn{color:var(--u2-down)}
+  .mkt .ledg b.dn{color:var(--u2-down-deep)}
   .mkt .ledg b.tf{color:var(--u2-ink-3)}
   /* 18% 处弹到位（与图标 vdup 同一节奏），72% 开始飘散，100% 正好接下一笔 */
   @keyframes ledgPop{
@@ -267,7 +268,7 @@
     display:inline-flex;align-items:baseline;gap:.3em;
     font-variant-numeric:tabular-nums;letter-spacing:.2px;
     background:var(--u2-up-deep);color:#fff}
-  .u2-tape-lab.down{background:var(--u2-down)}
+  .u2-tape-lab.down{background:var(--u2-down-deep)}
   .u2-tape-lab.halt{background:rgba(43,31,18,.55)}
   .tape .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:10px;color:var(--u2-ink-3)}
@@ -278,7 +279,10 @@
   .mkt .d span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mkt .d span:last-child{flex:0 0 auto}
   .mkt .d b{color:var(--u2-ink-2);font-weight:800}
-  .up{color:var(--u2-up-deep)} .down{color:var(--u2-down)} .flat{color:var(--u2-ink-3)}
+  .up{color:var(--u2-up-deep)} .down{color:var(--u2-down-deep)} .flat{color:var(--u2-ink-3)}
+  /* 层叠兜底：.up/.down/.flat 声明在角标之后，会把角标白字覆盖成同色字同色底（跌日绿字绿底、停牌灰字灰底）。
+     必须在它们之后重申白字。 */
+  .u2-tape-lab,.u2-tape-lab.down,.u2-tape-lab.halt{color:#fff}
 
   /* ---- 卡牌舞台：一叠牌（主卡 + 两层空白牌背） ---- */
   .stage{flex:1 1 auto;position:relative;margin:0 16px 12px;margin-bottom:calc(12px + env(safe-area-inset-bottom));
@@ -364,7 +368,7 @@
     border:3px solid;background:rgba(253,246,225,.95);box-shadow:var(--u2-sh-stamp);
     max-width:200px;white-space:nowrap;overflow:hidden;
     opacity:0;pointer-events:none;transition:opacity var(--u2-t-fast)}
-  .stamp.L{left:20%;color:var(--u2-down);border-color:var(--u2-down);transform:rotate(-10deg)}
+  .stamp.L{left:20%;color:var(--u2-down-deep);border-color:var(--u2-down-deep);transform:rotate(-10deg)}
   /* 奶油底上的红印章用 up-deep（up 只有 4.3:1，读不清） */
   .stamp.R{right:20%;color:var(--u2-up-deep);border-color:var(--u2-up-deep);transform:rotate(10deg)}
 
