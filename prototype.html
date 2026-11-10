@@ -420,6 +420,104 @@
   .intro .intro-hint{font-size:11px;line-height:1.8;font-weight:700;color:var(--u2-ink-2);
     letter-spacing:.5px;margin:0 0 16px}
 
+  /* ---- 主菜单（2026-11-10）：抓大鹅式首页。原来开场页只是一张说明卡，没有「家」的形态，
+     结局图鉴 / 每日任务 / 广告次数这些局外系统也无处安放。结构：
+     顶栏（战绩 chip + 次数 chip·加号）→ 中央 hero（场景底图 + 标题）→ 大开始键 → 三个入口 ---- */
+  .home{width:min(345px,100%);display:flex;flex-direction:column;align-items:center}
+  .home-top{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
+  .h-chip{background:var(--u2-card);border:2px solid var(--u2-edge);border-radius:var(--u2-r-chip);
+    padding:7px 12px;font-size:11px;font-weight:800;color:var(--u2-ink);
+    box-shadow:var(--u2-sh-stamp);display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+  .h-add{width:22px;height:22px;border-radius:50%;border:2px solid var(--u2-edge);background:var(--u2-gold);
+    color:var(--u2-ink);font-size:13px;font-weight:900;line-height:1;cursor:pointer;padding:0;
+    box-shadow:0 2px 0 rgba(43,31,18,.35);transition:transform var(--u2-t-tap) var(--u2-e-back);
+    -webkit-appearance:none;font-family:inherit}
+  .h-add:active{transform:scale(.88)}
+  .home-hero{width:100%;height:196px;border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);
+    overflow:hidden;position:relative;box-shadow:var(--u2-sh-hard),var(--u2-sh-soft);margin-bottom:18px;
+    background:var(--u2-felt-2)}
+  .home-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .home-hero::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(12,43,30,.08) 30%,rgba(12,43,30,.58))}
+  .h-logo{position:absolute;left:0;right:0;top:46px;z-index:1;font-size:40px;font-weight:900;
+    letter-spacing:6px;color:var(--u2-on-felt);text-indent:6px;text-align:center;
+    text-shadow:0 3px 0 rgba(11,32,22,.55)}
+  .h-kick{position:absolute;left:16px;right:16px;top:104px;z-index:1;font-size:10.5px;line-height:1.7;
+    font-weight:700;color:var(--u2-on-felt-2);text-align:center}
+  .btn.h-start{width:100%;height:56px;font-size:17px;letter-spacing:3px;background:var(--u2-gold);
+    color:var(--u2-ink);border-color:var(--u2-edge);margin-bottom:16px;
+    animation:hBreath 2.8s ease-in-out infinite}
+  @keyframes hBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+  .home-nav{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .h-ent{background:var(--u2-card);border:2px solid var(--u2-edge);border-radius:var(--u2-r-panel);
+    padding:10px 4px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;
+    box-shadow:var(--u2-sh-stamp);transition:transform var(--u2-t-tap) var(--u2-e-back);position:relative;
+    -webkit-appearance:none;font-family:inherit}
+  .h-ent:active{transform:translateY(2px)}
+  .h-ent i{font-size:20px;line-height:1.2;font-style:normal}
+  .h-ent b{font-size:11px;font-weight:800;color:var(--u2-ink);letter-spacing:.5px}
+  .h-ent em{font-size:9px;font-style:normal;font-weight:700;color:var(--u2-ink-3);line-height:1.4}
+  .h-ent em.hot{color:var(--u2-up-deep)}
+  .home-hint{font-size:10px;line-height:1.8;font-weight:600;color:var(--u2-on-felt-2);
+    letter-spacing:.4px;margin:14px 0 0;text-align:center}
+
+  /* ---- 局外面板（图鉴/任务/玩法/广告）：压在主菜单 z40 之上，z45 ---- */
+  .over.sub{z-index:45}
+  .p-card{width:min(345px,100%);max-height:100%;overflow-y:auto;background:var(--u2-card);
+    border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);padding:16px 14px;
+    box-shadow:var(--u2-sh-hard),var(--u2-sh-soft);display:flex;flex-direction:column;align-items:center;
+    -webkit-overflow-scrolling:touch}
+  .over.on .p-card,.over.on .ad-card{animation:u2OverPop 460ms cubic-bezier(.3,1.05,.4,1) both}
+  .p-head{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .p-head b{font-size:15px;font-weight:900;letter-spacing:2px;color:var(--u2-ink)}
+  .p-head b em{font-style:normal;font-size:11px;font-weight:800;color:var(--u2-ink-3);margin-left:8px;
+    font-variant-numeric:tabular-nums}
+  .p-x{width:30px;height:30px;border-radius:50%;border:2px solid var(--u2-edge);background:var(--u2-card-2);
+    color:var(--u2-ink);font-size:12px;font-weight:900;cursor:pointer;padding:0;flex:0 0 auto;
+    box-shadow:0 2px 0 rgba(43,31,18,.3);-webkit-appearance:none;font-family:inherit}
+  .p-rules{font-size:10px;line-height:1.9;font-weight:600;color:var(--u2-ink-2);text-align:left;
+    background:rgba(43,31,18,.06);border-radius:10px;padding:9px 11px;margin:0 0 12px;width:100%}
+  .p-hint{font-size:11px;line-height:1.8;font-weight:700;color:var(--u2-ink-2);letter-spacing:.5px;margin:0 0 10px}
+  .help-vit{justify-content:center;gap:16px;height:auto;margin-bottom:6px}
+  .help-vit .vit-i{cursor:default}
+  .help-vit .vit-i::after{display:none}
+  /* 结局图鉴格子：未解锁灰阶剪影，解锁后点亮 + 记录那一局的天数与终局净值 */
+  .alb-grid{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .alb-it{background:var(--u2-card-2);border:2px solid var(--u2-edge);border-radius:10px;
+    padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    min-height:88px;justify-content:center}
+  .alb-it .alb-em{font-size:22px;line-height:1.3;filter:grayscale(1);opacity:.4}
+  .alb-it b{font-size:11px;font-weight:800;color:var(--u2-ink-3);letter-spacing:1px}
+  .alb-it span{font-size:8.5px;color:var(--u2-ink-3);line-height:1.5;text-align:center}
+  .alb-it.on{background:var(--u2-card)}
+  .alb-it.on .alb-em{filter:none;opacity:1}
+  .alb-it.on b{color:var(--u2-ink)}
+  .alb-it.on span{color:var(--u2-ink-2)}
+  /* 每日任务行 */
+  .task-it{width:100%;display:flex;align-items:center;gap:10px;background:var(--u2-card-2);
+    border:2px solid var(--u2-edge);border-radius:10px;padding:9px 10px;margin-bottom:8px}
+  .task-it .t-i{font-size:18px;flex:0 0 auto}
+  .task-it .t-m{flex:1;text-align:left;min-width:0}
+  .task-it .t-m b{display:block;font-size:12px;font-weight:800;color:var(--u2-ink)}
+  .task-it .t-m span{font-size:9.5px;color:var(--u2-ink-3);line-height:1.5}
+  .t-claim{height:32px;padding:0 12px;border-radius:9px;border:2px solid var(--u2-edge);cursor:default;
+    font-size:10.5px;font-weight:800;letter-spacing:.5px;-webkit-appearance:none;font-family:inherit;
+    background:var(--u2-card);color:var(--u2-ink-3);flex:0 0 auto}
+  .t-claim.ok{background:var(--u2-gold);color:var(--u2-ink);cursor:pointer;
+    box-shadow:0 2px 0 rgba(43,31,18,.35);transition:transform var(--u2-t-tap) var(--u2-e-back)}
+  .t-claim.ok:active{transform:translateY(2px)}
+  /* 广告模拟卡：上线替换激励视频 SDK，节奏（3s 可领）按真机广告时长调 */
+  .ad-card{width:min(300px,100%);background:var(--u2-card);border:3px solid var(--u2-edge);
+    border-radius:var(--u2-r-card);padding:18px 16px;box-shadow:var(--u2-sh-hard),var(--u2-sh-soft);
+    display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+  .ad-tag{font-size:9px;font-weight:800;letter-spacing:1px;color:var(--u2-ink-3);
+    background:rgba(43,31,18,.08);border-radius:6px;padding:3px 8px}
+  .ad-card .ad-emoji{font-size:40px;line-height:1.2}
+  .ad-body{font-size:12px;font-weight:700;color:var(--u2-ink-2);line-height:1.7}
+  .ad-skip{background:none;border:none;font-size:10px;font-weight:700;color:var(--u2-ink-3);
+    cursor:pointer;text-decoration:underline;padding:0;-webkit-appearance:none;font-family:inherit}
+  .endcard .btn.o-home{background:var(--u2-card-2);color:var(--u2-ink)}
+
   .endcard{width:345px;max-width:100%;max-height:100%;overflow-y:auto;
     background:var(--u2-card);border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);
     padding:20px 18px;box-shadow:var(--u2-sh-hard),0 18px 26px rgba(0,0,0,.30);
@@ -597,7 +695,7 @@
     100%{opacity:1;transform:none}}
   .over.on .endcard{animation:u2OverPop 460ms cubic-bezier(.3,1.05,.4,1) both}
   .over.on .em{animation:u2Jelly 620ms cubic-bezier(.3,.9,.3,1) 140ms both}
-  .intro .intro-card{animation:u2OverPop 520ms cubic-bezier(.3,1.05,.4,1) both}
+  .intro .home{animation:u2OverPop 520ms cubic-bezier(.3,1.05,.4,1) both}
 
   /* 系统开了「减弱动效」：全部压到 1ms 终态。数值、颜色、文字照旧，只是不再动。
      小程序没有这个媒体查询时，用 ?fx=0 / app 级开关等效（motion-spec §6）。 */
@@ -651,13 +749,23 @@
     <div class="stage" id="stage"></div>
 
     <div class="over intro" id="intro">
-      <div class="intro-card">
-        <div class="kicker">一个关于炒股、生活和不赔上人生的故事</div>
-        <h2>韭菜之王</h2>
-        <div class="u2-hair"></div>
-        <div class="vit" id="i-vit"></div>
-        <p class="intro-hint">右滑＝照做 · 左滑＝推掉</p>
-        <button class="btn" id="i-b">开始</button>
+      <div class="home">
+        <div class="home-top">
+          <div class="h-chip" id="h-best">🏆 第一局等你开局</div>
+          <div class="h-chip">💡 ×<b id="h-lives">3</b><button class="h-add" id="h-add" aria-label="看广告得次数">＋</button></div>
+        </div>
+        <div class="home-hero">
+          <img src="assets/bg/scene_trading_desk.webp" alt="">
+          <div class="h-logo">韭菜之王</div>
+          <div class="h-kick">一个关于炒股、生活和不赔上人生的故事</div>
+        </div>
+        <button class="btn h-start" id="i-b">开始游戏</button>
+        <div class="home-nav">
+          <button class="h-ent" id="h-album"><i>📖</i><b>结局图鉴</b><em id="h-albct">0/12</em></button>
+          <button class="h-ent" id="h-task"><i>🎯</i><b>每日任务</b><em id="h-taskdot">领奖励</em></button>
+          <button class="h-ent" id="h-help"><i>📋</i><b>玩法说明</b><em>规则</em></button>
+        </div>
+        <p class="home-hint">右滑＝照做 · 左滑＝推掉<br>次数＝再来一局的资格，每天免费 3 次</p>
       </div>
     </div>
 
@@ -673,6 +781,50 @@
           <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
         </div>
         <button class="btn" id="o-b">再来一辈子</button>
+        <button class="btn o-home" id="o-home">回主菜单</button>
+      </div>
+    </div>
+
+    <div class="over sub" id="help">
+      <div class="p-card">
+        <div class="p-head"><b>玩法说明</b><button class="p-x" id="p-x-help">✕</button></div>
+        <div class="vit help-vit" id="i-vit"></div>
+        <p class="p-hint">右滑＝照做 · 左滑＝推掉</p>
+        <p class="p-rules">
+          四条命：心态、风险、社会、精力——任何一条归零（或风险打满）都直接结算这一局。<br>
+          金钱：现金 + 持仓 − 负债。每月 5 号发薪并扣房租水电，有欠款则同日自动还月供。<br>
+          借钱：现金不够会自动欠下（记进负债），负债顶到额度就没人再借你——那是一个结局。<br>
+          行情：你只有一只票。泡沫、冬天、停牌都会来；K 线右上角的标签是它今天的涨跌。
+        </p>
+        <button class="btn" id="p-go-help">知道了</button>
+      </div>
+    </div>
+
+    <div class="over sub" id="album">
+      <div class="p-card">
+        <div class="p-head"><b>结局图鉴<em id="alb-ct">0/12</em></b><button class="p-x" id="p-x-album">✕</button></div>
+        <div class="alb-grid" id="alb-grid"></div>
+        <p class="p-rules">死掉或达成的那一局，会点亮这里的一格。图鉴只记录，不评判。</p>
+        <button class="btn" id="p-go-album">返回</button>
+      </div>
+    </div>
+
+    <div class="over sub" id="task">
+      <div class="p-card">
+        <div class="p-head"><b>每日任务</b><button class="p-x" id="p-x-task">✕</button></div>
+        <div id="task-list" style="width:100%"></div>
+        <p class="p-rules">任务每天零点刷新，奖励是「再来一局」的次数。原型先按这个节奏发，上线后接真实广告位。</p>
+        <button class="btn" id="p-go-task">返回</button>
+      </div>
+    </div>
+
+    <div class="over sub" id="admod">
+      <div class="ad-card">
+        <div class="ad-tag">模拟广告位 · 上线替换激励视频</div>
+        <div class="ad-emoji">📺</div>
+        <div class="ad-body">看完一小段广告，换一次「再来一局」。<br>局内死亡不复活——次数只在开局消耗。</div>
+        <button class="btn" id="ad-b">广告播放中 3s</button>
+        <button class="ad-skip" id="ad-skip">放弃</button>
       </div>
     </div>
   </div>
@@ -2330,6 +2482,7 @@ function check(){
   }
   if(!e) return;
   S.over = true;
+  recordRun(e[1], e[0], d, n);   // 写进图鉴 + 战绩（localStorage；原型替代账号系统）
   closeTips(null);        // 结局页 z-40 只是盖住：不主动收，重开一局 tip 会重新露在 HUD 上
   $("o-em").textContent = e[0]; $("o-t").textContent = e[1]; $("o-s").textContent = e[2]; $("o-q").textContent = e[3];
   var stat = "终局面板：心态 " + Math.round(S.mind) + " · 社会 " + Math.round(S.social) + " · 风险 " + Math.round(S.risk) +
@@ -2803,16 +2956,162 @@ function relayout(){ applyDegrade(); markArtShort(); }
 function hideOver(el){
   if(!el) return;
   try{
-    var kids = el.querySelectorAll(".endcard,.intro-card,.em");
+    var kids = el.querySelectorAll(".endcard,.intro-card,.em,.home,.p-card,.ad-card");
     for(var i = 0; i < kids.length; i++) kids[i].style.animation = "none";
   }catch(_e){}
   el.classList.remove("on");
   try{ window.scrollTo(0, 0); }catch(_e){}
 }
-$("i-b").onclick = function(){ hideOver($("intro")); };
-$("intro").classList.add("on");          // 开局必看：目标与玩法说明（点「开始」关闭）
+/* ============ 局外系统（2026-11-10）：主菜单 / 次数 / 图鉴 / 每日任务 ============
+   原型阶段用 localStorage 替代账号系统（上线换微信 openid + 云存储，接口形状不变）。
+   次数铁律（openend-design §2）：广告＝「再来一局的资格」，不是局内复活——
+   次数只在开局消耗，局内死亡不复活。每日免费 3 次，看广告/任务各补。 */
+var LSKEY = "leek_meta_v1", META;
+/* 图鉴目录：名字必须和 check() 里的 e[1] 逐字一致（写完两边 grep 对一遍） */
+var ALBUM = [
+  { n:"自由",         em:"🪙" }, { n:"上岸",         em:"🌅" },
+  { n:"两个人",       em:"🏠" }, { n:"熬成精",       em:"🗿" },
+  { n:"一次都没动",   em:"👁"  }, { n:"泡沫之后",     em:"🫧" },
+  { n:"爆了",         em:"💥" }, { n:"最后一把",     em:"🎈" },
+  { n:"冬天还没过完", em:"❄️" }, { n:"穿仓",         em:"💀" },
+  { n:"不动了",       em:"🧊" }, { n:"没有人",       em:"🪑" }
+];
+var TASKS = [
+  { k:"run",   em:"🎴", n:"来一局",     d:"随便玩玩就算数",           r:1 },
+  { k:"day20", em:"🛡", n:"活过 20 天", d:"撑过甜头期，见识通胀",     r:2 },
+  { k:"ad",    em:"📺", n:"看一次广告", d:"支持一下这个穷开发商",     r:1 }
+];
+function todayKey(){
+  var d = new Date();
+  return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+}
+function saveMeta(){
+  try{ localStorage.setItem(LSKEY, JSON.stringify(META)); }catch(_e){}   // 模拟桩/隐私模式：静默跳过
+}
+function metaInit(){
+  try{ META = JSON.parse(localStorage.getItem(LSKEY) || "{}") || {}; }catch(_e){ META = {}; }
+  if(META.date !== todayKey()){                      // 换天：免费次数回 3、任务清零（图鉴/战绩保留）
+    META.date = todayKey(); META.lives = 3;
+    META.tasks = { run:0, day20:0, ad:0, claimed:[false,false,false] };
+  }
+  if(!META.unlocked) META.unlocked = {};
+  if(!META.best) META.best = {};
+  if(!META.tasks) META.tasks = { run:0, day20:0, ad:0, claimed:[false,false,false] };
+  if(typeof META.lives !== "number") META.lives = 3;
+}
+function recordRun(name, em, d, n){
+  META.unlocked[name] = { em: em, days: d, net: Math.round(n) };
+  if(d > (META.best.days || 0)) META.best.days = d;
+  if(Math.round(n) > (META.best.net || 0)) META.best.net = Math.round(n);
+  if(d >= 20) META.tasks.day20 = 1;                  // 任务：活过 20 天
+  saveMeta();
+}
+function taskProg(k){
+  if(k === "day20") return META.tasks.day20 ? 1 : 0;
+  return Math.min(1, META.tasks[k] || 0);
+}
+function refreshHome(){
+  try{
+    $("h-lives").textContent = META.lives;
+    $("h-best").textContent = META.best.days ? "🏆 最长 " + META.best.days + " 天" : "🏆 第一局等你开局";
+    var cnt = 0;
+    ALBUM.forEach(function(a){ if(META.unlocked[a.n]) cnt++; });
+    $("h-albct").textContent = cnt + "/" + ALBUM.length;
+    var claimable = false;                            // 有可领未领的任务：入口红字提醒（爆款首页惯例）
+    TASKS.forEach(function(t, i){
+      if(!META.tasks.claimed[i] && taskProg(t.k) >= 1) claimable = true;
+    });
+    $("h-taskdot").className = claimable ? "hot" : "";
+    $("h-taskdot").textContent = claimable ? "可领奖励" : "领奖励";
+  }catch(_e){}
+}
+/* 进局：扣一次次数。次数就是资格——耗尽时主菜单的「＋」和开始键都会引导去广告 */
+function enterRun(){
+  META.lives--; META.tasks.run++;
+  saveMeta(); refreshHome();
+  hideOver($("intro")); hideOver($("over"));
+  _skipTut = true; reset();
+}
+/* 模拟广告：上线替换激励视频 SDK（onClose 回调里发奖）。3s 可领按真机广告时长调 */
+var AD_T = 0;
+function openAd(){
+  $("admod").classList.add("on");
+  var b = $("ad-b"), left = 3;
+  b.disabled = true; b.textContent = "广告播放中 3s";
+  clearInterval(AD_T);
+  AD_T = setInterval(function(){
+    left--;
+    if(left > 0){ b.textContent = "广告播放中 " + left + "s"; return; }
+    clearInterval(AD_T);
+    b.disabled = false; b.textContent = "领取 💡 ×1";
+  }, 1000);
+}
+function renderAlbum(){
+  var done = 0, html = "";
+  ALBUM.forEach(function(a){
+    var u = META.unlocked[a.n];
+    if(u){ done++;
+      html += '<div class="alb-it on"><div class="alb-em">' + a.em + '</div><b>' + a.n + '</b>' +
+              '<span>最长一次 ' + u.days + ' 天<br>终局净值 ' + money(u.net) + '</span></div>';
+    }else{
+      html += '<div class="alb-it"><div class="alb-em">❓</div><b>？？？</b><span>结局待解锁</span></div>';
+    }
+  });
+  $("alb-grid").innerHTML = html;
+  $("alb-ct").textContent = done + "/" + ALBUM.length;
+}
+function renderTasks(){
+  var html = "";
+  TASKS.forEach(function(t, i){
+    var done = taskProg(t.k) >= 1, claimed = META.tasks.claimed[i];
+    var btn = claimed ? '<button class="t-claim" disabled>已领取</button>'
+            : done    ? '<button class="t-claim ok" data-i="' + i + '">领 ' + t.r + ' 次</button>'
+                      : '<button class="t-claim" disabled>进行中</button>';
+    html += '<div class="task-it"><span class="t-i">' + t.em + '</span>' +
+            '<span class="t-m"><b>' + t.n + '</b><span>' + t.d + '</span></span>' + btn + '</div>';
+  });
+  var host = $("task-list"); host.innerHTML = html;
+  var btns = host.querySelectorAll(".t-claim.ok");
+  for(var i = 0; i < btns.length; i++){
+    btns[i].onclick = function(){
+      var j = +this.getAttribute("data-i");
+      META.tasks.claimed[j] = true;
+      META.lives += TASKS[j].r;
+      saveMeta(); renderTasks(); refreshHome();
+    };
+  }
+}
+
+/* 主菜单事件接线 */
+$("i-b").onclick = function(){
+  if(META.lives <= 0){ openAd(); return; }         // 次数耗尽：广告＝再来一局的资格
+  enterRun();
+};
+$("o-b").onclick = function(){
+  hideOver($("over"));
+  if(META.lives <= 0){ $("intro").classList.add("on"); refreshHome(); openAd(); return; }
+  enterRun();
+};
+$("o-home").onclick = function(){ hideOver($("over")); $("intro").classList.add("on"); refreshHome(); };
+$("h-add").onclick   = openAd;
+$("h-album").onclick = function(){ renderAlbum(); $("album").classList.add("on"); };
+$("h-task").onclick  = function(){ renderTasks(); $("task").classList.add("on"); };
+$("h-help").onclick  = function(){ $("help").classList.add("on"); };
+$("p-x-album").onclick = $("p-go-album").onclick = function(){ hideOver($("album")); };
+$("p-x-task").onclick  = $("p-go-task").onclick  = function(){ hideOver($("task")); };
+$("p-x-help").onclick  = $("p-go-help").onclick  = function(){ hideOver($("help")); };
+$("ad-b").onclick = function(){
+  clearInterval(AD_T);
+  META.lives++; META.tasks.ad++;
+  saveMeta(); refreshHome();
+  $("admod").classList.remove("on");
+};
+$("ad-skip").onclick = function(){ clearInterval(AD_T); $("admod").classList.remove("on"); };
+
+$("intro").classList.add("on");          // 主菜单（点「开始游戏」进局，消耗一次次数）
+metaInit(); refreshHome();
 reset();
-introIcons();                            // 开局页那四个满格小图标
+introIcons();                            // 玩法说明面板里那四个满格小图标
 ensureLedgRow();                         // 账目行常驻占位：第一次出现时不让行情区跳 16px
 relayout();
 try{
