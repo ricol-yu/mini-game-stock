@@ -99,7 +99,11 @@
      改高度即改数值，天然带 550ms 过渡。 */
   .hud{flex:0 0 auto;padding:2px 12px 0}
   .vit{display:flex;justify-content:space-around;align-items:center;height:46px}
-  .vit-i{position:relative;width:34px;height:32px;display:block;cursor:pointer}
+  .vit-i{position:relative;z-index:1;width:34px;height:32px;display:block;cursor:pointer}
+  /* z-index:1（2026-11-10）：warn 闪红 / bump Q 弹是运行中的动画，会给 .vit-i 生成
+     层叠上下文，把 tip 的 z-35 困在图标里——后画的胶囊行/行情面板就会整个盖住弹窗
+     （精力最常进预警，最先被发现）。图标常驻抬一层：tip 跟着出坑，又仍压不到
+     toast(30)/结局页(40)，touch 热区不受影响。 */
   /* 44×44 触达热区（34×32 本体，四边外扩 6 → 46×44；图标视觉不变） */
   .vit-i::after{content:"";position:absolute;inset:-6px}
   .u2-vit-slot,.u2-vit-out{position:absolute;left:0;top:0;width:34px;height:32px;
