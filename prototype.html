@@ -466,7 +466,7 @@
   .p-card{width:min(345px,100%);max-height:100%;overflow-y:auto;background:var(--u2-card);
     border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);padding:16px 14px;
     box-shadow:var(--u2-sh-hard),var(--u2-sh-soft);display:flex;flex-direction:column;align-items:center;
-    -webkit-overflow-scrolling:touch}
+    -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .over.on .p-card,.over.on .ad-card{animation:u2OverPop 460ms cubic-bezier(.3,1.05,.4,1) both}
   .p-head{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
   .p-head b{font-size:15px;font-weight:900;letter-spacing:2px;color:var(--u2-ink)}
@@ -533,7 +533,7 @@
     background:var(--u2-card);border:3px solid var(--u2-edge);border-radius:var(--u2-r-card);
     padding:20px 18px;box-shadow:var(--u2-sh-hard),0 18px 26px rgba(0,0,0,.30);
     display:flex;flex-direction:column;align-items:center;text-align:center;
-    -webkit-overflow-scrolling:touch}
+    -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .over .em{font-size:40px;line-height:1;margin-bottom:6px}
   .over .sub{font-size:10.5px;line-height:1.7;font-weight:700;color:var(--u2-ink-3);
     letter-spacing:.5px;margin:4px 0 12px}
@@ -3682,7 +3682,11 @@ function check(){
   S.over = true;
   /* 分享槽三档（share-flow §1.2）：isNew 必须在 recordRun 之前取——
      recordRun 一写 unlocked，判断必假。快照也在这里拍深拷贝：
-     生成是异步的，期间玩家可能已点「再来一辈子」，S 会被 reset()。 */
+     生成是异步的，期间玩家可能已点「再来一辈子」，S 会被 reset()。
+     【整个分享块 try/catch 兜底】这段是新加的局外系统，玩家环境千差万别
+     （老存档/隐私模式/WebView 差异）；它任何一个抛错都不能拦住结局页弹出——
+     S.over 已经 true，结局页不弹就是「卡死在最后一张卡上」（2026-11-13 用户实测撞到）。 */
+  try{
   var shToday = todayKey();
   var shPrevDay = META.share ? META.share.lastDay : "";
   var shIsNew = !META.unlocked[e[1]];
@@ -3700,6 +3704,7 @@ function check(){
     setTimeout(function(){ shPrefetch(SHARE.data); }, 1200);   // 后台预生成：等结局动画/震屏跑完
     if(shIsNew) shPulseSlot();
   }
+  }catch(_e){}                                                 // 结局页必须弹：分享挂了就当没有分享槽
   closeTips(null);        // 结局页 z-40 只是盖住：不主动收，重开一局 tip 会重新露在 HUD 上
   $("o-em").textContent = e[0]; $("o-t").textContent = e[1]; $("o-s").textContent = e[2]; $("o-q").textContent = e[3];
   var stat = "终局面板：心态 " + Math.round(S.mind) + " · 社会 " + Math.round(S.social) + " · 风险 " + Math.round(S.risk) +
@@ -4272,7 +4277,7 @@ function enterRun(){
   _skipTut = true; reset();
 }
 /* 模拟广告：上线替换激励视频 SDK（onClose 回调里发奖）。3s 可领按真机广告时长调 */
-var AD_T = 0;
+var AD_T = 0, _adCtx = "";   // 广告从哪儿弹的：menu=主菜单、end=结局页「再来一辈子」（领取后直接开新局）
 function openAd(){
   $("admod").classList.add("on");
   var b = $("ad-b"), left = 3;
@@ -4333,12 +4338,12 @@ function renderTasks(){
 
 /* 主菜单事件接线 */
 $("i-b").onclick = function(){
-  if(META.lives <= 0){ openAd(); return; }         // 次数耗尽：广告＝再来一局的资格
+  if(META.lives <= 0){ _adCtx = "menu"; openAd(); return; }         // 次数耗尽：广告＝再来一局的资格
   enterRun();
 };
 $("o-b").onclick = function(){
   hideOver($("over"));
-  if(META.lives <= 0){ $("intro").classList.add("on"); refreshHome(); openAd(); return; }
+  if(META.lives <= 0){ $("intro").classList.add("on"); refreshHome(); _adCtx = "end"; openAd(); return; }
   enterRun();
 };
 $("o-home").onclick = function(){ hideOver($("over")); $("intro").classList.add("on"); refreshHome(); };
@@ -4363,8 +4368,12 @@ $("ad-b").onclick = function(){
   META.lives++; META.tasks.ad++;
   saveMeta(); refreshHome();
   $("admod").classList.remove("on");
+  /* 从结局页「再来一辈子」进来的广告：领完直接开新局——玩家的意图就是再来一辈子，
+     把他丢回主菜单再点一次开始，体感就是「点完了没反应」（2026-11-13） */
+  if(_adCtx === "end"){ _adCtx = ""; enterRun(); return; }
+  _adCtx = "";
 };
-$("ad-skip").onclick = function(){ clearInterval(AD_T); $("admod").classList.remove("on"); };
+$("ad-skip").onclick = function(){ clearInterval(AD_T); _adCtx = ""; $("admod").classList.remove("on"); };
 
 $("intro").classList.add("on");          // 主菜单（点「开始游戏」进局，消耗一次次数）
 metaInit(); refreshHome();
@@ -4375,6 +4384,26 @@ relayout();
 try{
   window.addEventListener("resize", relayout);
   window.addEventListener("orientationchange", relayout);
+}catch(_e){}
+/* 真机防滚动劫持（2026-11-13 修「游戏结束卡死」）：.over 结局层是 absolute、跟着文档走，
+   而非 clean 模式（玩家直接打开原型，没有 ?clean=1）没有 overflow:hidden，文档比视口高 ~160px。
+   手机上在结局卡/主菜单随手一滑，整个页面被滚走，结局层跟着错位——按钮点不到、
+   滑动全被页面滚动吃掉，体感就是「卡住了，滑不动，没反应」。桌面 Chrome 有 clean 包装兜着，复现不了。
+   统一在 touchmove 拦掉文档滚动，只放行真正要滚的面板（结局卡 / 图鉴任务说明的 p-card）。
+   游戏卡自带 touch-action:none，不受影响；pointer 事件照常派发。 */
+try{
+  document.addEventListener("touchmove", function(e){
+    var n = e.target, sc = null;
+    while(n && n !== document){
+      var c = n.classList;
+      if(c && (c.contains("endcard") || c.contains("p-card") || c.contains("alb-body"))){ sc = n; break; }
+      n = n.parentNode;
+    }
+    /* 放行的前提是它真的有得滚：内容不溢出的 endcard 一放行，浏览器就把滚动
+       链（scroll chain）传给文档——结局层照样被滚走（实测 scrollY 滚到 258）。
+       overscroll-behavior:contain 兜链式滚动，这里兜「根本不可滚」的情况。 */
+    if(!sc || sc.scrollHeight <= sc.clientHeight + 1) e.preventDefault();
+  }, { passive: false });
 }catch(_e){}
 </script>
 </body>
