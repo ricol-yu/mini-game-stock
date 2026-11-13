@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>韭菜之王 · 结局战绩分享卡 · 五套模板样张</title>
+<style>
+/* =====================================================================
+   结局战绩分享卡 · 五套模板样张
+   规格：design/share-card-spec.md（1080×1440，3:4）
+   本页所有卡内数值均为 **1080 画布 px**，用 transform:scale(.28) 缩小展示，
+   所以你在屏幕上看到的 302×403 就是最终成品缩略。
+   ---------------------------------------------------------------------
+   Token（均注明来源，详见 spec §2）
+   绒布  #2a7452 → #17402f → #0c2b1e   （沿用 ui-v2，径向中心在 y=15%）
+   奶油  #fdf6e1 / #f0e2be             （沿用 ui-v2）
+   描边  #241a0e 3px                   （沿用 ui-v2）
+   纸墨  #2b1f12 / #6b5a44 / #857356   （沿用 ui-v2）
+   布上  #fdf3d8 + rgba(253,243,216,.86/.66)（沿用 ui-v2）
+   纸上红 #c9302a（4.94:1）／#a8281e（6.51:1）  ← 禁用主界面 #e23c30（纸上仅 3.95:1）
+   纸上绿 #157a44（4.99:1）              ← 禁用主界面 #1e9e5a（纸上仅 3.19:1）
+   布上红 #ff6b5e ／ 布上绿 #4fbf82      （新增，深底提亮）
+   鎏金  #f2b01e（仅线条/色块，纸上文字用 #8a5a12）
+   印章  #b02a1f（新增）／高亮描边 #e2503f（新增）
+   ---------------------------------------------------------------------
+   本页无 backdrop-filter / clip-path / mask / SVG，所有质感都能用
+   canvas 2D 表达（渐变、shadowOffsetY 硬投影、三角路径、逐点噪点）。
+   ===================================================================== */
+
+*{box-sizing:border-box}
+:root{
+  --felt-1:#2a7452;--felt-2:#17402f;--felt-3:#0c2b1e;
+  --card:#fdf6e1;--card-2:#f0e2be;--edge:#241a0e;
+  --ink:#2b1f12;--ink-2:#6b5a44;--ink-3:#857356;
+  --on-felt:#fdf3d8;--up:#c9302a;--up-deep-r:#a8281e;--up-felt:#ff6b5e;
+  --down:#157a44;--down-felt:#4fbf82;
+  --gold:#f2b01e;--gold-ink:#8a5a12;--seal:#b02a1f;--seal-bright:#e2503f;
+  --F:"PingFang SC","HarmonyOS Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
+}
+body{margin:0;background:#e4e7ea;color:#2b3440;font-family:var(--F);
+  background-image:radial-gradient(rgba(60,70,85,.06) 1px,transparent 1.2px);background-size:20px 20px}
+.page{max-width:1720px;margin:0 auto;padding:34px 32px 70px}
+
+/* ---------------- 文档头 ---------------- */
+.doc{max-width:900px;margin:0 auto 30px;text-align:center}
+.doc .k{font:800 10px/1 ui-monospace,Menlo,monospace;letter-spacing:4px;color:#7d8794;margin-bottom:10px}
+.doc h1{font-size:24px;letter-spacing:2px;margin:0 0 12px;color:#232c37}
+.doc p{font-size:12.5px;line-height:1.95;color:#6b7684;margin:0 0 6px}
+.doc p b{color:#2b3440}
+.doc .rule{width:64px;height:3px;background:#c2c9d1;margin:16px auto 0;border-radius:2px}
+
+/* ---------------- 卡槽 ---------------- */
+.rail{display:flex;gap:28px;justify-content:center;align-items:flex-start;flex-wrap:nowrap}
+.slot{width:302.4px;flex:0 0 302.4px}
+.frame{width:302.4px;height:403.2px;overflow:hidden;border-radius:5px;position:relative;
+  box-shadow:0 4px 0 rgba(11,32,22,.30),0 14px 22px rgba(0,0,0,.22)}
+.card{position:relative;width:1080px;height:1440px;overflow:hidden;transform:scale(.28);
+  transform-origin:0 0;font-family:var(--F);
+  background:radial-gradient(125% 70% at 50% 15%,var(--felt-1),var(--felt-2) 56%,var(--felt-3))}
+.grid{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(253,243,216,.045) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(253,243,216,.045) 1px,transparent 1px);background-size:60px 60px}
+.noise{position:absolute;inset:0;background-image:radial-gradient(rgba(253,243,216,.07) 1px,transparent 1.5px);
+  background-size:7px 11px;opacity:.65}
+
+/* ---------------- 页脚（五套共用） ---------------- */
+.fline{position:absolute;left:72px;top:1150px;width:936px;height:1.5px;background:rgba(253,243,216,.20)}
+.fname{position:absolute;left:72px;top:1184px;font:900 42px/1.05 var(--F);letter-spacing:10px;color:var(--on-felt)}
+.fslogan{position:absolute;left:72px;top:1240px;font:700 26px/1 var(--F);letter-spacing:1px;color:rgba(253,243,216,.72)}
+.fwm{position:absolute;left:72px;top:1292px;font:600 20px/1 var(--F);letter-spacing:2px;color:rgba(253,243,216,.34)}
+.qr{position:absolute;left:840px;top:1176px;width:168px;height:168px;background:var(--card);
+  border:3px solid var(--edge);border-radius:8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px}
+.qr-seal{width:86px;height:86px;border:3px solid var(--seal);border-radius:4px;position:relative;
+  display:flex;align-items:center;justify-content:center;font:900 40px/1 var(--F);color:var(--seal)}
+.qr-seal::after{content:"";position:absolute;inset:5px;border:1px solid var(--seal);border-radius:2px}
+.qr-txt{font:600 20px/1 var(--F);color:var(--ink-2);letter-spacing:1px}
+
+/* ============================ T1 豪言版 ============================ */
+.t1-bars{position:absolute;left:0;right:0;bottom:290px;height:420px;display:flex;align-items:flex-end;
+  justify-content:space-between;padding:0 18px;opacity:.72}
+.t1-bars i{width:26px;background:rgba(242,176,30,.10);display:block}
+.t1-glow{position:absolute;left:50%;top:250px;width:1120px;height:1120px;transform:translate(-50%,-50%);
+  background:radial-gradient(closest-side,rgba(242,176,30,.16),transparent)}
+.t1-tag{position:absolute;left:0;right:0;top:96px;text-align:center;
+  font:700 28px/1.6 var(--F);letter-spacing:8px;color:rgba(253,243,216,.66)}
+.t1-mini{position:absolute;left:890px;top:96px;width:100px;height:100px;border:3px solid var(--seal-bright);
+  border-radius:8px;transform:rotate(8deg);display:flex;align-items:center;justify-content:center;
+  color:var(--on-felt);font:900 34px/1 var(--F);letter-spacing:2px;position:absolute}
+.t1-mini::after{content:"";position:absolute;inset:6px;border:1px solid rgba(253,243,216,.40);border-radius:3px}
+.t1-emoji{position:absolute;left:0;right:0;top:148px;text-align:center;font-size:132px;line-height:1}
+.t1-name{position:absolute;left:0;right:0;top:300px;text-align:center;
+  font:900 200px/1.02 var(--F);letter-spacing:4px;color:var(--on-felt)}
+.t1-rule-s{position:absolute;left:300px;top:546px;width:480px;height:1px;background:rgba(242,176,30,.35)}
+.t1-rule{position:absolute;left:372px;top:552px;width:336px;height:2px;background:var(--gold)}
+.t1-quote{position:absolute;left:72px;width:936px;top:604px;text-align:center;
+  font:600 34px/1.9 var(--F);color:rgba(253,243,216,.88);letter-spacing:1px}
+.t1-div{position:absolute;top:860px;width:1px;height:126px;background:rgba(253,243,216,.16)}
+.t1-st{position:absolute;top:856px;transform:translateX(-50%);text-align:center}
+.t1-st .l{font:700 26px/1.6 var(--F);letter-spacing:2px;color:rgba(253,243,216,.60)}
+.t1-st .v{font:900 56px/1.1 var(--F);color:var(--on-felt);margin-top:4px}
+.t1-st .v.gold{color:var(--gold)}
+
+/* ============================ T2 认命版 ============================ */
+.t2-plate{position:absolute;left:72px;top:72px;width:936px;height:1060px;background:var(--card);
+  border:3px solid var(--edge);border-radius:20px;
+  box-shadow:0 20px 0 rgba(11,32,22,.45),0 34px 34px rgba(0,0,0,.26)}
+.t2-date{position:absolute;left:0;right:0;top:178px;text-align:center;
+  font:700 28px/1.6 var(--F);letter-spacing:8px;color:var(--ink-3)}
+.t2-emoji{position:absolute;left:0;right:0;top:236px;text-align:center;font-size:96px;line-height:1}
+.t2-name{position:absolute;left:0;right:0;top:372px;text-align:center;
+  font:900 92px/1.08 var(--F);letter-spacing:8px;color:var(--ink)}
+.t2-rule{position:absolute;left:492px;top:512px;width:96px;height:3px;background:rgba(43,31,18,.20)}
+.t2-quote{position:absolute;left:150px;width:780px;top:584px;text-align:center;
+  font:600 34px/2.2 var(--F);color:var(--ink-2)}
+.t2-stat{position:absolute;left:0;right:0;top:1006px;text-align:center;
+  font:700 28px/1.6 var(--F);letter-spacing:1px;color:var(--ink-2)}
+
+/* ============================ T3 嘴硬版 ============================ */
+.t3-date{position:absolute;left:0;right:0;top:96px;text-align:center;
+  font:700 28px/1.6 var(--F);letter-spacing:8px;color:rgba(253,243,216,.66)}
+.t3-seal{position:absolute;left:180px;top:224px;width:720px;height:300px;background:var(--seal);
+  border-radius:10px;transform:rotate(-7deg);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 0 rgba(0,0,0,.22);
+  background-image:radial-gradient(rgba(0,0,0,.10) 2px,transparent 2.5px);background-size:23px 19px}
+.t3-seal::before{content:"";position:absolute;inset:12px;border:4px solid rgba(253,246,225,.88);border-radius:6px}
+.t3-seal::after{content:"";position:absolute;inset:28px;border:1.5px solid rgba(253,246,225,.88);border-radius:4px}
+.t3-seal span{font:900 132px/1 var(--F);letter-spacing:24px;margin-right:-24px;color:#fdf6e1}
+.t3-quote{position:absolute;left:120px;width:840px;top:620px;text-align:center;
+  font:600 30px/2 var(--F);color:rgba(253,243,216,.86)}
+.t3-seal2{position:absolute;left:780px;top:700px;width:132px;height:132px;border:3px solid var(--seal-bright);
+  border-radius:6px;transform:rotate(12deg);display:flex;align-items:center;justify-content:center;
+  color:var(--on-felt);font:900 40px/1 var(--F);letter-spacing:2px}
+.t3-seal2::after{content:"";position:absolute;inset:7px;border:1px solid rgba(253,243,216,.35);border-radius:3px}
+.t3-rows{position:absolute;left:120px;top:880px;width:840px}
+.t3-rows .r{display:flex;align-items:baseline;height:70px}
+.t3-rows b{width:300px;font:700 28px/1.6 var(--F);letter-spacing:2px;color:rgba(253,243,216,.60)}
+.t3-rows em{font:900 44px/1 var(--F);font-style:normal;color:var(--on-felt)}
+.t3-rows em.up{color:var(--up-felt)}
+
+/* ============================ T4 清算版 ============================ */
+.t4-paper{position:absolute;left:96px;top:88px;width:920px;height:1010px;background:var(--card);
+  border-top:3px solid var(--edge);border-left:3px solid var(--edge);border-right:3px solid var(--edge);
+  border-radius:6px 6px 0 0;box-shadow:0 12px 0 rgba(11,32,22,.40),0 26px 30px rgba(0,0,0,.24)}
+.t4-name{position:absolute;left:136px;top:114px;font:900 76px/1.1 var(--F);letter-spacing:6px;color:var(--ink)}
+.t4-emoji{position:absolute;left:0;right:136px;top:120px;text-align:right;font-size:56px;line-height:1}
+.t4-head{position:absolute;left:136px;right:136px;top:214px;display:flex;justify-content:space-between;
+  font:800 30px/1.6 var(--F);letter-spacing:8px;color:var(--ink-2)}
+.t4-dbl{position:absolute;left:136px;right:136px;top:262px;border-top:2px solid var(--ink)}
+.t4-dbl::after{content:"";position:absolute;left:0;right:0;top:4px;border-top:1px solid var(--ink)}
+.t4-th{position:absolute;left:136px;right:136px;top:292px;display:flex;justify-content:space-between;
+  font:700 28px/1.6 var(--F);letter-spacing:2px;color:var(--ink-3)}
+.t4-rows{position:absolute;left:136px;right:136px;top:352px}
+.t4-rows .r{height:74px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px dashed rgba(43,31,18,.28)}
+.t4-rows .r b{font:700 30px/1.6 var(--F);color:var(--ink-2);letter-spacing:1px}
+.t4-rows .r em{font:800 34px/1 var(--F);font-style:normal;color:var(--ink)}
+.t4-total{position:absolute;left:136px;right:136px;top:660px;border-top:3px solid var(--ink);
+  padding-top:22px;display:flex;justify-content:space-between;align-items:baseline}
+.t4-total b{font:800 32px/1.2 var(--F);letter-spacing:2px;color:var(--ink)}
+.t4-total em{font:900 62px/1 var(--F);font-style:normal;color:var(--up-deep-r)}
+.t4-quote{position:absolute;left:164px;width:700px;top:796px;font:600 28px/1.9 var(--F);color:var(--ink-2)}
+.t4-quote::before{content:"";position:absolute;left:-28px;top:8px;width:5px;height:84px;background:var(--gold)}
+.t4-seal{position:absolute;left:660px;top:910px;width:280px;height:110px;border:4px solid var(--seal);
+  border-radius:5px;transform:rotate(-9deg);display:flex;align-items:center;justify-content:center;
+  color:var(--seal);font:900 48px/1 var(--F);letter-spacing:8px;text-indent:8px}
+.t4-seal::after{content:"";position:absolute;inset:8px;border:1.5px solid var(--seal);border-radius:3px}
+.t4-foot{position:absolute;left:136px;top:1044px;font:700 28px/1.6 var(--F);color:var(--ink-3);letter-spacing:1px}
+.t4-teeth{position:absolute;left:96px;top:1095px;width:920px;height:24px;display:flex}
+.t4-teeth i{width:0;height:0;border-left:28.75px solid transparent;border-right:28.75px solid transparent;
+  border-top:24px solid var(--card)}
+
+/* ============================ T5 温情版 ============================ */
+.t5-art{position:absolute;left:0;top:0;width:1080px;height:1040px;overflow:hidden}
+.t5-scene{width:100%;height:100%;object-fit:cover;object-position:50% top;display:block}
+.t5-scrim{position:absolute;left:0;top:400px;width:1080px;height:640px;
+  background:linear-gradient(180deg,rgba(12,43,30,0) 0%,rgba(12,43,30,.45) 38%,
+    rgba(12,43,30,.88) 78%,rgba(12,43,30,.98) 100%)}
+.t5-emoji{position:absolute;left:0;right:0;top:756px;text-align:center;font-size:60px;line-height:1}
+.t5-name{position:absolute;left:0;right:0;top:830px;text-align:center;
+  font:900 92px/1.08 var(--F);letter-spacing:8px;color:var(--on-felt)}
+.t5-quote{position:absolute;left:100px;width:880px;top:948px;text-align:center;
+  font:600 30px/1.9 var(--F);color:rgba(253,243,216,.86)}
+.t5-stat{position:absolute;left:0;right:0;top:1096px;text-align:center;
+  font:700 28px/1.6 var(--F);color:rgba(253,243,216,.72)}
+
+/* ---------------- 卡下注释 ---------------- */
+.cap{margin-top:14px;background:#fff;border-radius:10px;padding:12px 13px 13px;
+  box-shadow:0 2px 0 rgba(43,52,64,.10),0 6px 14px rgba(43,52,64,.07)}
+.cap-t{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.cap-t b{font:800 10px/1 ui-monospace,Menlo,monospace;background:#2b3440;color:#fff;
+  border-radius:5px;padding:4px 6px;letter-spacing:.5px}
+.cap-t span{font-size:13px;font-weight:800;color:#232c37;letter-spacing:.5px}
+.cap-t i{font-style:normal;font-size:11px;color:#8a94a3}
+.cap-a{font-size:11px;line-height:1.75;color:#5d6874;margin-bottom:6px}
+.cap-k{font-size:11px;line-height:1.75;color:#26313c;margin-bottom:0}
+.cap-k u{text-decoration:none;background:#fff6d8;border-bottom:2px solid #f2b01e;padding:0 1px}
+.cap-x{font-size:10.5px;line-height:1.7;color:#a2563f;margin-top:6px}
+
+/* ---------------- 角色卡（375 基准，1:1 展示） ---------------- */
+.sec-h{max-width:1624px;margin:44px auto 16px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sec-h b{font:800 10px/1 ui-monospace,Menlo,monospace;background:#2b3440;color:#fff;border-radius:5px;padding:5px 7px}
+.sec-h span{font-size:15px;font-weight:800;color:#232c37;letter-spacing:1px}
+.sec-h em{flex:0 0 100%;font-style:normal;font-size:11.5px;line-height:1.8;color:#6b7684}
+.chrow{display:flex;gap:22px;justify-content:center;flex-wrap:wrap}
+.chcol{width:343px}
+.ch{position:relative;width:343px;background:var(--card);border:3px solid var(--edge);border-radius:14px;
+  padding:12px;display:flex;gap:12px;overflow:hidden;
+  box-shadow:0 7px 0 rgba(11,32,22,.45),0 16px 26px rgba(0,0,0,.26)}
+.ch::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--c)}
+.ch-av{width:72px;height:72px;flex:0 0 72px;border-radius:12px;border:2px solid var(--edge);
+  display:flex;align-items:center;justify-content:center;font-size:38px;line-height:1}
+.ch-body{min-width:0;flex:1 1 auto}
+.ch-top{display:flex;align-items:center;gap:7px}
+.ch-top b{font:900 16px/1 var(--F);color:var(--ink);letter-spacing:.5px}
+.ch-top i{font:800 9px/1 var(--F);font-style:normal;color:var(--ink);border:1.5px solid var(--c);
+  background:rgba(43,31,18,.05);border-radius:8px;padding:4px 6px;letter-spacing:.3px;white-space:nowrap}
+.ch-q{font:600 13px/1.65 var(--F);color:var(--ink-2);margin-top:7px}
+.ch-m{font:600 10px/1.6 var(--F);color:var(--ink-3);margin-top:5px;letter-spacing:.4px}
+.ch-note{font-size:10.5px;line-height:1.7;color:#8a94a3;margin-top:8px;padding-left:2px}
+
+/* ---------------- 你的票 nidepiao · 视觉标识 ---------------- */
+.np-avrow{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.np-av{width:224px;background:#fff;border-radius:10px;padding:12px;text-align:center;
+  box-shadow:0 2px 0 rgba(43,52,64,.10),0 5px 12px rgba(43,52,64,.07)}
+.np-av .chip{width:72px;height:72px;margin:0 auto 10px;border-radius:12px;border:2px solid var(--edge);
+  display:flex;align-items:center;justify-content:center;font-size:36px;line-height:1}
+.np-av b{display:block;font:900 12.5px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.4px;color:#2b3440}
+.np-av b u{text-decoration:none;font-weight:800;color:#8a94a3}
+.np-av em{display:block;font-style:normal;font-size:10.5px;line-height:1.7;color:#6b7684;margin-top:5px}
+.np-scenes{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.np-sc{width:218px;background:#fff;border-radius:10px;padding:10px}
+.np-sc .bd{height:124px;border-radius:8px;position:relative;overflow:hidden;margin-bottom:7px;
+  background:radial-gradient(120% 90% at 50% 22%,#3c424a,#242a31 62%,#14181d)}
+.np-sc .lb{font-size:10.5px;font-weight:800;color:#2b3440}
+.np-sc .lb em{display:block;font-style:normal;font-weight:600;color:#8a94a3;margin-top:2px;font-size:9.5px;line-height:1.6}
+/* 空镜小样：只有物件与光，没有人 */
+.scr{position:absolute;left:34px;top:26px;width:82px;height:52px;border-radius:3px;
+  background:#0f1a22;box-shadow:0 0 22px rgba(150,200,230,.28)}
+.scr::after{content:"";position:absolute;left:9px;bottom:12px;width:60px;height:2px;
+  background:linear-gradient(90deg,#c9302a 0 34%,rgba(201,48,42,.25) 34% 60%,#c9302a 60% 100%);
+  transform:rotate(-9deg);transform-origin:left bottom}
+.desk{position:absolute;left:0;right:0;bottom:0;height:32px;background:linear-gradient(#4a3a2a,#2b2118)}
+.cup{position:absolute;right:38px;bottom:26px;width:26px;height:30px;border-radius:3px 3px 8px 8px;
+  border:1.5px solid rgba(253,243,216,.42);overflow:hidden}
+.cup::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:rgba(190,205,210,.20)}
+.glow{position:absolute;left:50%;top:20px;width:120px;height:120px;transform:translateX(-50%);
+  background:radial-gradient(circle,rgba(242,176,30,.42),transparent 68%)}
+.win{position:absolute;left:22px;top:14px;right:22px;bottom:22px;border-radius:4px;
+  background:linear-gradient(#1a2530,#0d1319);box-shadow:inset 0 0 26px rgba(90,140,180,.30)}
+.win::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;
+  background:rgba(253,243,216,.20)}
+.win::after{content:"";position:absolute;left:0;right:0;top:52%;height:2px;
+  background:rgba(253,243,216,.20)}
+.box2{position:absolute;left:24px;bottom:18px;width:44px;height:26px;border-radius:3px;
+  background:rgba(253,243,216,.16);border:1px solid rgba(253,243,216,.24)}
+.tel{position:absolute;right:30px;bottom:16px;width:40px;height:66px;border-radius:6px;
+  background:#0f1a22;border:1.5px solid rgba(253,243,216,.26);box-shadow:0 0 18px rgba(150,200,230,.22)}
+.tel::after{content:"";position:absolute;left:7px;top:30px;width:24px;height:2px;
+  background:linear-gradient(90deg,rgba(21,122,68,.9),rgba(21,122,68,.2));transform:rotate(12deg)}
+
+/* ---------------- 元素库 ---------------- */
+.elrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.el{width:210px;background:#fff;border-radius:10px;padding:10px;text-align:center;
+  box-shadow:0 2px 0 rgba(43,52,64,.10),0 5px 12px rgba(43,52,64,.07)}
+.el .box{height:74px;border-radius:8px;background:radial-gradient(125% 70% at 50% 15%,#2a7452,#17402f 56%,#0c2b1e);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:7px}
+.el .lb{font-size:10.5px;font-weight:800;color:#2b3440;letter-spacing:.3px}
+.el .lb em{display:block;font-style:normal;font-weight:600;color:#8a94a3;margin-top:2px;font-size:9.5px}
+/* 元素小样 */
+.el-seal{width:52px;height:22px;border:2px solid #e2503f;border-radius:3px;transform:rotate(-7deg);
+  position:relative;color:#fdf3d8;font:900 11px/1 var(--F);display:flex;align-items:center;justify-content:center}
+.el-seal::after{content:"";position:absolute;inset:2px;border:1px solid rgba(253,243,216,.4)}
+.el-teeth{width:80px;height:16px;position:relative;display:flex;align-items:flex-end}
+.el-teeth::before{content:"";position:absolute;left:0;top:0;width:80px;height:8px;background:#fdf6e1}
+.el-teeth i{width:0;height:0;border-left:6.66px solid transparent;
+  border-right:6.66px solid transparent;border-top:9px solid #fdf6e1}
+.el-corner{position:absolute;left:0;top:0;width:0;height:0;
+  border-top:34px solid #fdf3d8;border-right:34px solid transparent}
+.el-tri{display:flex;align-items:center;gap:6px;font:900 13px/1 var(--F);color:#ff6b5e}
+.el-tri s{text-decoration:none;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
+  border-bottom:11px solid #ff6b5e}
+.el-net{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(253,243,216,.10) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(253,243,216,.10) 1px,transparent 1px);background-size:16px 16px}
+.el-dot{position:absolute;inset:0;background-image:radial-gradient(rgba(253,243,216,.22) 1px,transparent 1.4px);
+  background-size:7px 9px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ================= 文档头 ================= -->
+<div class="doc">
+  <div class="k">SHARE CARD · 5 TEMPLATES · 1080×1440</div>
+  <h1>结局战绩分享卡 · 五套模板</h1>
+  <p>一个结局一张卡，五种姿态。卡内所有数值都是 <b>1080 画布 px</b>，此处按 <b>1:4 缩放（scale .28）</b> 排列——
+     你在屏幕上看到的尺寸就是朋友圈缩略的实际观感。</p>
+  <p>施工规格见 <b>design/share-card-spec.md</b>；全部质感可由 canvas 2D 表达（渐变 / 硬投影 / 路径 / 噪点），
+     无 backdrop-filter、无 clip-path、无 SVG。</p>
+  <p style="color:#9aa4b0">※ 水印共两层：页脚那行 <b>结局 No.06 · 由《韭菜之王》生成</b>（可见）＋ 45° 平铺「韭菜之王」5% 白（规格 §3.4，
+     缩略图下几乎看不见，属正常）。</p>
+  <div class="rule"></div>
+</div>
+
+<!-- ================= 五套模板 ================= -->
+<div class="rail">
+
+  <!-- ============================================================
+       模板名：T1 豪言版
+       适用结局：自由 / 快进快出 / 大阳线 / 逆风局 / 一次都没动 / 上岸 / 熬成精
+       示例：快进快出 🎰
+       视觉要点：满幅绒布 + 顶部金晕 + 底部 16 根 K 柱；主标题 200px/900 压顶（4 字 812 宽）；
+       　　quote 降为副标 34px；三段 56px 数据撑住下盘；右上角一枚朱红小印「活法」定阵营。
+       ============================================================ -->
+  <div class="slot">
+    <div class="frame">
+      <div class="card t1">
+        <div class="grid"></div>
+        <div class="t1-glow"></div>
+        <div class="t1-bars">
+          <i style="height:60px"></i><i style="height:90px"></i><i style="height:70px"></i>
+          <i style="height:124px"></i><i style="height:100px"></i><i style="height:152px"></i>
+          <i style="height:132px"></i><i style="height:184px"></i><i style="height:156px"></i>
+          <i style="height:212px"></i><i style="height:182px"></i><i style="height:242px"></i>
+          <i style="height:206px"></i><i style="height:272px"></i><i style="height:238px"></i>
+          <i style="height:308px"></i>
+        </div>
+        <div class="noise"></div>
+
+        <div class="t1-tag">第 38 天 · 活法</div>
+        <div class="t1-mini">活法</div>
+        <div class="t1-emoji">🎰</div>
+        <div class="t1-name">快进快出</div>
+        <div class="t1-rule-s"></div>
+        <div class="t1-rule"></div>
+        <div class="t1-quote">三个月，走完了别人十年的路。下一程去哪，你自己挑。</div>
+
+        <div class="t1-div" style="left:378px"></div>
+        <div class="t1-div" style="left:702px"></div>
+        <div class="t1-st" style="left:216px">
+          <div class="l">最后剩下</div><div class="v gold">¥86,420</div>
+        </div>
+        <div class="t1-st" style="left:540px">
+          <div class="l">这一辈子</div><div class="v">38 天</div>
+        </div>
+        <div class="t1-st" style="left:864px">
+          <div class="l">买卖次数</div><div class="v">41 次</div>
+        </div>
+
+        <div class="fline"></div>
+        <div class="fname">韭菜之王</div>
+        <div class="fslogan">你的一辈子，能撑多少天？</div>
+        <div class="fwm">结局 No.06 · 由《韭菜之王》生成 · 可在设置里关闭</div>
+        <div class="qr"><div class="qr-seal">韭</div><div class="qr-txt">搜索 韭菜之王</div></div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="cap-t"><b>T1</b><span>豪言版</span><i>示例结局：快进快出 🎰</i></div>
+      <div class="cap-a">适用：自由 / 快进快出 / 大阳线 / 逆风局 / 一次都没动 / 上岸 / 熬成精</div>
+      <div class="cap-k">视觉要点：<u>主标题 200px/900 压在顶部</u>（4 字 812 宽，5 字降 168、6 字降 144）；
+        quote 降为副标（34px，≤3 行）；底部 16 根 K 柱 10% 金 + 顶部金晕给「向上的气」；
+        三段数据用 56px 数字撑住下盘。</div>
+      <div class="cap-x">避免：标题超 6 字还硬塞 / 数据超过 3 项 / 加「恭喜」类词。</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       模板名：T2 认命版
+       适用结局：不动了 / 温水煮蛙 / 平凡之路 / 梦游 / 没有人 / 停牌之后 / 冬天还没过完
+       示例：温水煮蛙 🐸
+       视觉要点：一整张奶油碑面（936×1060，r20，硬影 20）；734~1000 全空——那块空白就是模板本体；
+       　　标题压到 92px，quote 行高 2.2、色降到 ink-2，像铭文；数据只留最底一行。
+       ============================================================ -->
+  <div class="slot">
+    <div class="frame">
+      <div class="card t2">
+        <div class="grid"></div>
+        <div class="noise"></div>
+        <div class="t2-plate"></div>
+
+        <div class="t2-date">第 52 天</div>
+        <div class="t2-emoji">🐸</div>
+        <div class="t2-name">温水煮蛙</div>
+        <div class="t2-rule"></div>
+        <div class="t2-quote">没有一声巨响。钱是一点一点变少的，<br>少到你自己都习惯了。</div>
+        <div class="t2-stat">最后剩下 ¥21,480</div>
+
+        <div class="fline"></div>
+        <div class="fname">韭菜之王</div>
+        <div class="fslogan">你的一辈子，能撑多少天？</div>
+        <div class="fwm">结局 No.29 · 由《韭菜之王》生成 · 可在设置里关闭</div>
+        <div class="qr"><div class="qr-seal">韭</div><div class="qr-txt">搜索 韭菜之王</div></div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="cap-t"><b>T2</b><span>认命版</span><i>示例结局：温水煮蛙 🐸</i></div>
+      <div class="cap-a">适用：不动了 / 温水煮蛙 / 平凡之路 / 梦游 / 没有人 / 停牌之后 / 冬天还没过完</div>
+      <div class="cap-k">视觉要点：一整张奶油碑面（936×1060，r20，硬影 20）；<u>724~1000 全空，这块空白就是模板本体</u>；
+        标题缩到 92px，quote 提升到 2.2 行高、降为 ink-2，像铭文；唯一数据压在最底一行。</div>
+      <div class="cap-x">避免：往空白里加装饰 / 引文用满黑 / 用红绿（认命版是全套唯一不用涨跌色的）。</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       模板名：T3 嘴硬版
+       适用结局：泡沫之后 / 穿仓 / 最后一把 / 爆了 / 老赖顶格 / 查房
+       示例：穿仓 💀
+       视觉要点：结局名不是文字，是 720×300 的朱红印章斜压 −7°（双线框 + 印泥噪点）；
+       　　第二枚「不服」小印 +12° 反向歪；三行数据左对齐，负值用布上红 #ff6b5e。
+       ============================================================ -->
+  <div class="slot">
+    <div class="frame">
+      <div class="card t3">
+        <div class="grid"></div>
+        <div class="noise"></div>
+
+        <div class="t3-date">第 61 天 · 死法</div>
+        <div class="t3-seal"><span>穿仓</span></div>
+        <div class="t3-quote">那些钱从来不是你的，它们只是路过你的账户。</div>
+        <div class="t3-seal2">不服</div>
+
+        <div class="t3-rows">
+          <div class="r"><b>最后剩下</b><em class="up">−¥12,300</em></div>
+          <div class="r"><b>买卖次数</b><em>96 次</em></div>
+          <div class="r"><b>风险终值</b><em>92/100</em></div>
+        </div>
+
+        <div class="fline"></div>
+        <div class="fname">韭菜之王</div>
+        <div class="fslogan">你的一辈子，能撑多少天？</div>
+        <div class="fwm">结局 No.21 · 由《韭菜之王》生成 · 可在设置里关闭</div>
+        <div class="qr"><div class="qr-seal">韭</div><div class="qr-txt">搜索 韭菜之王</div></div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="cap-t"><b>T3</b><span>嘴硬版</span><i>示例结局：穿仓 💀</i></div>
+      <div class="cap-a">适用：泡沫之后 / 穿仓 / 最后一把 / 爆了 / 老赖顶格 / 查房</div>
+      <div class="cap-k">视觉要点：结局名不是文字，是<u>一枚 720×300 的朱红印章斜压 −7°</u>（双线框 + 印泥噪点）；
+        quote 30px 冷静陈述；第二枚「不服」小印 +12° 反向歪；三行数据左对齐、负值用布上红。</div>
+      <div class="cap-x">避免：印章正着放 / 章里加 emoji / 引文也斜 / 印章压到日期。</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       模板名：T4 清算版
+       适用结局：复利葬礼 / 断供 / 亮红灯 / 离婚 / 不认识
+       示例：复利葬礼 🧾
+       视觉要点：一张真收银小票——直角 + 底部 16 齿锯齿（齿距 57.5 整）、虚线行分隔、
+       　　金额一律右对齐到 x=944、行距 74 才有「表格感」；合计 62px 深红；−9° 盖「已结清」。
+       ============================================================ -->
+  <div class="slot">
+    <div class="frame">
+      <div class="card t4">
+        <div class="grid"></div>
+        <div class="noise"></div>
+        <div class="t4-paper"></div>
+        <div class="t4-teeth">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+
+        <div class="t4-name">复利葬礼</div>
+        <div class="t4-emoji">🧾</div>
+        <div class="t4-head"><span>结 算 单 · SETTLEMENT</span><span>第 61 天</span></div>
+        <div class="t4-dbl"></div>
+        <div class="t4-th"><span>项目</span><span>金额</span></div>
+
+        <div class="t4-rows">
+          <div class="r"><b>初始本金</b><em>¥18,000</em></div>
+          <div class="r"><b>进出总额</b><em>¥342,800</em></div>
+          <div class="r"><b>利息支出</b><em>¥97,600</em></div>
+          <div class="r"><b>手续费</b><em>¥4,120</em></div>
+        </div>
+
+        <div class="t4-total"><b>合计支出</b><em>¥101,720</em></div>
+        <div class="t4-quote">这两年你付出去的利息，够付一套房的首付。本金还是那些本金。</div>
+        <div class="t4-seal">已 结 清</div>
+        <div class="t4-foot">这一辈子 61 天 · 买卖 96 次</div>
+
+        <div class="fline"></div>
+        <div class="fname">韭菜之王</div>
+        <div class="fslogan">你的一辈子，能撑多少天？</div>
+        <div class="fwm">结局 No.32 · 由《韭菜之王》生成 · 可在设置里关闭</div>
+        <div class="qr"><div class="qr-seal">韭</div><div class="qr-txt">搜索 韭菜之王</div></div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="cap-t"><b>T4</b><span>清算版</span><i>示例结局：复利葬礼 🧾</i></div>
+      <div class="cap-a">适用：复利葬礼 / 断供 / 亮红灯 / 离婚 / 不认识</div>
+      <div class="cap-k">视觉要点：一张<u>真收银小票</u>——直角 + 底部 16 齿锯齿（齿距 57.5 整）、虚线行分隔、
+        金额一律右对齐到 x=944、行距 76 才够「表格感」；合计 62px 深红；−9° 盖「已结清」。</div>
+      <div class="cap-x">避免：表格超 4 行 / 合计用金色（纸上仅 1.77:1）/ 锯齿做成波浪。</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       模板名：T5 温情版
+       适用结局：两个人 / 三口之家 / 一人一狗 / 错过的人 / 无债一身轻 / 再就业 / 平衡大师
+       示例：两个人 🏠
+       视觉要点：插画满幅铺到 y=1040（8:9 同族、cover、无圆角无描边），400→1040 渐变压暗托字；
+       　　emoji 60 + 名字 92 + 引文只给 2 行——全套字数上限最狠的一版，成本就是「文字最少」。
+       ============================================================ -->
+  <div class="slot">
+    <div class="frame">
+      <div class="card t5">
+        <div class="t5-art">
+          <img class="t5-scene" src="../assets/bg/scene_living_night.webp" alt="">
+        </div>
+        <div class="t5-scrim"></div>
+
+        <div class="t5-emoji">🏠</div>
+        <div class="t5-name">两个人</div>
+        <div class="t5-quote">你们没赢市场。可这局你真正想赢的，本来就不是市场。</div>
+        <div class="t5-stat">第 60 天 · 最后剩下 ¥34,120</div>
+
+        <div class="fline"></div>
+        <div class="fname">韭菜之王</div>
+        <div class="fslogan">你的一辈子，能撑多少天？</div>
+        <div class="fwm">结局 No.03 · 由《韭菜之王》生成 · 可在设置里关闭</div>
+        <div class="qr"><div class="qr-seal">韭</div><div class="qr-txt">搜索 韭菜之王</div></div>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="cap-t"><b>T5</b><span>温情版</span><i>示例结局：两个人 🏠</i></div>
+      <div class="cap-a">适用：两个人 / 三口之家 / 一人一狗 / 错过的人 / 无债一身轻 / 再就业 / 平衡大师</div>
+      <div class="cap-k">视觉要点：插画<u>满幅铺到 y=1040</u>（卡面同款 640×720 场景图、cover 顶部对齐、无圆角无描边），
+        400→1040 渐变压暗托住文字；emoji 60px + 名字 92px + <u>引文只给 2 行</u>——
+        全套里字数上限最狠的一版，成本就是「文字最少」。</div>
+      <div class="cap-x">避免：给插画加框 / 引文超 2 行 / 在图上叠印章 / 用 T5 装赢家结局。
+        关系断裂类（没有人 / 离婚 / 不认识）同版式，只换「空景」插画。
+        <br>※ <b>纯场景即成品</b>：不叠人物层、不为分享卡单独出人像。分享卡插画区是满幅 640 高，
+        与卡面图区 309×350 比例完全不同，塞卡面素材要重新构图 = 第二套美术；而且游戏里那张脸
+        和海报上那张脸对不上，玩家会当成两个人。「同一款游戏」的连续性由<b>场景与色调</b>保持，不靠脸。
+        连场景图都没有时：中性渐变 + 居中 emoji 物件 180px，文字坐标一字不改。</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= B2 · 你的票 ================= -->
+<div class="sec-h">
+  <b>B2</b><span>B 档「你的票」· 视觉标识（无形象 · 永远空镜）</span>
+  <em>B 档唯一真支线现在不是一个人，是玩家手里那张纸。<b>它没有形象</b>：每个节点一张空镜（桌面 / 亮着的屏 / 一杯凉了的水），
+    画面里没有人，也没有人的倒影、影子、剪影和伸进来的手。avatar 只用下面三个符号表示状态，<b>同一节点只出现一个</b>。</em>
+  <em style="color:#a2563f">※ 出图 prompt 最后一行压住模型：<b>Empty room, nobody is here. No people, no hands, no silhouette, no reflection of a person.</b>
+    违反任一条就打回——给票配一张脸，等于给玩家的贪心配一张脸。</em>
+</div>
+<div class="np-avrow">
+
+  <div class="np-av">
+    <div class="chip" style="background:rgba(201,48,42,.12)">📈</div>
+    <b>📈 <u>#c9302a</u></b>
+    <em>账面在赚。<br>该节点净值 &gt; 成本</em>
+  </div>
+
+  <div class="np-av">
+    <div class="chip" style="background:rgba(21,122,68,.12)">📉</div>
+    <b>📉 <u>#157a44</u></b>
+    <em>账面在亏。<br>该节点净值 &lt; 成本</em>
+  </div>
+
+  <div class="np-av">
+    <div class="chip" style="background:rgba(168,40,30,.10)">🔴</div>
+    <b>🔴 <u>#a8281e</u></b>
+    <em>还攥着。<br>净值 ≈ 成本 /「我还没卖」</em>
+  </div>
+
+</div>
+<div class="cap-x" style="max-width:1020px;margin:10px auto 0;text-align:center">
+  ※ emoji 自带配色且跨平台不一致（📈 在 Apple 偏红、在 Windows 是蓝线），所以<b>方向交给 emoji、涨跌交给紧邻的文字与数字颜色</b>——
+  别指望 emoji 是红的。App 内那一行净值一律 <b>#c9302a / #157a44</b>（纸上实测 4.94 / 4.99:1）。
+</div>
+
+<div class="np-scenes">
+
+  <div class="np-sc">
+    <div class="bd"><div class="scr"></div><div class="desk"></div><div class="cup"></div></div>
+    <div class="lb">S1 桌面 + 亮着的屏<em>交易日 / 下单 / 加仓</em></div>
+  </div>
+
+  <div class="np-sc">
+    <div class="bd"><div class="desk" style="height:46px"></div>
+      <div class="cup" style="left:50%;right:auto;bottom:38px;width:34px;height:42px;transform:translateX(-50%)"></div></div>
+    <div class="lb">S2 一杯凉了的水<em>等待 / 犹豫 / 装死不看</em></div>
+  </div>
+
+  <div class="np-sc">
+    <div class="bd"><div class="win"></div>
+      <div class="glow" style="left:auto;right:16px;top:auto;bottom:6px;width:96px;height:96px;transform:none"></div></div>
+    <div class="lb">S3 深夜窗 + 台灯<em>睡不着 / 加杠杆 / 复盘</em></div>
+  </div>
+
+  <div class="np-sc">
+    <div class="bd"><div class="tel"></div><div class="desk" style="height:28px"></div>
+      <div class="cup" style="left:26px;right:auto;bottom:34px;width:18px;height:14px;border-radius:2px"></div></div>
+    <div class="lb">S5 手机平放桌面<em>清仓 / 认输 / 最后一眼</em></div>
+  </div>
+
+</div>
+
+<!-- ================= 存档 · 角色卡组件 ================= -->
+<div class="sec-h" style="margin-top:36px">
+  <b>存档</b><span>角色卡组件（本期不上线 · 当前无 B 档人物使用）</span>
+  <em>B 档现在不是人，这套组件不进版本；留着是为将来真出现一个「会再来的人」时直接复用数值。
+    375 基准 1:1：343 宽 / 100 高，角色色竖条 6，头像 72（emoji 38），名字 16/900，胶囊 9/800，台词 13/1.65/600。
+    角色色<b>只做竖条 / 胶囊描边 / 头像底</b>，永不作正文字色。</em>
+  <em style="color:#a2563f">※ 小王是 A 档普通高频（≤5 次/局、间隔 ≥6 张、第 3 天前不登场，不加 tier/stage、不扩卡）；张阿姨与司机是 C 档一次性（各 ≤1 次、彼此不同局）。<b>三人都不进支线、不出立绘、不上角色卡</b>——下方三张仅作组件样例。</em>
+</div>
+<div class="chrow">
+
+  <div class="chcol">
+    <div class="ch" style="--c:#5aa9e6">
+      <div class="ch-av" style="background:rgba(90,169,230,.18)">👔</div>
+      <div class="ch-body">
+        <div class="ch-top"><b>同事小王</b><i>第 12 天</i></div>
+        <div class="ch-q">「哥，你买啥，我跟着买。」</div>
+        <div class="ch-m">A 档 · ≤5 次/局 · 间隔 ≥6 张</div>
+      </div>
+    </div>
+    <div class="ch-note">蓝 #5aa9e6 · 办公室里坐在你斜后方的那个人。他不坏，他只是把你当成了答案。</div>
+  </div>
+
+  <div class="chcol">
+    <div class="ch" style="--c:#d9733c">
+      <div class="ch-av" style="background:rgba(217,115,60,.18)">🧶</div>
+      <div class="ch-body">
+        <div class="ch-top"><b>张阿姨</b><i>第 18 天</i></div>
+        <div class="ch-q">「有个内部渠道，稳得很。」</div>
+        <div class="ch-m">C 档 · 单局 ≤1 次</div>
+      </div>
+    </div>
+    <div class="ch-note">砖橙 #d9733c · 菜市场三楼卖毛线的。她真心希望你发财，她只是不知道自己在传什么。</div>
+  </div>
+
+  <div class="chcol">
+    <div class="ch" style="--c:#f2b01e">
+      <div class="ch-av" style="background:rgba(242,176,30,.20)">🚕</div>
+      <div class="ch-body">
+        <div class="ch-top"><b>出租车司机</b><i>第 26 天</i></div>
+        <div class="ch-q">「上个月我把工作辞了。」</div>
+        <div class="ch-m">C 档 · 单局 ≤1 次</div>
+      </div>
+    </div>
+    <div class="ch-note">出租黄 #f2b01e · 后视镜里挂着平安符的那位。他已经 all in，所以他只能继续劝你。</div>
+  </div>
+
+</div>
+
+<!-- ================= 元素库 ================= -->
+<div class="sec-h">
+  <b>A4</b><span>视觉元素库</span>
+  <em>每个元素都给 canvas 画法（见 spec §6）。此处按 1:1 小样展示，用于确认质感方向。</em>
+</div>
+<div class="elrow">
+  <div class="el"><div class="box"><div class="el-seal">已结清</div></div>
+    <div class="lb">印章<em>双线框 + −7° 斜角 + 压印影</em></div></div>
+  <div class="el"><div class="box"><div class="el-teeth">
+      <i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="lb">票据锯齿<em>齿宽 57.5 / 齿高 22 / 16 齿</em></div></div>
+  <div class="el"><div class="box"><div class="el-corner"></div></div>
+    <div class="lb">标签角<em>45° 三角路径 + 沿斜边排字</em></div></div>
+  <div class="el"><div class="box"><div class="el-tri"><s></s>+¥5,670</div></div>
+    <div class="lb">涨跌三角<em>形状 + 符号 + 颜色三重编码</em></div></div>
+  <div class="el"><div class="box"><div class="el-net"></div></div>
+    <div class="lb">格子底纹<em>60px 网格 / 1px / 明度 4.5%</em></div></div>
+  <div class="el"><div class="box"><div class="el-dot"></div></div>
+    <div class="lb">噪点<em>固定种子，1200 点，alpha 2~5%</em></div></div>
+</div>
+
+</div>
+</body>
+</html>

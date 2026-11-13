@@ -74,6 +74,12 @@
 |---|---|
 | `docs/design/game-design.md` | 完整玩法规格：四属性、每日结算公式、七种状态、结局优先级 |
 | `docs/design/motion-spec.md` | **动效规范（唯一真源）**：事件表、实现铁律、`?fx` 开关、小程序迁移注意。改手感先改这里 |
+| `docs/design/ui-adaptation.md` | **适配规范**：设备矩阵、高度分配、降级阶梯、安全区、小程序 WXSS 坑、验收清单。改布局先改这里 |
+| `docs/design/share-flow.md` | **分享功能施工图**：入口与节流、三条保存路径（H5 / 小程序 / 朋友圈限制）、小程序码与降级、常驻人物判据（A/B/C 档）、埋点、验收 |
+| `design/share-card-spec.md` | 结局战绩分享卡**视觉规格**：1080×1440、五套模板 T1–T5、小程序码三态降级、可读性红线 |
+| `design/characters.md` | 三个常驻角色**人设与支线骨架**：语言指纹、口头禅、弧线映射（A 档锁人设＝老婆/老妈；B 档唯一支线＝「你的票」；C 档配角不做常驻） |
+| `design/characters-cast.md` | 配角阵容（小王/张阿姨/出租车司机）：一次性角色的人设卡，单局每人 ≤1 次，不进支线 |
+| `docs/design/characters.md` | 20 人常驻**名册**（回答「谁该常驻」，不是人设） |
 | `docs/plan/next-phase.md` | **下个阶段路线图**：卡池扩容目标、schema v2、素材规范、系统顺序、铺量门槛 |
 | `docs/plan/development-plan.md` | **执行清单（按节点推进）**：每完成一项打勾写日期，开工先看这里 |
 | `docs/tech/miniprogram-migration.md` | 迁移到小程序的方案、WXS 手势架构、WXSS 兼容性问题、类目风险 |
