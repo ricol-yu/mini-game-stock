@@ -174,7 +174,7 @@
       "id": "fam_child_01",
       "who": "孩子",
       "whoId": "haizi",
-      "avatar": "👧",
+      "avatar": "🧒",
       "tag": "孩子",
       "text": "爸爸，你为什么总在看手机？",
       "when": "has:baby",
@@ -312,7 +312,7 @@
       "id": "fam_fever_01",
       "who": "孩子",
       "whoId": "haizi",
-      "avatar": "🤒",
+      "avatar": "🧒",
       "tag": "孩子",
       "text": "半夜发烧 39 度。",
       "when": "has:baby",
@@ -340,7 +340,7 @@
       "id": "fam_babysfirst_01",
       "who": "孩子",
       "whoId": "haizi",
-      "avatar": "👶",
+      "avatar": "🧒",
       "tag": "孩子",
       "text": "孩子第一次叫爸爸。你正在看盘。",
       "when": "has:baby",
@@ -426,7 +426,7 @@
       "id": "work_layoff_02",
       "who": "老板",
       "whoId": "laoban",
-      "avatar": "😅",
+      "avatar": "😰",
       "tag": "职场",
       "text": "名单公布，上面没有你。但工区少了三个人。",
       "when": "no:fired;did:work_layoff_01.l",
@@ -596,7 +596,7 @@
       "id": "work_tip_01",
       "who": "同事小王",
       "whoId": "tongshi_xiaowang",
-      "avatar": "👨‍💼",
+      "avatar": "👔",
       "tag": "职场",
       "text": "我表哥在券商，说最近有个大动作。跟不跟？",
       "when": null,
@@ -839,7 +839,7 @@
       "id": "soc_scam_01",
       "who": "老同学",
       "whoId": "laotongxue",
-      "avatar": "🤳",
+      "avatar": "🍺",
       "tag": "人情",
       "text": "有个项目，稳赚，就是得先投点钱。",
       "when": "social>48",
@@ -1249,6 +1249,176 @@
       }
     },
     {
+      "id": "piao_voice_01",
+      "who": "你的票",
+      "whoId": "nidepiao",
+      "avatar": "📈",
+      "tag": "决策",
+      "text": "你盯着我看了很久了。",
+      "when": "day>6; equity>500",
+      "alwaysStatus": null,
+      "left": {
+        "label": "关掉屏幕",
+        "effects": {
+          "mind": 3,
+          "energy": 3,
+          "risk": 2
+        }
+      },
+      "right": {
+        "label": "再看一会儿",
+        "effects": {
+          "mind": -3,
+          "energy": -3,
+          "risk": -2
+        }
+      },
+      "cap": 1,
+      "tier": "B",
+      "stage": 1
+    },
+    {
+      "id": "piao_voice_02",
+      "who": "你的票",
+      "whoId": "nidepiao",
+      "avatar": "📉",
+      "tag": "决策",
+      "text": "你今天，会卖了我吗？",
+      "when": "day>6; equity>500",
+      "alwaysStatus": null,
+      "left": {
+        "label": "不会",
+        "effects": {
+          "mind": -3,
+          "risk": 4
+        }
+      },
+      "right": {
+        "label": "卖一点",
+        "effects": {
+          "sell": 0.3,
+          "mind": 3,
+          "social": -2
+        }
+      },
+      "cap": 1,
+      "tier": "B",
+      "stage": 1
+    },
+    {
+      "id": "piao_voice_03",
+      "who": "你的票",
+      "whoId": "nidepiao",
+      "avatar": "📈",
+      "tag": "决策",
+      "text": "你还差多少？",
+      "when": "day>24; equity>300",
+      "alwaysStatus": null,
+      "left": {
+        "label": "不看了",
+        "effects": {
+          "mind": 3,
+          "energy": 2,
+          "risk": 3
+        }
+      },
+      "right": {
+        "label": "算一算",
+        "effects": {
+          "mind": -5,
+          "risk": -2
+        }
+      },
+      "cap": 1,
+      "tier": "B",
+      "stage": 2
+    },
+    {
+      "id": "piao_voice_04",
+      "who": "你的票",
+      "whoId": "nidepiao",
+      "avatar": "📉",
+      "tag": "决策",
+      "text": "你昨天说的话，今天还算吗？",
+      "when": "day>24; equity>300",
+      "alwaysStatus": null,
+      "left": {
+        "label": "算",
+        "effects": {
+          "risk": 4,
+          "mind": -3
+        }
+      },
+      "right": {
+        "label": "不算了",
+        "effects": {
+          "mind": 4,
+          "social": -2
+        }
+      },
+      "cap": 1,
+      "tier": "B",
+      "stage": 2
+    },
+    {
+      "id": "piao_silent_01",
+      "who": "你的票",
+      "whoId": "nidepiao",
+      "avatar": "🔴",
+      "tag": "决策",
+      "text": "它不说话了。停牌公告还是没有来。",
+      "when": "has:halt; day>10; did:piao_voice_03.l|has:halt; day>10; did:piao_voice_03.r|has:halt; day>10; did:piao_voice_04.l|has:halt; day>10; did:piao_voice_04.r",
+      "alwaysStatus": null,
+      "left": {
+        "label": "关掉",
+        "effects": {
+          "mind": 3,
+          "energy": 2,
+          "risk": 2
+        }
+      },
+      "right": {
+        "label": "继续刷",
+        "effects": {
+          "mind": -4,
+          "energy": -2,
+          "social": 2
+        }
+      },
+      "cap": 1,
+      "tier": "B",
+      "stage": 3
+    },
+    {
+      "id": "piao_silent_02",
+      "who": "你的票",
+      "whoId": "nidepiao",
+      "avatar": "🔴",
+      "tag": "决策",
+      "text": "它不说话了。你也没再问。",
+      "when": "has:crisis; day>40; did:piao_voice_03.l|has:crisis; day>40; did:piao_voice_03.r|has:crisis; day>40; did:piao_voice_04.l|has:crisis; day>40; did:piao_voice_04.r",
+      "alwaysStatus": null,
+      "left": {
+        "label": "睡吧",
+        "effects": {
+          "mind": 3,
+          "energy": 2,
+          "risk": 2
+        }
+      },
+      "right": {
+        "label": "再算一遍",
+        "effects": {
+          "mind": -4,
+          "energy": -2,
+          "risk": -3
+        }
+      },
+      "cap": 1,
+      "tier": "B",
+      "stage": 3
+    },
+    {
       "id": "dec_size_01",
       "who": "自己",
       "whoId": "ziji",
@@ -1356,7 +1526,7 @@
       "id": "mkt_paperwin_01",
       "who": "你的票",
       "whoId": "nidepiao",
-      "avatar": "🤩",
+      "avatar": "📈",
       "tag": "市场",
       "text": "你赚的钱，已经比一整年工资还多。",
       "when": "has:bubble; equity>1000",
@@ -1617,7 +1787,7 @@
       "id": "risk_leak_01",
       "who": "微信群",
       "whoId": "weixinqun",
-      "avatar": "👥",
+      "avatar": "💬",
       "tag": "风险",
       "text": "群里有人说，这只票下周要有大动作，内部消息。",
       "when": null,
@@ -1903,7 +2073,7 @@
       "id": "fam_inlaws_02",
       "who": "丈母娘",
       "whoId": "zhangmuniang",
-      "avatar": "👵",
+      "avatar": "🧓",
       "tag": "家人",
       "text": "饭桌上，丈母娘随口问：「今年，攒下了吧？」",
       "when": "did:fam_hunli_01",
@@ -2108,8 +2278,8 @@
     },
     {
       "id": "mkt_bull_taxi_01",
-      "who": "所有人",
-      "whoId": "suoyouren",
+      "who": "出租车司机",
+      "whoId": "taxi",
       "avatar": "🚕",
       "tag": "市场",
       "text": "出租车司机在跟你聊 K 线：上月刚辞职，现在全职。",
@@ -2617,7 +2787,7 @@
       "id": "fam_inlaws_03",
       "who": "丈母娘",
       "whoId": "zhangmuniang",
-      "avatar": "👵",
+      "avatar": "🧓",
       "tag": "家人",
       "text": "丈母娘生日。红包行情，你研究了一晚上。",
       "when": "did:fam_hunli_01",
@@ -2797,11 +2967,11 @@
     },
     {
       "id": "fam_hospital_02",
-      "who": "老爸",
+      "who": "老妈",
       "whoId": "laoma",
-      "avatar": "🧑‍🦳",
+      "avatar": "👵",
       "tag": "家人",
-      "text": "爸住院了。这回，是你自己没接那个电话。",
+      "text": "你爸住院了。这回，是你自己没接那个电话。",
       "when": "no:has:momgone; did:fam_momcall_01.l; did:fam_momhealth_01.l",
       "alwaysStatus": null,
       "window": [
