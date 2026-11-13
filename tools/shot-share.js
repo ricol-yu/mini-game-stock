@@ -110,32 +110,38 @@ const CASES = [
     await ctx.close();
   }
 
-  /* 入口布局检查：390 / 320 两个宽度 + fx=0，分享槽不挤压主按钮、不撑出滚动条 */
-  for (const [w, h] of [[390, 844], [320, 568]]) {
+  /* 入口布局检查：四个档位 + fx=0，分享槽不挤压主按钮、不新增行高（team-lead 实测口径）
+       ① 「再来一辈子」top ≥ 65% 视口高（基线 320→77.7% / 375→69.3% / 390→65.3% / 430→63.8%，改动前）
+       ② 320 档 .endcard 的 scrollHeight − clientHeight 必须为 0（不能把卡片撑出滚动） */
+  for (const [w, h] of [[320, 568], [375, 667], [390, 844], [430, 932]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
     const url = 'file:///' + path.resolve(ROOT, 'prototype.html').replace(/\\/g, '/') + '?clean=1&fx=0';
     await page.goto(url, { waitUntil: 'load' });
-    await page.evaluate(() => { S.tut = 3; reset(); S.day = 40; S.cash = 0; S.equity = 0; S.debt = creditLimit(); check(); });
+    await page.evaluate(() => { S.tut = 3; reset(); S.day = 40; S.cash = 0; S.equity = 0; S.debt = creditLimit(); S.trades = 12; S.mdd = 0.64; check(); });
     await page.waitForTimeout(400);
     const m = await page.evaluate(() => {
-      const r = id => { const b = document.getElementById(id).getBoundingClientRect(); return { t: Math.round(b.top), b: Math.round(b.bottom), l: Math.round(b.left), rgt: Math.round(b.right), h: Math.round(b.height) }; };
+      const r = id => { const b = document.getElementById(id).getBoundingClientRect(); return { t: Math.round(b.top), b: Math.round(b.bottom), l: Math.round(b.left), rgt: Math.round(b.right), h: Math.round(b.height), w: Math.round(b.width) }; };
       const ec = document.querySelector('.endcard');
       return {
+        ec: { h: Math.round(ec.getBoundingClientRect().height), top: Math.round(ec.getBoundingClientRect().top) },
         ob: r('o-b'), home: r('o-home'), slot: r('sh-slot'),
-        /* 横向溢出才是分享槽会引入的风险（竖向 scrollHeight 超 viewport 是 .legend
-           的既有行为，与结局页无关，见 prototype.html clean 模式说明） */
+        /* 横向溢出才是分享槽会引入的风险（竖向 scrollHeight 超 viewport 是 .legend 的既有行为） */
         overflowX: document.documentElement.scrollWidth > innerWidth,
         cardScroll: ec.scrollHeight - ec.clientHeight,
         slotText: (document.getElementById('sh-tx') || {}).textContent,
         iconHidden: document.getElementById('sh-ico').style.display === 'none',
       };
     });
-    const overlap = m.slot.l < m.home.rgt - 2;
-    const ctaOK = m.ob.b <= h && m.ob.t >= 0;
-    const foldOK = w < 360 ? (m.slotText === '存图' && m.iconHidden) : true;
-    console.log(`  ${w}x${h} 入口：主CTA ${m.ob.t}~${m.ob.b}${ctaOK ? ' 首屏内' : ' 溢出!'} · 槽 ${m.slot.l}~${m.slot.rgt} 文案「${m.slotText}」图标${m.iconHidden ? '隐藏' : '显示'}${w < 360 ? '（320 应强制折叠）' : ''} · 重叠:${overlap ? '有!' : '无'} · 横向溢出:${m.overflowX ? '有!' : '无'} · 卡内滚动:${m.cardScroll > 0 ? m.cardScroll + 'px' : '无'}`);
-    if (overlap || m.overflowX || !ctaOK || !foldOK) fail++;
+    const ctaPct = (m.ob.t / h * 100);
+    const ctaOK = m.ob.b <= h && m.ob.t >= 0 && ctaPct >= 65;
+    const overlap = m.slot.l < m.home.rgt - 2;                    // 槽压到「回主菜单」上
+    const sameRow = Math.abs(m.slot.t - m.home.t) < 6;            // 同一行（top 差 <6px）
+    /* 主 CTA 仍独占一行：宽度 ≈ 次行「按钮 + 槽」的总宽（差 1px 内） */
+    const ctaFull = Math.abs(m.ob.w - ((m.home.rgt - m.home.l) + m.slot.w + 8)) <= 2;
+    const foldOK = w < 360 ? (m.slotText === '存图' && m.iconHidden) : (m.slot.w >= 88);
+    console.log(`  ${w}x${h}：卡片 ${m.ec.top}+${m.ec.h} · 「再来一辈子」top ${ctaPct.toFixed(1)}%${ctaOK ? ' ✓' : ' ✗低于65%/溢出'} · 次行 槽${m.slot.w}px+按钮${m.home.rgt - m.home.l}px 同行:${sameRow ? '是' : '否!'} 重叠:${overlap ? '有!' : '无'} · 主CTA全宽:${ctaFull ? '是' : '否(' + m.ob.w + ')'} · 文案「${m.slotText}」图标${m.iconHidden ? '隐藏' : '显示'} · 卡内滚动:${m.cardScroll === 0 ? '0 ✓' : m.cardScroll + 'px ✗'} · 横向溢出:${m.overflowX ? '有!' : '无'}`);
+    if (!ctaOK || overlap || !sameRow || !foldOK || !ctaFull || m.cardScroll !== 0 || m.overflowX) fail++;
     await page.screenshot({ path: path.join(OUT, `_share-entry-${w}.png`) });
     await ctx.close();
   }
