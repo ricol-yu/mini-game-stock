@@ -50,6 +50,11 @@ const lines = data.cards.map(c => {
   if (c.pri) head += ',pri:' + c.pri;            // 插队优先级（数大先出），用于「婚后必须尽快来的节点卡」
   if (c.urgent) head += ',urgent:1';             // 关键卡：条件满足就插队问一句（不走袋子），如「上岸」确认
   if (c.fact) head += ',fact:1';                 // 既定事实卡：两边效果一样，只用来告诉玩家「已经这样了」
+  /* tier + stage：B 档支线（你的票）的段位。piaoOK() 闸门全靠这两个字段认卡——
+     漏写 = 闸门对票卡完全失效（卡照样出、段位台词乱序），而且在 prototype 里看不出来。
+     两者必须成对：只有 tier 没有 stage 会被 piaoOK 判成数据错（宁可不出一张也不要台词穿越）。 */
+  if (c.tier) head += ',tier:' + j(c.tier);
+  if (c.stage) head += ',stage:' + c.stage;
   head += ',txt:' + j(c.text) + ',';
   let body = '';
   if (c.alwaysStatus) body += '\n  st:' + effStr(c.alwaysStatus) + ',';

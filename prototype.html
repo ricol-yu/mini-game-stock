@@ -968,6 +968,9 @@ function reset(){
   S = { cash:INIT - SEED_EQ, equity:SEED_EQ, cost:SEED_EQ, debt:0,
         mind:58, risk:0, social:56, energy:50, day:1, tut:(_skipTut ? TUT.length : 0),
         st:{}, flags:{}, did:{}, seen:{}, miss:{fam:0,child:0,pet:0,lover:0}, arrears:0, over:false, trades:0, peak:INIT, mdd:0, neverBought:true,
+        /* 你的票支线（B 档）：段位进度是局内的——每一世都要重新把它说服一次（share-flow §4.2）。
+           _pStage 当前段 / _pAdv 已升段次数（上限 2）/ _pLastDay 上次 B 档出牌的天数 */
+        _pStage:0, _pAdv:0, _pLastDay:0,
         leak:null,                                    // 手里的那条消息（见 apply 的 leak / tick 的兑现）
         ledger:{},                                    // 今日账目：led() 埋点入账，render 展示后清空
         index:3000, hist:[3000] };
@@ -2065,6 +2068,10 @@ function recentTag(tag, n){
 function bagFind(strict, avoidTag, tagCap){
   for(var i = 0; i < _bag.length; i++){
     var k = _bag[i], c = CARDS[k];
+    /* 票支线闸门挂两处（bagFind + bagFindChain），见 share-flow §4.2/§8.2。
+       ⚠️ 少挂一处 = 那一段的票卡完全不设防：段 1/2 无 did: 走这里，段 3 有 did: 长 OR 走 bagFindChain。
+       非 B 档的卡 piaoOK 直接返回 true，放在这里是零成本。 */
+    if(!piaoOK(c)) continue;
     var cap = c.cap || (isChain(c) ? 1 : 2);         // 关联卡是叙事大事件，一局只出一次；c.cap 可放宽（如彩礼可再来一次）
     if((c._used|0) >= cap) continue;
     if(lineGone(c)) continue;
@@ -2087,6 +2094,28 @@ function isChain(c){
   return w.indexOf("did:") >= 0 || w.indexOf("seen:") >= 0;
 }
 
+/* ===== B 档「你的票」支线闸门（share-flow §4.2，2026-11-14 落位）=====
+   这条线不占 A 档的 5 次普通配额，也不吃 A 档的链卡配额（它是一件东西在变，不是"人又来了"）。
+   三条判据 + 两条时点，全部由抽卡层物理保证——台词不可能超前，"它突然沉默了"也不可能凭空出现：
+     ① 只放行「下一段」st === S._pStage + 1（跳段 = 台词穿越）
+     ② 段 1 最早第 4 天（先买过、拿过几天，"它开口"才有对象）
+     ③ 段间至少 8 张卡：1 卡/天 = 8 天（S._pLastDay 记的是上次 B 档卡出现的天数）
+     ④ 每局最多升段 2 次（0→1 是登场，不计入），即本局最多走到第 3 段
+     ⑤ tier:"B" 却没 stage → 数据错，宁可不出一张也不要台词乱序
+   ⚠️ 必须挂在 bagFind 和 bagFindChain 两处的候选循环第一行：
+      段 1/2（piao_voice_01~04）when 里没有 did: → isChain=false → 普通抽屉 bagFind
+      段 3（piao_silent_01/02）when 里是段 2 四张卡的 did: 长 OR → isChain=true → bagFindChain */
+function piaoOK(c){
+  if(c.tier !== "B") return true;
+  var st = c.stage | 0;
+  if(!st) return false;                                  // 数据错：有 tier 没 stage
+  if(st !== (S._pStage | 0) + 1) return false;            // ① 只出下一段
+  if((S._pAdv | 0) >= 2) return false;                    // ④ 本局最多升段 2 次
+  if(st === 1 && S.day < 4) return false;                 // ② 第 1 段最早第 4 天
+  if(S._pLastDay && S.day - S._pLastDay < 8) return false; // ③ 段间至少 8 张
+  return true;
+}
+
 /* 插队通道：条件已满足的关联卡优先于普通抽卡出场。
    排队三条（2026-10-26）：插队曾占认真玩 63% 的抽卡，把普通卡挤到 4%——
     ① 隔天：昨天已经插过队，今天必须出普通卡（叙事回响晚一天，天塌不下来）
@@ -2097,6 +2126,9 @@ function bagFindChain(avoidTag){
   var cands = [], i, k, c;
   for(i = 0; i < _bag.length; i++){
     k = _bag[i]; c = CARDS[k];
+    /* 票支线闸门挂两处（bagFind + bagFindChain），见 share-flow §4.2/§8.2。
+       段 3（piao_silent_01/02）就是从这里出去的——只挂 bagFind 等于段 3 完全不设防。 */
+    if(!piaoOK(c)) continue;
     if(!isChain(c)) continue;
     if(lineGone(c)) continue;
     if((c._used|0) >= (c.cap || 1)) continue;
@@ -2180,6 +2212,18 @@ function pick(){
   if(i < 0) return CARDS[0];                          // 理论不可达
   var k = _bag.splice(i, 1)[0], c = CARDS[k];
   c._used = (c._used|0) + 1;
+  /* B 档（你的票）出牌后的段位记账（share-flow §4.2）：
+     0→1 是「登场」不算升段，1→2 / 2→3 各算一次，所以 _pAdv 上限 2 = 最多走到第 3 段。
+     _pLastDay 记这次出牌的天数，给下一次的「段间 ≥8 张」用（1 卡/天 = 8 天）。
+     ⚠️ 这段不累加 S._whoCnt——票不占 A 档的 5 次普通配额。 */
+  if(c.tier === "B"){
+    var pst = c.stage | 0;
+    if(pst > (S._pStage | 0)){
+      if((S._pStage | 0) > 0) S._pAdv = (S._pAdv | 0) + 1;
+      S._pStage = pst;
+    }
+    S._pLastDay = S.day;
+  }
   _lastTag = c.tag;
   _lastWasChain = chain;                              // 给明天的插队节流看
   _recent.unshift(k); if(_recent.length > COOL) _recent.pop();
@@ -3775,17 +3819,17 @@ CARDS = [
   R:{s:"扛着，会回来的",e:{mind:-6,risk:6}},L:{s:"割了",e:{sell:1,mind:-3,social:-5}}},
  {id:"dec_limitup_01",who:"你的票",wid:"nidepiao",av:"🔴",tag:"决策",when:"equity>600",txt:"今天它封住了涨停。群里都在喊明天还有。",
   R:{s:"拿着，明天还有",e:{mind:-3,risk:5,social:3}},L:{s:"见好就收",e:{sell:0.6,mind:4,social:-3}}},
- {id:"piao_voice_01",who:"你的票",wid:"nidepiao",av:"📈",tag:"决策",when:"day>6; equity>500",cap:1,txt:"你盯着我看了很久了。",
+ {id:"piao_voice_01",who:"你的票",wid:"nidepiao",av:"📈",tag:"决策",when:"day>6; equity>500",cap:1,tier:"B",stage:1,txt:"你盯着我看了很久了。",
   R:{s:"再看一会儿",e:{mind:-3,energy:-3,risk:-2}},L:{s:"关掉屏幕",e:{mind:3,energy:3,risk:2}}},
- {id:"piao_voice_02",who:"你的票",wid:"nidepiao",av:"📉",tag:"决策",when:"day>6; equity>500",cap:1,txt:"你今天，会卖了我吗？",
+ {id:"piao_voice_02",who:"你的票",wid:"nidepiao",av:"📉",tag:"决策",when:"day>6; equity>500",cap:1,tier:"B",stage:1,txt:"你今天，会卖了我吗？",
   R:{s:"卖一点",e:{sell:0.3,mind:3,social:-2}},L:{s:"不会",e:{mind:-3,risk:4}}},
- {id:"piao_voice_03",who:"你的票",wid:"nidepiao",av:"📈",tag:"决策",when:"day>24; equity>300",cap:1,txt:"你还差多少？",
+ {id:"piao_voice_03",who:"你的票",wid:"nidepiao",av:"📈",tag:"决策",when:"day>24; equity>300",cap:1,tier:"B",stage:2,txt:"你还差多少？",
   R:{s:"算一算",e:{mind:-5,risk:-2}},L:{s:"不看了",e:{mind:3,energy:2,risk:3}}},
- {id:"piao_voice_04",who:"你的票",wid:"nidepiao",av:"📉",tag:"决策",when:"day>24; equity>300",cap:1,txt:"你昨天说的话，今天还算吗？",
+ {id:"piao_voice_04",who:"你的票",wid:"nidepiao",av:"📉",tag:"决策",when:"day>24; equity>300",cap:1,tier:"B",stage:2,txt:"你昨天说的话，今天还算吗？",
   R:{s:"不算了",e:{mind:4,social:-2}},L:{s:"算",e:{risk:4,mind:-3}}},
- {id:"piao_silent_01",who:"你的票",wid:"nidepiao",av:"🔴",tag:"决策",when:"has:halt; day>10; did:piao_voice_03.l|has:halt; day>10; did:piao_voice_03.r|has:halt; day>10; did:piao_voice_04.l|has:halt; day>10; did:piao_voice_04.r",cap:1,txt:"它不说话了。停牌公告还是没有来。",
+ {id:"piao_silent_01",who:"你的票",wid:"nidepiao",av:"🔴",tag:"决策",when:"has:halt; day>10; did:piao_voice_03.l|has:halt; day>10; did:piao_voice_03.r|has:halt; day>10; did:piao_voice_04.l|has:halt; day>10; did:piao_voice_04.r",cap:1,tier:"B",stage:3,txt:"它不说话了。停牌公告还是没有来。",
   R:{s:"继续刷",e:{mind:-4,energy:-2,social:2}},L:{s:"关掉",e:{mind:3,energy:2,risk:2}}},
- {id:"piao_silent_02",who:"你的票",wid:"nidepiao",av:"🔴",tag:"决策",when:"has:crisis; day>40; did:piao_voice_03.l|has:crisis; day>40; did:piao_voice_03.r|has:crisis; day>40; did:piao_voice_04.l|has:crisis; day>40; did:piao_voice_04.r",cap:1,txt:"它不说话了。你也没再问。",
+ {id:"piao_silent_02",who:"你的票",wid:"nidepiao",av:"🔴",tag:"决策",when:"has:crisis; day>40; did:piao_voice_03.l|has:crisis; day>40; did:piao_voice_03.r|has:crisis; day>40; did:piao_voice_04.l|has:crisis; day>40; did:piao_voice_04.r",cap:1,tier:"B",stage:3,txt:"它不说话了。你也没再问。",
   R:{s:"再算一遍",e:{mind:-4,energy:-2,risk:-3}},L:{s:"睡吧",e:{mind:3,energy:2,risk:2}}},
  {id:"dec_size_01",who:"自己",wid:"ziji",av:"🙋",tag:"决策",when:"risk>25",txt:"七成的钱已经买成了股票。看着今天的行情，你又想再买一点。",
   R:{s:"{} 满上",e:{buy:8000,risk:9,mind:-3}},L:{s:"只加 {}",e:{buy:4000,risk:4,mind:-2}}},
@@ -4177,6 +4221,10 @@ function metaInit(){
   if(!META.unlocked) META.unlocked = {};
   if(!META.best) META.best = {};
   if(!META.share) META.share = { lastDay:"", hits:0 };   // 分享节流状态（share-flow §5.2）
+  /* META.runs = 总开局数（share-flow §8.1.2）：分享「生成渗透率」的分母。
+     不能用 META.tasks.run 顶——那个每天清零，当分母会把渗透率算成几百倍。
+     老存档没这个字段就按 0 走，不写迁移脚本。 */
+  if(typeof META.runs !== "number") META.runs = 0;
   if(!META.tasks) META.tasks = { run:0, day20:0, ad:0, claimed:[false,false,false] };
   if(typeof META.lives !== "number") META.lives = 3;
 }
@@ -4197,7 +4245,13 @@ function taskProg(k){
 function refreshHome(){
   try{
     $("h-lives").textContent = META.lives;
-    $("h-best").textContent = META.best.days ? "🏆 最长 " + META.best.days + " 天" : "🏆 第一局等你开局";
+    /* 战绩 chip：最长天数是「打过结局的那局」，局数取 META.runs（含没打完的）——
+       两个数口径不同是故意的：前者说"你最好的一世"，后者说"你一共重来了几次"。 */
+    /* 前段只有「打通结局」才写得进去 → 开了局却还没结局时不能再说「第一局等你开局」，
+       否则会出现「第一局等你开局 · 3 局」这种自相矛盾（关掉页面就算一局）。 */
+    var shHead = META.best.days ? "最长 " + META.best.days + " 天"
+              : (META.runs > 0 ? "还没有结局" : "第一局等你开局");
+    $("h-best").textContent = "🏆 " + shHead + (META.runs > 0 ? " · " + META.runs + " 局" : "");
     var cnt = 0;
     ALBUM.forEach(function(a){ if(META.unlocked[a.n]) cnt++; });
     $("h-albct").textContent = cnt + "/" + ALBUM.length;
@@ -4212,6 +4266,7 @@ function refreshHome(){
 /* 进局：扣一次次数。次数就是资格——耗尽时主菜单的「＋」和开始键都会引导去广告 */
 function enterRun(){
   META.lives--; META.tasks.run++;
+  META.runs = (META.runs | 0) + 1;      // 总开局数：开局就 +1，中途退出的也算（它才是渗透率的分母）
   saveMeta(); refreshHome();
   hideOver($("intro")); hideOver($("over"));
   _skipTut = true; reset();

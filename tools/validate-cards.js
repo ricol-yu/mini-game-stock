@@ -24,6 +24,10 @@
  * 第 9 类 choice（2026-10-21 加，L1 写作规则）：
  *   正文剧透选项 / 选项只碰 1 条数值 / 选项没有代价 / 两选项互相支配或完全相同
  *   —— 这是「决策感」的门禁，卡池里任何一张滑哪边都一样，玩法就少一张。
+ *
+ * 第 10 类 avatar（2026-11-14 加，share-flow §8.1.1）：
+ *   同一 whoId 的人脸类 emoji ≤1（处境符号 📞🏠☕ 随便换；脸只有一张）。
+ *   nidepiao 不是人：📈/📉/🔴 三个行情符号并存是设计意图，走白名单豁免。
  */
 'use strict';
 
@@ -365,6 +369,32 @@ function validateCards(data) {
     seen[c.id] = true;
   });
 
+  /* 10. avatar：同一 whoId 只许一张「脸」（2026-11-14 加，share-flow §8.1.1）
+     口径：只查人脸类 emoji（人形 / 表情）。处境符号（📞🏠☕💍…）每张卡都该不一样，
+     它们才是「这一屏的处境」，进黑名单会把设计意图判成错误。
+     👀 / 👰 按 §8.1.1 的判例算「人形符号但不是主角的脸」，不进脸黑名单（老婆那张卡用它合法）。
+     豁免：nidepiao 不是人，📈/📉/🔴 三个行情符号并存是 §8.1.1 第 4 条的明确定稿。
+     跨 whoId 共用脸（规则②）、bigram 撞车、金额复用、B 档 stage 连续 是另一批校验，本关不查。 */
+  var FACE_RE = /[\u{1F464}-\u{1F469}\u{1F47C}\u{1F474}-\u{1F476}\u{1F600}-\u{1F64F}\u{1F910}-\u{1F92F}\u{1F930}-\u{1F933}\u{1F9D1}-\u{1F9D5}]/u;
+  var AVATAR_WL = { nidepiao: ['📈', '📉', '🔴'] };
+  var whoFaces = {};
+  cards.forEach(function (c) {
+    if (!c || !c.whoId || !c.avatar) return;
+    if ((AVATAR_WL[c.whoId] || []).indexOf(c.avatar) >= 0) return;
+    if (!FACE_RE.test(c.avatar)) return;
+    var rec = whoFaces[c.whoId] || (whoFaces[c.whoId] = { who: c.who, faces: {}, ids: {} });
+    rec.faces[c.avatar] = true;
+    rec.ids[c.avatar] = c.id;
+  });
+  Object.keys(whoFaces).forEach(function (wid) {
+    var rec = whoFaces[wid], faces = Object.keys(rec.faces);
+    if (faces.length <= 1) return;
+    err('avatar', rec.ids[faces[1]], 'avatar',
+        '「' + (rec.who || wid) + '」(' + wid + ') 出现 ' + faces.length + ' 张脸 ' +
+        faces.map(function (f) { return f + '(' + rec.ids[f] + ')'; }).join('、') +
+        '——一个角色只许一张脸；处境符号可以换，脸不行（share-flow §8.1.1）');
+  });
+
   return ISSUES;
 }
 
@@ -395,7 +425,7 @@ function main() {
   if (selftest) { selfTest(validateCards, data); return; }
 
   if (errors.length === 0 && warns.length === 0) {
-    console.log('✓ 校验通过：' + data.cards.length + ' 张卡，9 类检查全绿');
+    console.log('✓ 校验通过：' + data.cards.length + ' 张卡，10 类检查全绿');
     return;
   }
   issues.forEach(function (i) {
@@ -405,9 +435,9 @@ function main() {
   process.exit(errors.length ? 1 : 0);
 }
 
-/* --selftest：注入 8 个坏样例，8 类检查必须全部命中，否则判失败 */
+/* --selftest：注入 12 个坏样例，对应规则必须全部命中，否则判失败 */
 function selfTest(validateCards, goodData) {
-  var RULES = ['id', 'required', 'when', 'effect-key', 'effect-range', 'text-len', 'did-ref', 'window', 'choice'];
+  var RULES = ['id', 'required', 'when', 'effect-key', 'effect-range', 'text-len', 'did-ref', 'window', 'choice', 'avatar'];
   function clone(d) { return JSON.parse(JSON.stringify(d)); }
   function make(mutate) {
     var d = clone(goodData);
@@ -429,7 +459,14 @@ function selfTest(validateCards, goodData) {
         d.cards[0].right.effects = { mind: 5, social: 4 };
       }) },
     { rule: 'choice', file: make(function (d) {                                                  // 正文剧透
-        d.cards[0].text = '这个月房贷 6,800。先拖两天还是出 5,500？';
+        /* 从这张卡自己的 label 取原文塞进正文——写死「5,500」那版在卡池改文案后就一直漏检了
+           （label 早不是那两句），自检形同虚设。跟着数据走，卡池怎么改都还能验到规则。 */
+        d.cards[0].text = '这个月房贷 6,800。' + d.cards[0].left.label + '？';
+      }) },
+    { rule: 'avatar', file: make(function (d) {                                                  // 同一角色两张脸
+        var mom = d.cards.filter(function (c) { return c.whoId === 'laoma'; });
+        mom[0].avatar = '🧑‍🦳';                       // 白发人 = 第二张脸（👵 之外的）
+        mom[1].avatar = '👵';
       }) },
   ];
 
