@@ -559,6 +559,51 @@
   .btn:active{transform:translateY(3px) scale(.985);box-shadow:0 1px 0 rgba(43,31,18,.28)}
   .endcard .btn,.intro-card .btn{width:100%}
 
+  /* ---- 结局页分享槽（share-flow §1.1）：与「回主菜单」同行右槽，文字链层级，零新增行高 ----
+     主 CTA「再来一辈子」永远是唯一实心全宽；分享槽不是按钮是文字链，永不隐藏。
+     槽本体 44 高（热区），上下各 -1px 负 margin：行高仍由 46 的次按钮决定，布局零新增。 */
+  .endcard .sh-act{display:flex;align-items:center;gap:8px;width:100%}
+  .endcard .sh-act .btn{width:auto;flex:1;min-width:0}
+  .sh-slot{flex:0 0 auto;height:44px;margin:-1px 0;min-width:92px;padding:0 2px;
+    display:inline-flex;align-items:center;justify-content:center;gap:4px;
+    background:none;border:none;box-shadow:none;border-radius:8px;
+    font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--u2-ink);
+    font-family:inherit;-webkit-appearance:none;cursor:pointer;
+    transition:transform var(--u2-t-tap) var(--u2-e-back)}
+  .sh-slot:active{transform:scale(.94)}
+  .sh-slot .sh-ico{font-style:normal;font-size:13px;line-height:1}
+  .sh-slot.sh-mini{min-width:56px;font-size:11px;color:var(--u2-ink-3)}
+  .sh-slot.sh-mini2{font-weight:600}
+  .sh-slot.sh-pulse{animation:shPulse 400ms var(--u2-e-out) 1}
+  @keyframes shPulse{0%{transform:scale(1)}45%{transform:scale(1.07)}100%{transform:none}}
+  /* 窄屏（<360，SE1 一档）：强制折叠态，槽宽 56、无图标（share-flow §1.7）。
+     320 上 .endcard 内容天然超高，基线行为是整列 flex 压缩（按钮行压到 ~21px、无内滚动）。
+     行若不可压缩（min-height:auto 被 46px 按钮顶住）会变成 22px 内滚动——
+     所以这一档让整行跟着压缩：行高 H 分给按钮与槽（各 height:100%），零新增高度在这档也成立。
+     文案「存图」由 JS renderShareSlot 按同一判据切换，CSS 只兜图标与宽度。 */
+  @media (max-width:359px){
+    .endcard .sh-act{min-height:0}
+    .endcard .sh-act .btn{height:100%;min-height:0}
+    .endcard .sh-act .sh-slot{height:100%;min-height:0;margin:0}
+    .sh-slot{min-width:56px}
+    .sh-slot .sh-ico{display:none}
+  }
+
+  /* ---- 长按保存面板（share-flow §2.2.3，iOS Safari / 微信内）----
+     img 必须可长按出「存储图像」：不许继承卡面 img 的 pointer-events/callout 限制，
+     选择器写死在 .sh-hold img 上（share-flow §2.2.3 第 2 条）。 */
+  .sh-hold{position:fixed;inset:0;z-index:90;background:rgba(12,43,30,.82);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom));text-align:center}
+  .sh-hold[hidden]{display:none}
+  .sh-hold h3{margin:0;font-size:14px;font-weight:800;letter-spacing:1px;color:var(--u2-on-felt)}
+  .sh-hold img{max-width:min(320px,86vw);max-height:calc(100% - 170px - env(safe-area-inset-bottom));
+    border-radius:8px;box-shadow:0 10px 0 rgba(11,32,22,.35),0 24px 40px rgba(0,0,0,.4);
+    pointer-events:auto;-webkit-touch-callout:default;user-select:text;-webkit-user-select:text}
+  .sh-hold .sh-tip{margin:0;font-size:11px;font-weight:600;color:rgba(253,243,216,.72);letter-spacing:.4px}
+  .sh-hold .sh-acts{display:flex;gap:10px;width:min(320px,86vw)}
+  .sh-hold .sh-acts .btn{height:40px;padding:0 16px;font-size:13px;flex:1;min-width:0}
+
   .legend{margin-top:14px;font-size:11px;color:#7d8794;text-align:center;line-height:1.9;max-width:540px}
 
   /* =====================================================================
@@ -713,7 +758,8 @@
   @media (prefers-reduced-motion:reduce){
     .phone.fx-shake,.phone.fx-shake-hard,.fx-jelly,.fx-wobble,.card.fx-deal,
     .mkt.fx-dent,.stamp.fx-lock,.toast.on,.over.on .endcard,.over.on .em,
-    .intro .intro-card,.vit-i.bump,.vit-i.warn,.mbar i.u2-debt-breathe{
+    .intro .intro-card,.vit-i.bump,.vit-i.warn,.mbar i.u2-debt-breathe,
+    .sh-slot.sh-pulse{
       animation-duration:1ms !important;animation-iteration-count:1 !important}
   }
   /* ?fx=0：整站动效一次关干净（截图对照、低端安卓、系统减弱动效的兜底）。
@@ -792,7 +838,10 @@
           <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
         </div>
         <button class="btn" id="o-b">再来一辈子</button>
-        <button class="btn o-home" id="o-home">回主菜单</button>
+        <div class="sh-act">
+          <button class="btn o-home" id="o-home">回主菜单</button>
+          <button class="sh-slot" id="sh-slot" aria-label="把这一局的战绩存成一张图"><i class="sh-ico" id="sh-ico">📷</i><span id="sh-tx">存一张</span></button>
+        </div>
       </div>
     </div>
 
@@ -845,6 +894,23 @@
     v4：桌游牌局风换肤（奶油卡面 / 硬投影 / 一叠牌）· 四条命液面填充 · 触屏可点开数值明细<br>
     每月 5 号发薪、同日扣房租水电；有欠款则每月自动还月供。没钱就只能卖股票，或者欠着。<br>
     平衡：3000 局模拟 — 乱滑玩家平均活 34 天、通关 7%；会玩的策略通关率约为乱滑的 7 倍。
+  </div>
+</div>
+
+<!-- 结局战绩分享卡 · 离屏画布：必须在文档流里可布局（禁 display:none，否则小程序端
+     canvasToTempFilePath 导出空白图，share-flow §7.1 坑 1）；CSS 尺寸 1080×1440
+     让「1 绘图单位 = 1 CSS px」，backing store 由 JS 按 dpr=min(2,pixelRatio) 设置。 -->
+<canvas id="shareCv" width="1080" height="1440"
+        style="position:fixed;left:-9999px;top:0;width:1080px;height:1440px;"></canvas>
+
+<!-- 长按保存面板（iOS Safari / 微信内）：图必须是真 <img> + blob/data URI -->
+<div class="sh-hold" id="sh-hold" role="dialog" aria-modal="true" aria-labelledby="sh-hold-t" hidden>
+  <h3 id="sh-hold-t">图已经做好了。长按它，存到相册。</h3>
+  <img id="sh-hold-img" alt="">
+  <p class="sh-tip">存下来，发给那个也在这个群里的人。</p>
+  <div class="sh-acts">
+    <button class="btn" id="sh-hold-copy">复制文字</button>
+    <button class="btn o-home" id="sh-hold-x">好了</button>
   </div>
 </div>
 
@@ -2516,6 +2582,909 @@ var END_GROUPS = [
                    "不认识","复利葬礼"] }
 ];
 
+/* ============ 结局战绩分享卡（docs/content/share-lines.md + design/share-card-canvas.md） ============
+   只读逻辑：读结局数据 → 画 1080×1440 竖版海报。不碰游戏数值（tick/pick/applyEff/check/账本/卡池）。
+   施工依据 share-card-canvas.md（P0–P7 逐层）；流程/节流/兜底/埋点依据 docs/design/share-flow.md。 */
+var SHARE_RANK = true;                                  // 段位标签层开关（share-lines §五，可选层）
+var CARD_W = 1080, CARD_H = 1440;
+var SH_F = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+var TPL_OF = { bold:'T1', fate:'T2', mouth:'T3', bill:'T4', warm:'T5' };
+/* 结局编号（水印「结局 No.06」与码 scene 共用同一套号）：与 END_GROUPS 同序 1–32，
+   只追加不重排——改号等于改码，已发出去的图全废（share-flow §3.1）。 */
+var SH_NO = {};
+(function(){
+  var i = 0;
+  END_GROUPS.forEach(function(g){ g.ids.forEach(function(nm){ SH_NO[nm] = ++i; }); });
+})();
+
+/* ---- 文案常量：照 share-lines.md §二/§三 原样搬，一个字都不许改 ----
+   32 个结局 → { tpl: bold|fate|mouth|bill|warm, big: 大字（第一人称） }。
+   唯一例外：share-lines §三标称 32 条实际只有 31 条，「冬天还没过完」缺席——
+   按它 §二 分组的口径归入 fate，大字沿用 END.q 原文（不新造文案），已报 team-lead。 */
+var END_SHARE = {
+  /* bold · 豪言 */
+  "自由":       { tpl:"bold", big:"我赢麻了，还是每天九点半醒。" },
+  "快进快出":   { tpl:"bold", big:"别人用十年亏完，我用了三个月。" },
+  "大阳线":     { tpl:"bold", big:"我什么都没干，钱自己涨了。" },
+  "逆风局":     { tpl:"bold", big:"大盘跌成那样，我居然没事。" },
+  "一次都没动": { tpl:"bold", big:"这一整局，我只动了一次。" },
+  "上岸":       { tpl:"bold", big:"不玩了。这是我赢的唯一方式。" },
+  "熬成精":     { tpl:"bold", big:"亏完了，明天还开盘。" },
+  /* fate · 认命 */
+  "不动了":     { tpl:"fate", big:"我不是不看了，是不敢看了。" },
+  "温水煮蛙":   { tpl:"fate", big:"没有一声响，钱就没了。" },
+  "平凡之路":   { tpl:"fate", big:"一辈子，就在起步价上下晃。" },
+  "梦游":       { tpl:"fate", big:"我每天都在，但我早就不在了。" },
+  "没有人":     { tpl:"fate", big:"很久没人问我最近怎么样了。" },
+  "停牌之后":   { tpl:"fate", big:"我等的那条公告，一直没来。" },
+  "冬天还没过完": { tpl:"fate", big:"你没有做错什么。只是正好站在了那儿。" },
+  /* mouth · 嘴硬 */
+  "泡沫之后":   { tpl:"mouth", big:"我知道会破。我赌它破之前我能跑。" },
+  "穿仓":       { tpl:"mouth", big:"我以为我在抄底。底在抄我。" },
+  "最后一把":   { tpl:"mouth", big:"最后一单，我手很稳。" },
+  "爆了":       { tpl:"mouth", big:"我只想再借一点点。" },
+  "老赖顶格":   { tpl:"mouth", big:"名单上有我。备注栏是空的。" },
+  "查房":       { tpl:"mouth", big:"我跟了那条内幕。内幕跟我了。" },
+  /* bill · 清算 */
+  "复利葬礼":   { tpl:"bill", big:"我付的利息，够一套房的首付。" },
+  "断供":       { tpl:"bill", big:"房子不是跌没的，是「下个月再说」说没的。" },
+  "亮红灯":     { tpl:"bill", big:"病历先到了跌停。" },
+  "离婚":       { tpl:"bill", big:"签字一分钟。空房间要住很多年。" },
+  "不认识":     { tpl:"bill", big:"他管接送的阿姨叫爸爸。" },
+  /* warm · 温情 */
+  "两个人":     { tpl:"warm", big:"我没赢过市场。但我赢了想赢的那件事。" },
+  "三口之家":   { tpl:"warm", big:"孩子睡了，我把软件关了。" },
+  "一人一狗":   { tpl:"warm", big:"至少还有个东西，按点等我回家。" },
+  "错过的人":   { tpl:"warm", big:"她还在。只是不再问我了。" },
+  "无债一身轻": { tpl:"warm", big:"零，原来是这么舒服的数字。" },
+  "再就业":     { tpl:"warm", big:"降薪三成，我干得比以前认真。" },
+  "平衡大师":   { tpl:"warm", big:"什么都守住了，什么都没多。" }
+};
+
+/* ---- 通用句：share-lines.md §四，5 组 × 8 条，原样搬 ----
+   随机抽 1 条挂在卡的复制文字里；抽样不带 Math.random（稳定 hash + localStorage 记
+   lastPick[结局名]，同一结局 3 天内不重复），保证同一局重复生成时句子不变。 */
+var SHARE_GENERIC = {
+  bold: [
+    "时间会证明我是对的。",
+    "时间证明了，我是对的，只是没人给我钱。",
+    "站在光里，别光站在门口。",
+    "这次不一样。每次都不一样。",
+    "我不做波段，我做股东。",
+    "跌了我加，涨了我不走。",
+    "这一波，我看的是三年后。",
+    "别人恐惧我贪婪——我确实很贪婪。"
+  ],
+  fate: [
+    "冰点下面还有绝对零度，零度下面还有我。",
+    "年内每天都是最低点，只是每天换一个。",
+    "我在等回调。回调在等我接盘。",
+    "不买立省 100%。我买了，所以省了 0%。",
+    "没有一声巨响，钱也会没有。",
+    "温水不烫，就是有点久。",
+    "我已经不看了。这不等于我卖了。",
+    "慢慢来，比较快亏完。"
+  ],
+  mouth: [
+    "我补仓不是不服，是摊低成本。",
+    "再给我一个礼拜，我就回本。",
+    "这不是亏，这是浮亏。",
+    "我没被套，我在做长线。",
+    "盘中开香槟，收盘找天台。",
+    "一通操作猛如虎，本金只剩二百五。",
+    "白天给主力送钱，晚上给主力送外卖。",
+    "收盘三件套：刷消息、找利好、做美梦。"
+  ],
+  bill: [
+    "三分靠运气，七分靠硬扛，剩下九十分靠自我安慰。",
+    "理财的尽头是国债，我的尽头是负债。",
+    "别人理财是钱生钱，我是钱生不见。",
+    "表面月薪过万，账上拿不出一千。",
+    "我付的每一分利息，都在替别人还房贷。",
+    "拆东墙补西墙，墙墙都漏。",
+    "我把生活费也闲进去了。",
+    "杠杆不商量。它只负责放大。"
+  ],
+  warm: [
+    "我对它像谈了个渣男：一次次失望，一次次给机会。",
+    "它没骗我。是我一直在骗自己。",
+    "家里的事，我一件都没赶上。",
+    "我说再看五分钟，看了五年。",
+    "她问我在看什么。我说没什么。",
+    "孩子学会的第一句话，不是爸爸。",
+    "我妈以为我在外面欠钱。她猜对了。",
+    "这局我唯一做对的事，是关掉了软件。"
+  ]
+};
+
+/* 段位标签（share-lines §五「从夯到拉」，借全网通行体系，不用解释）。可选层，SHARE_RANK 控制 */
+function shareRank(day, netW){
+  if(day >= 120 && netW >= INIT * 2) return '夯';
+  if(day >= 90 && netW > 0) return '顶级';
+  if(day >= 60 || netW > 0) return '人上人';
+  if(day >= 30) return 'NPC';
+  return '拉完了';
+}
+
+/* ---- T5 场景素材（卡面同款 scene_*.webp，纯场景即成品，不叠人物层）----
+   关系断裂类（错过的人/没有人/离婚/不认识）没有空景素材 → 走 spec §4.5.3 中性渐变兜底 */
+var SH_SCENE = {
+  "两个人": "assets/bg/scene_living_night.webp",
+  "三口之家": "assets/bg/scene_living_night.webp",
+  "一人一狗": "assets/bg/scene_living_night.webp",
+  "无债一身轻": "assets/bg/scene_living_night.webp",
+  "再就业": "assets/bg/scene_living_night.webp",
+  "平衡大师": "assets/bg/scene_living_night.webp"
+};
+
+/* ---- 画布工具（share-card-canvas.md §2 的 8 个函数，一份实现全模板共用）---- */
+function shFnt(w, s){ return w + ' ' + s + 'px ' + SH_F; }
+function shRnd(i){ var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function shRR(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+/* 带字距宽度 / 绘制（canvas 没有 letter-spacing；mls 扣尾距，有字距时禁用 textAlign='center'） */
+function shMLS(ctx, t, ls){
+  ls = ls || 0;
+  var w = 0, i;
+  for(i = 0; i < t.length; i++) w += ctx.measureText(t.charAt(i)).width + ls;
+  return w - ls;
+}
+function shLS(ctx, t, x, y, ls){
+  ls = ls || 0;
+  var cx = x, i;
+  for(i = 0; i < t.length; i++){ ctx.fillText(t.charAt(i), cx, y); cx += ctx.measureText(t.charAt(i)).width + ls; }
+  return cx - ls;
+}
+function shCenter(ctx, t, cx, y, ls){ shLS(ctx, t, cx - shMLS(ctx, t, ls) / 2, y, ls); }
+function shRight(ctx, t, rx, y, ls){ shLS(ctx, t, rx - shMLS(ctx, t, ls), y, ls); }
+/* 中文折行（避头尾） */
+var SH_NO_HEAD = '，。、；：？！）」』】》%…';
+var SH_NO_TAIL = '（「『【《';
+function shWrap(ctx, t, maxW){
+  var out = [], cur = '', i, ch;
+  for(i = 0; i < t.length; i++){
+    ch = t.charAt(i);
+    if(ctx.measureText(cur + ch).width > maxW && cur){
+      if(SH_NO_HEAD.indexOf(ch) >= 0 || SH_NO_TAIL.indexOf(cur.charAt(cur.length - 1)) >= 0){ cur += ch; continue; }
+      out.push(cur); cur = ch;
+    }else cur += ch;
+  }
+  if(cur) out.push(cur);
+  return out;
+}
+/* 金额：−¥12,300（U+2212 不是连字符；千分位必须有）；过长转「万」不缩字号 */
+function shMoney(n){
+  var neg = n < 0, a = Math.abs(Math.round(n));
+  return (neg ? '−' : '') + '¥' + String(a).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function shMoneyFit(n, maxChars){
+  maxChars = maxChars || 9;
+  var s = shMoney(n);
+  if(s.length <= maxChars) return s;
+  return (n < 0 ? '−' : '') + '¥' + (Math.abs(n) / 10000).toFixed(1) + ' 万';
+}
+function shPad2(n){ return (n < 10 ? '0' : '') + n; }
+/* 票据锯齿（齿宽 = w/n，齿尖朝下；只描斜边——顶边再描会和纸体断层） */
+function shTeeth(ctx, x, y, w, h, n){
+  var tw = w / n, i;
+  ctx.beginPath(); ctx.moveTo(x, y);
+  for(i = 0; i < n; i++){ ctx.lineTo(x + tw * i + tw / 2, y + h); ctx.lineTo(x + tw * (i + 1), y); }
+  ctx.closePath();
+  ctx.fillStyle = '#fdf6e1'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x, y);
+  for(i = 0; i < n; i++){ ctx.lineTo(x + tw * i + tw / 2, y + h); ctx.lineTo(x + tw * (i + 1), y); }
+  ctx.strokeStyle = '#241a0e'; ctx.lineWidth = 3; ctx.stroke();
+}
+/* 引文：折行 → 删整句截断 → 2 行均衡断行（share-card-canvas.md §6.1，各模板参数已定死） */
+function shLayoutQuote(ctx, t, maxW, maxLines, fs, lh){
+  ctx.font = shFnt(600, fs);
+  t = t || '';
+  var lines = shWrap(ctx, t, maxW);
+  if(lines.length > maxLines){
+    var sent = t.match(/[^。！？]*[。！？]?/g).filter(Boolean);
+    var out = t;
+    while(sent.length && shWrap(ctx, out, maxW).length > maxLines){
+      sent.pop();
+      out = sent.join('') + '…';
+    }
+    lines = shWrap(ctx, out, maxW);
+  }
+  if(lines.length === 2){
+    var cand = [], i;
+    for(i = 1; i < t.length; i++){
+      if('，。、；：！？'.indexOf(t.charAt(i - 1)) < 0) continue;
+      var a = t.slice(0, i), b = t.slice(i);
+      if(ctx.measureText(a).width > maxW) break;
+      if(ctx.measureText(b).width > maxW) continue;
+      if(b.length < a.length * 0.4) continue;
+      cand.push([a, b, Math.abs(a.length - b.length)]);
+    }
+    if(cand.length){
+      cand.sort(function(x, y){ return x[2] - y[2]; });
+      lines = [cand[0][0], cand[0][1]];
+    }
+  }
+  return { lines: lines, step: fs * lh };
+}
+/* 结局名字号：按字数查表，不按宽度试探（32 个结局最长 6 字，表已覆盖） */
+var SH_NAME_SIZE = {
+  T1: { 1:200, 2:200, 3:200, 4:200, 5:168, 6:144 },
+  T2: { 1:92,  2:92,  3:92,  4:92,  5:92,  6:76 },
+  T3: { 1:160, 2:132, 3:132, 4:104, 5:88,  6:76 },
+  T4: { 1:92,  2:76,  3:76,  4:76,  5:76,  6:66 },
+  T5: { 1:92,  2:92,  3:92,  4:92,  5:92,  6:76 }
+};
+function shNameSize(tpl, name){
+  var row = SH_NAME_SIZE[tpl];
+  return row[Math.min(name.length, 6)] || row[6];
+}
+
+/* ---- 离屏画布：文档流里挂一份，永久复用（重建代价 80–200ms）---- */
+var _shCv = null, _shCtx = null, _shDpr = 1, _shSceneImg = null, _shGenKey = '';
+function shCv(){
+  if(_shCv) return _shCv;
+  var c = $("shareCv");
+  if(!c){
+    c = document.createElement('canvas');
+    c.id = 'shareCv';
+    c.style.position = 'fixed'; c.style.left = '-9999px'; c.style.top = '0';
+    c.style.width = CARD_W + 'px'; c.style.height = CARD_H + 'px';
+    (document.body || document.documentElement).appendChild(c);
+  }
+  var dpr = 1;
+  try{ dpr = Math.min(2, window.devicePixelRatio || 1); }catch(_e){ dpr = 1; }   // dpr 封顶 2：低端安卓 OOM 红线
+  c.width = CARD_W * dpr; c.height = CARD_H * dpr;
+  _shCtx = c.getContext ? c.getContext('2d') : null;
+  _shDpr = dpr;
+  _shCv = c;
+  return c;
+}
+/* 系统字体等一次就够（不等会出现「量出来的宽 ≠ 画出来的宽」，折行全错）；300ms 兜底不许无限等 */
+function shEnsureFont(cb){
+  var fired = false;
+  var go = function(){ if(fired) return; fired = true; cb(); };
+  try{
+    if(document.fonts && document.fonts.ready){
+      var to = setTimeout(go, 300);
+      document.fonts.ready.then(function(){ clearTimeout(to); go(); }, function(){ clearTimeout(to); go(); });
+      return;
+    }
+  }catch(_e){}
+  go();
+}
+function shLoadImg(src, cb){
+  var fired = false;
+  var go = function(v){ if(fired) return; fired = true; cb(v); };
+  try{
+    var im = new Image();
+    var to = setTimeout(function(){ go(null); }, 1500);       // 素材 1.5s 超时 → 兜底，不卡整张卡
+    im.onload = function(){ clearTimeout(to); go(im); };
+    im.onerror = function(){ clearTimeout(to); go(null); };
+    im.src = src;
+  }catch(_e){ go(null); }
+}
+
+/* ---- 数据快照：check() 时拍下深拷贝，生成期间 S 随便变（share-flow §2.1）----
+   取数三条：no/em/quote 全部从 END 取，不在展示侧抄第二份；不放昵称/绝对日期/why/角色名；
+   一屏最多 3 个数字（T4 是账单、T2 只 1 项）。 */
+function shSnapshot(name, em, day, n){
+  var E = END[name] || {};
+  var sh = END_SHARE[name] || { tpl: 'fate', big: E.q || '' };   // 映射缺失兜底 fate
+  var t = TPL_OF[sh.tpl] || 'T2';
+  var intPaid = Math.round((S.flags && S.flags.intPaid) || 0);
+  var debt = Math.round(S.debt || 0);
+  return {
+    name: name, em: em || E.em || '🌱', day: day, net: Math.round(n),
+    trades: S.trades || 0, risk: Math.round(S.risk || 0),
+    quote: E.q || '', grp: E.grp === 'win' ? '活法' : '死法',
+    tpl: t, big: sh.big || '', no: SH_NO[name] || 0,
+    generic: shGeneric(name, sh.tpl),
+    rank: SHARE_RANK ? shareRank(day, n) : '',
+    /* T4 账单只用引擎真实在记的字段（share-flow §2.1：渲染器不许自造字段）。
+       「合计支出」只算损耗项（债息 + 还欠着的债），本金/持仓是周转——
+       口径对齐 spec §9 示例（合计 = 利息支出 + 手续费）。 */
+    bill: [
+      { k: '初始本金', v: INIT },
+      { k: '持仓成本', v: Math.round(S.cost || 0) },
+      { k: '债息支出', v: intPaid },
+      { k: '欠下的债', v: debt }
+    ],
+    total: intPaid + debt,
+    qr: null, qrState: 'C',      // 原型无服务端 → 恒 C 态（方印「韭」+ 搜索 韭菜之王）
+    watermark: true
+  };
+}
+/* 通用句抽样：稳定 hash 起步 + lastPick 记 3 天；换句时偏移 1..7，保证与上一条不同 */
+function shGeneric(name, tplKey){
+  var pool = SHARE_GENERIC[tplKey] || SHARE_GENERIC.fate;
+  if(!pool || !pool.length) return '';
+  var sh = shLoad();
+  var rec = sh.lastPick[name];
+  var now = Date.now();
+  if(rec && typeof rec.i === 'number' && (now - (rec.t || 0)) < 3 * 86400000){
+    return pool[rec.i % pool.length];
+  }
+  var h = 0, s = name + '|' + todayKey(), c;
+  for(c = 0; c < s.length; c++) h = (h * 31 + s.charCodeAt(c)) >>> 0;
+  var i = rec ? (rec.i + 1 + (h % (pool.length - 1))) % pool.length : h % pool.length;
+  sh.lastPick[name] = { i: i, t: now };
+  shStore();
+  return pool[i];
+}
+/* 复制文字版（share-flow §3.4 第三条腿）：大字（第一人称）+ 判词 + 战绩 + 落款 */
+function shCardText(d){
+  var stat = '这一辈子 ' + d.day + ' 天 · 最后剩下 ' + shMoney(d.net) + ' · 买卖 ' + d.trades + ' 次';
+  if(SHARE_RANK && d.rank) stat += ' · ' + d.rank;
+  return ['《韭菜之王》第 ' + d.day + ' 天，' + d.name + '。', d.big, d.quote, stat,
+          '你的一辈子，能撑多少天？'].join('\n');
+}
+
+/* ---- 绘制：P0 清屏 → P1 绒布 → P2 网格/噪点 → P3 水印A → P4–P6 模板 → P7 页脚 ---- */
+function shDrawCard(ctx, d, done){
+  var cv = _shCv;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.scale(_shDpr, _shDpr);                 // 之后一律 1080 基准坐标
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  /* P1 绒布径向（与主界面同源，中心在画面上方 15%） */
+  var g = ctx.createRadialGradient(540, 216, 0, 540, 216, 1560);
+  g.addColorStop(0, '#2a7452'); g.addColorStop(0.56, '#17402f'); g.addColorStop(1, '#0c2b1e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 1080, 1440);
+  /* P2a 60px 网格（+0.5 对齐 1px 线） */
+  ctx.strokeStyle = 'rgba(253,243,216,.045)'; ctx.lineWidth = 1;
+  var x, y;
+  for(x = 0; x <= 1080; x += 60){ ctx.beginPath(); ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, 1440); ctx.stroke(); }
+  for(y = 0; y <= 1440; y += 60){ ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(1080, y + .5); ctx.stroke(); }
+  /* P2b 噪点：固定种子，同一张卡连拍两次必须逐像素一致 */
+  for(var i = 0; i < 1200; i++){
+    ctx.fillStyle = 'rgba(253,243,216,' + (0.02 + shRnd(i * 3) * 0.03) + ')';
+    ctx.fillRect(shRnd(i * 2 + 1) * 1080, shRnd(i * 2 + 2) * 1440, 1 + (shRnd(i * 5) > .8 ? 1 : 0), 1);
+  }
+  /* P3 水印 A：画在背景之后、纸面/插画之前 —— 只在绒布上显现，纸上自动被盖住 */
+  if(d.watermark){
+    ctx.save();
+    ctx.translate(540, 720); ctx.rotate(-Math.PI / 4); ctx.translate(-540, -720);
+    ctx.fillStyle = 'rgba(253,243,216,.05)'; ctx.font = shFnt(600, 20);
+    for(y = -400; y < 1800; y += 320)
+      for(x = -400; x < 1500; x += 420) ctx.fillText('韭菜之王', x, y);
+    ctx.restore();
+  }
+  var fin = function(){
+    if(d.tpl === 'T1') shTplT1(ctx, d);
+    else if(d.tpl === 'T3') shTplT3(ctx, d);
+    else if(d.tpl === 'T4') shTplT4(ctx, d);
+    else if(d.tpl === 'T5') shTplT5(ctx, d);
+    else shTplT2(ctx, d);
+    shFooter(ctx, d);
+    if(done) done();
+  };
+  if(d.tpl === 'T5' && SH_SCENE[d.name]){
+    shLoadImg(SH_SCENE[d.name], function(img){ _shSceneImg = img; fin(); });
+  }else{
+    _shSceneImg = null;
+    fin();
+  }
+}
+
+/* ---- T1 豪言（share-card-canvas.md §4 T1）---- */
+function shTplT1(ctx, d){
+  var i, x;
+  var BH = [60, 90, 70, 124, 100, 152, 132, 184, 156, 212, 182, 242, 206, 272, 238, 308];
+  ctx.fillStyle = 'rgba(242,176,30,.072)';
+  for(i = 0; i < 16; i++){
+    x = 18 + i * 67.87;
+    ctx.fillRect(x, 1150 - BH[i], 26, BH[i]);
+  }
+  var gl = ctx.createRadialGradient(540, 250, 0, 540, 250, 560);
+  gl.addColorStop(0, 'rgba(242,176,30,.16)');
+  gl.addColorStop(1, 'rgba(242,176,30,0)');
+  ctx.fillStyle = gl; ctx.fillRect(0, 0, 1080, 1100);
+  ctx.fillStyle = 'rgba(242,176,30,.35)'; ctx.fillRect(300, 546, 480, 1);
+  ctx.fillStyle = '#f2b01e'; ctx.fillRect(372, 552, 336, 2);
+  ctx.fillStyle = 'rgba(253,243,216,.16)';
+  ctx.fillRect(378, 884, 1, 126); ctx.fillRect(702, 884, 1, 126);
+  ctx.save();
+  ctx.translate(940, 146); ctx.rotate(8 * Math.PI / 180);
+  ctx.strokeStyle = '#e2503f'; ctx.lineWidth = 3;
+  shRR(ctx, -50, -50, 100, 100, 8); ctx.stroke();
+  ctx.strokeStyle = 'rgba(253,243,216,.40)'; ctx.lineWidth = 1;
+  shRR(ctx, -44, -44, 88, 88, 3); ctx.stroke();
+  ctx.fillStyle = '#fdf3d8'; ctx.font = shFnt(900, 34);
+  shCenter(ctx, d.grp, 0, 0, 0);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(253,243,216,.66)'; ctx.font = shFnt(700, 28);
+  shCenter(ctx, '第 ' + d.day + ' 天 · ' + d.grp, 540, 118, 8);
+  ctx.font = '132px ' + SH_F; ctx.textAlign = 'center';
+  ctx.fillText(d.em, 540, 214);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fdf3d8'; ctx.font = shFnt(900, shNameSize('T1', d.name));
+  shCenter(ctx, d.name, 540, 402, 4);
+  var L = shLayoutQuote(ctx, d.quote, 936, 3, 34, 1.9);
+  ctx.fillStyle = 'rgba(253,243,216,.88)'; ctx.font = shFnt(600, 34);
+  L.lines.forEach(function(s, i2){ shCenter(ctx, s, 540, 636 + i2 * L.step, 1); });
+  var labs = ['最后剩下', '这一辈子', '买卖次数'];
+  var vals = [shMoneyFit(d.net), d.day + ' 天', d.trades + ' 次'];
+  var xs = [216, 540, 864];
+  ctx.font = shFnt(700, 26);
+  ctx.fillStyle = 'rgba(253,243,216,.60)';
+  labs.forEach(function(t, i2){ shCenter(ctx, t, xs[i2], 878, 2); });
+  ctx.font = shFnt(900, 56);
+  vals.forEach(function(t, i2){
+    ctx.fillStyle = i2 === 0 ? (d.net < 0 ? '#ff6b5e' : '#f2b01e') : '#fdf3d8';
+    shCenter(ctx, t, xs[i2], 941, 0);
+  });
+}
+
+/* ---- T2 认命（碑面；734~1000 是故意留白，别往里加元素）---- */
+function shTplT2(ctx, d){
+  ctx.save();
+  ctx.shadowColor = 'rgba(11,32,22,.45)'; ctx.shadowOffsetY = 20; ctx.shadowBlur = 0;
+  shRR(ctx, 72, 72, 936, 1060, 20);
+  ctx.fillStyle = '#fdf6e1'; ctx.fill();
+  ctx.shadowColor = 'rgba(0,0,0,.26)'; ctx.shadowOffsetY = 0; ctx.shadowBlur = 34;   // 全卡唯一一处 blur
+  ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.strokeStyle = '#241a0e'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(43,31,18,.20)'; ctx.fillRect(492, 512, 96, 3);
+  ctx.fillStyle = '#857356'; ctx.font = shFnt(700, 28);
+  shCenter(ctx, '第 ' + d.day + ' 天', 540, 200, 8);
+  ctx.font = '96px ' + SH_F; ctx.textAlign = 'center';
+  ctx.fillText(d.em, 540, 284);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#2b1f12'; ctx.font = shFnt(900, shNameSize('T2', d.name));
+  shCenter(ctx, d.name, 540, 422, 8);
+  var L = shLayoutQuote(ctx, d.quote, 780, 3, 34, 2.2);
+  ctx.fillStyle = '#6b5a44'; ctx.font = shFnt(600, 34);
+  L.lines.forEach(function(s, i){ shCenter(ctx, s, 540, 621 + i * L.step, 1); });
+  ctx.font = shFnt(700, 28);
+  ctx.fillStyle = d.net < 0 ? '#c9302a' : '#6b5a44';
+  shCenter(ctx, '最后剩下 ' + shMoney(d.net), 540, 1028, 0);
+}
+
+/* ---- T3 嘴硬（印章斜压 −7°、小印 +12°；印章内字属印章本地坐标）---- */
+function shTplT3(ctx, d){
+  ctx.fillStyle = 'rgba(253,243,216,.66)'; ctx.font = shFnt(700, 28);
+  shCenter(ctx, '第 ' + d.day + ' 天 · ' + d.grp, 540, 118, 8);
+  ctx.save();
+  ctx.translate(540, 374); ctx.rotate(-7 * Math.PI / 180);
+  ctx.shadowColor = 'rgba(0,0,0,.22)'; ctx.shadowOffsetY = 8; ctx.shadowBlur = 0;
+  shRR(ctx, -360, -150, 720, 300, 10);
+  ctx.fillStyle = '#b02a1f'; ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.shadowOffsetY = 0; ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(253,246,225,.88)'; ctx.lineWidth = 4;
+  shRR(ctx, -348, -138, 696, 276, 6); ctx.stroke();
+  ctx.lineWidth = 1.5;
+  shRR(ctx, -332, -122, 664, 244, 4); ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,.10)';
+  for(var i = 0; i < 40; i++){
+    var a = shRnd(i) * Math.PI * 2, sc = 0.5 + shRnd(i + 99) * 0.5;
+    ctx.beginPath();
+    ctx.arc(Math.cos(a) * 360 * sc, Math.sin(a) * 150 * sc, 1 + shRnd(i + 7) * 2, 0, 7);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fdf6e1'; ctx.font = shFnt(900, 132);
+  shCenter(ctx, d.name, 0, 4, 24);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(846, 766); ctx.rotate(12 * Math.PI / 180);
+  ctx.strokeStyle = '#e2503f'; ctx.lineWidth = 3;
+  shRR(ctx, -66, -66, 132, 132, 6); ctx.stroke();
+  ctx.strokeStyle = 'rgba(253,243,216,.35)'; ctx.lineWidth = 1;
+  shRR(ctx, -59, -59, 118, 118, 3); ctx.stroke();
+  ctx.fillStyle = '#fdf3d8'; ctx.font = shFnt(900, 40);
+  shCenter(ctx, '不服', 0, 0, 2);
+  ctx.restore();
+  var L = shLayoutQuote(ctx, d.quote, 840, 3, 30, 2.0);
+  ctx.fillStyle = 'rgba(253,243,216,.86)'; ctx.font = shFnt(600, 30);
+  L.lines.forEach(function(s, i){ shCenter(ctx, s, 540, 650 + i * L.step, 1); });
+  var rows = [
+    ['最后剩下', shMoneyFit(d.net), d.net < 0],
+    ['买卖次数', d.trades + ' 次', false],
+    ['风险终值', (d.risk || 0) + '/100', false]
+  ];
+  var ys = [915, 985, 1055];
+  rows.forEach(function(r, i){
+    ctx.font = shFnt(700, 28);
+    ctx.fillStyle = 'rgba(253,243,216,.60)';
+    shLS(ctx, r[0], 120, ys[i], 2);
+    ctx.font = shFnt(900, 44);
+    ctx.fillStyle = r[2] ? '#ff6b5e' : '#fdf3d8';
+    shLS(ctx, r[1], 420, ys[i], 0);
+  });
+}
+
+/* ---- T4 清算（小票纸 + 锯齿；金额右对齐到 x=944 是「账单感」的全部）---- */
+function shTplT4(ctx, d){
+  ctx.save();
+  ctx.shadowColor = 'rgba(11,32,22,.40)'; ctx.shadowOffsetY = 12; ctx.shadowBlur = 0;
+  shRR(ctx, 96, 88, 920, 1010, 6);
+  ctx.fillStyle = '#fdf6e1'; ctx.fill();
+  ctx.shadowColor = 'rgba(0,0,0,.24)'; ctx.shadowOffsetY = 0; ctx.shadowBlur = 26;
+  ctx.fill();
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.strokeStyle = '#241a0e'; ctx.lineWidth = 3;
+  ctx.beginPath();                            // 只描上/左/右三边，底边留给锯齿
+  ctx.moveTo(96, 1098); ctx.lineTo(96, 88); ctx.lineTo(1016, 88); ctx.lineTo(1016, 1098);
+  ctx.stroke();
+  ctx.restore();
+  shTeeth(ctx, 96, 1095, 920, 24, 16);        // 16 齿 @920 = 57.5/齿，齿数与纸宽绑定
+  ctx.fillStyle = '#2b1f12';
+  ctx.fillRect(136, 262, 808, 2); ctx.fillRect(136, 268, 808, 1);
+  ctx.strokeStyle = 'rgba(43,31,18,.28)'; ctx.lineWidth = 1;
+  ctx.setLineDash([6, 6]);
+  [426, 500, 574, 648].forEach(function(ry){
+    ctx.beginPath(); ctx.moveTo(136, ry); ctx.lineTo(944, ry); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#2b1f12'; ctx.fillRect(136, 648, 808, 3);
+  ctx.fillStyle = '#f2b01e'; ctx.fillRect(136, 804, 5, 84);
+  ctx.save();
+  ctx.translate(800, 965); ctx.rotate(-9 * Math.PI / 180);
+  ctx.strokeStyle = '#b02a1f'; ctx.lineWidth = 4;
+  shRR(ctx, -140, -55, 280, 110, 5); ctx.stroke();
+  ctx.lineWidth = 1.5;
+  shRR(ctx, -132, -47, 264, 94, 3); ctx.stroke();
+  ctx.fillStyle = '#b02a1f'; ctx.font = shFnt(900, 48);
+  shCenter(ctx, '已 结 清', 0, 0, 8);
+  ctx.restore();
+  ctx.fillStyle = '#2b1f12'; ctx.font = shFnt(900, shNameSize('T4', d.name));
+  shLS(ctx, d.name, 136, 150, 6);
+  ctx.font = '56px ' + SH_F; ctx.textAlign = 'right';
+  ctx.fillText(d.em, 944, 148);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#6b5a44'; ctx.font = shFnt(800, 30);
+  shLS(ctx, '结 算 单 · SETTLEMENT', 136, 238, 8);
+  shRight(ctx, '第 ' + d.day + ' 天', 944, 238, 8);
+  ctx.fillStyle = '#857356'; ctx.font = shFnt(700, 28);
+  shLS(ctx, '项目', 136, 314, 2);
+  shRight(ctx, '金额', 944, 314, 2);
+  var RY = [389, 463, 537, 611];
+  (d.bill || []).forEach(function(r, i){
+    ctx.font = shFnt(700, 30); ctx.fillStyle = '#6b5a44';
+    shLS(ctx, r.k, 136, RY[i], 0);
+    ctx.font = shFnt(800, 34); ctx.fillStyle = '#2b1f12';
+    shRight(ctx, shMoneyFit(r.v), 944, RY[i], 0);
+  });
+  ctx.font = shFnt(800, 32); ctx.fillStyle = '#2b1f12';
+  shLS(ctx, '合计支出', 136, 706, 2);
+  ctx.font = shFnt(900, 62); ctx.fillStyle = '#a8281e';
+  shRight(ctx, shMoneyFit(d.total, 10), 944, 706, 0);
+  var L = shLayoutQuote(ctx, d.quote, 700, 2, 28, 1.9);
+  ctx.fillStyle = '#6b5a44'; ctx.font = shFnt(600, 28);
+  L.lines.forEach(function(s, i){ shLS(ctx, s, 164, 823 + i * 53.2, 1); });
+  ctx.fillStyle = '#857356'; ctx.font = shFnt(700, 28);
+  shLS(ctx, '这一辈子 ' + d.day + ' 天 · 买卖 ' + d.trades + ' 次', 136, 1066, 1);
+}
+
+/* ---- T5 温情（纯场景即成品，不叠人物层；空景缺素材走中性渐变兜底）---- */
+function shTplT5(ctx, d){
+  var img = _shSceneImg;
+  if(img){
+    var sw = img.naturalWidth || img.width || 640, shh = img.naturalHeight || img.height || 720;
+    var sc = Math.max(1080 / sw, 1040 / shh);          // cover：宽先满、顶部对齐，溢出由绒布覆盖
+    ctx.drawImage(img, 0, 0, sw, shh, 0, 0, sw * sc, shh * sc);
+  }else{
+    var fg = ctx.createLinearGradient(0, 0, 0, 1040);
+    fg.addColorStop(0, '#f3e8c9'); fg.addColorStop(1, '#e0cfa6');
+    ctx.fillStyle = fg; ctx.fillRect(0, 0, 1080, 1040);
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.font = '180px ' + SH_F; ctx.textAlign = 'center';
+    ctx.fillText(d.em, 540, 520);
+    ctx.restore();
+  }
+  var dg = ctx.createLinearGradient(0, 400, 0, 1040);
+  dg.addColorStop(0, 'rgba(12,43,30,0)');
+  dg.addColorStop(0.38, 'rgba(12,43,30,.45)');
+  dg.addColorStop(0.78, 'rgba(12,43,30,.88)');
+  dg.addColorStop(1, 'rgba(12,43,30,.98)');
+  ctx.fillStyle = dg; ctx.fillRect(0, 400, 1080, 640);
+  ctx.font = '60px ' + SH_F; ctx.textAlign = 'center';
+  ctx.fillStyle = '#fdf3d8';
+  ctx.fillText(d.em, 540, 786);
+  ctx.textAlign = 'left';
+  ctx.font = shFnt(900, shNameSize('T5', d.name));
+  shCenter(ctx, d.name, 540, 880, 8);
+  var L = shLayoutQuote(ctx, d.quote, 880, 2, 30, 1.9);
+  ctx.fillStyle = 'rgba(253,243,216,.86)'; ctx.font = shFnt(600, 30);
+  L.lines.forEach(function(s, i){ shCenter(ctx, s, 540, 976 + i * L.step, 1); });
+  ctx.fillStyle = 'rgba(253,243,216,.72)'; ctx.font = shFnt(700, 28);
+  shCenter(ctx, '第 ' + d.day + ' 天 · 最后剩下 ' + shMoney(d.net), 540, 1118, 0);
+}
+
+/* ---- P7 页脚（五套共用；码恒 C 态：原型无服务端，禁止画假二维码）---- */
+function shFooter(ctx, d){
+  ctx.strokeStyle = 'rgba(253,243,216,.20)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(72, 1150); ctx.lineTo(1008, 1150); ctx.stroke();
+  ctx.fillStyle = '#fdf3d8'; ctx.font = shFnt(900, 42);
+  shLS(ctx, '韭菜之王', 72, 1206, 10);
+  ctx.fillStyle = 'rgba(253,243,216,.72)'; ctx.font = shFnt(700, 26);
+  shLS(ctx, '你的一辈子，能撑多少天？', 72, 1253, 1);
+  if(d.watermark){
+    ctx.fillStyle = 'rgba(253,243,216,.34)'; ctx.font = shFnt(600, 20);
+    shLS(ctx, '结局 No.' + shPad2(d.no) + ' · 由《韭菜之王》生成 · 可在设置里关闭', 72, 1302, 2);
+  }
+  shRR(ctx, 840, 1176, 168, 168, 8);                 // 码底板三态都先画（切态不闪白）
+  ctx.fillStyle = '#fdf6e1'; ctx.fill();
+  ctx.strokeStyle = '#241a0e'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = '#b02a1f'; ctx.lineWidth = 3;
+  shRR(ctx, 880, 1200, 88, 88, 4); ctx.stroke();
+  ctx.lineWidth = 1;
+  shRR(ctx, 885, 1205, 78, 78, 3); ctx.stroke();
+  ctx.fillStyle = '#b02a1f'; ctx.font = shFnt(900, 40);
+  shCenter(ctx, '韭', 924, 1246, 0);
+  ctx.fillStyle = '#6b5a44'; ctx.font = shFnt(600, 20);
+  shCenter(ctx, '搜索 韭菜之王', 924, 1316, 0);
+}
+
+/* ---- 生成 / 导出 / 保存（share-flow §2：H5 与小程序共用一套状态机）---- */
+var SHARE = { state: 'idle', tier: 'full', data: null };
+var SH_CACHE = { key: '', blob: null };
+var _shOut = null;                                     // H5 导出画布（1:1 1080×1440）
+var SHKEY = 'leek_share_v1', SH = null;                // 埋点与存档分 key：埋点写失败不能毒化存档
+
+function shLoad(){
+  try{ SH = JSON.parse(localStorage.getItem(SHKEY) || 'null'); }catch(_e){ SH = null; }
+  if(!SH || SH.v !== 1) SH = {
+    v: 1, gen: 0, genFail: 0, saveShown: 0, saveOk: 0, saveFail: 0, holdShown: 0,
+    byTpl: {}, byTplGen: {}, byEnd: {}, lastPick: {}
+  };
+  return SH;
+}
+function shStore(){ try{ localStorage.setItem(SHKEY, JSON.stringify(SH)); }catch(_e){} }
+/* 唯一写入口，只写不读（原型阶段没有面板）：gen/saveShown/saveOk/saveFail/byTpl/byTplGen/byEnd */
+function shTrack(ev, meta){
+  meta = meta || {};
+  if(!SH) shLoad();
+  if(ev === 'gen'){
+    SH.gen++;
+    if(meta.tpl) SH.byTplGen[meta.tpl] = (SH.byTplGen[meta.tpl] || 0) + 1;
+    if(meta.end) SH.byEnd[meta.end] = (SH.byEnd[meta.end] || 0) + 1;
+  }
+  else if(ev === 'genFail') SH.genFail++;
+  else if(ev === 'saveShown'){ SH.saveShown++; if(meta.hold) SH.holdShown++; }
+  else if(ev === 'saveOk'){ SH.saveOk++; if(meta.tpl) SH.byTpl[meta.tpl] = (SH.byTpl[meta.tpl] || 0) + 1; }
+  else if(ev === 'saveFail') SH.saveFail++;
+  shStore();
+}
+function shKey(d){ return d.name + '|' + d.day + '|' + d.net + '|' + d.trades + '|' + d.tpl; }
+/* iOS / 微信内一律走长按（iOS Safari 会把 blob 图开新标签而不是下载；不做能力探测，按平台分支） */
+function shHoldPath(){
+  try{
+    var ua = navigator.userAgent || '';
+    if(/iP(hone|ad|od)/.test(ua)) return true;
+    if(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+    if(/MicroMessenger/i.test(ua)) return true;
+  }catch(_e){}
+  return false;
+}
+function shGenerate(d, cb){
+  shEnsureFont(function(){
+    var cv;
+    try{ cv = shCv(); }catch(e){ cb(false, 'CANVAS'); return; }
+    if(!cv || !_shCtx){ cb(false, 'CTX'); return; }
+    try{
+      shDrawCard(_shCtx, d, function(){
+        shExport(cv, d, function(ok, payload){
+          if(ok){
+            var key = shKey(d);
+            if(_shGenKey !== key){ _shGenKey = key; shTrack('gen', { tpl: d.tpl, end: d.name }); }
+          }
+          cb(ok, payload);
+        });
+      });
+    }catch(e){ cb(false, 'DRAW:' + ((e && e.message) || e)); }
+  });
+}
+function shExport(cv, d, cb){
+  /* 小程序腿（原型阶段走不到，代码写好方便迁移）：canvasToTempFilePath → saveImageToPhotosAlbum */
+  if(typeof wx !== 'undefined' && wx && wx.canvasToTempFilePath){
+    try{
+      wx.canvasToTempFilePath({
+        canvas: cv, x: 0, y: 0, width: CARD_W, height: CARD_H,
+        destWidth: CARD_W, destHeight: CARD_H,          // 永远 1080×1440，不跟 dpr 走
+        fileType: 'png', quality: 1,
+        success: function(r){
+          if(!r || !r.tempFilePath){ cb(false, 'EMPTY'); return; }
+          cb(true, { mpFile: r.tempFilePath });
+        },
+        fail: function(err){ cb(false, (err && err.errMsg) || 'EXPORT_FAIL'); }
+      });
+    }catch(e){ cb(false, 'WX:' + ((e && e.message) || e)); }
+    return;
+  }
+  /* H5 腿：导出 1:1 的 1080×1440（对齐小程序 destWidth/destHeight 语义；dpr 只影响笔触精度）。
+     重画一遍到导出画布再 toBlob，否则 toBlob 会按 backing store 导出 2160×2880（好几 MB）。 */
+  try{
+    var out = _shOut;
+    if(!out){
+      out = document.createElement('canvas');
+      out.width = CARD_W; out.height = CARD_H;
+      _shOut = out;
+    }
+    var octx = out.getContext ? out.getContext('2d') : null;
+    if(octx){
+      var keepCv = _shCv, keepDpr = _shDpr;
+      _shCv = out; _shDpr = 1;
+      shDrawCard(octx, d, function(){
+        _shCv = keepCv; _shDpr = keepDpr;
+        try{
+          if(out.toBlob){
+            out.toBlob(function(b){ b ? cb(true, { blob: b }) : cb(false, 'toBlob-null'); }, 'image/png', 1);
+            return;
+          }
+          var url = out.toDataURL('image/png', 1);       // 老 webview 兜底
+          var bin = atob(url.split(',')[1]), u8 = new Uint8Array(bin.length), i;
+          for(i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+          cb(true, { blob: new Blob([u8], { type: 'image/png' }) });
+        }catch(e2){ cb(false, 'EXPORT:' + ((e2 && e2.message) || e2)); }
+      });
+      return;
+    }
+    /* 拿不到导出画布：退回直接导 dpr 画布（图大一点好过没有） */
+    if(cv.toBlob){
+      cv.toBlob(function(b){ b ? cb(true, { blob: b }) : cb(false, 'toBlob-null'); }, 'image/png', 1);
+      return;
+    }
+  }catch(e){ cb(false, 'EXPORT:' + ((e && e.message) || e)); }
+}
+function shDeliver(d, payload){
+  if(payload.mpFile){
+    wx.saveImageToPhotosAlbum({
+      filePath: payload.mpFile,
+      success: function(){
+        shTrack('saveOk', { tpl: d.tpl });
+        toast('已存到相册');
+      },
+      fail: function(err){
+        var msg = (err && err.errMsg) || '';
+        if(/cancel/i.test(msg)) return;                                // 玩家取消：一个字都别追问
+        shTrack('saveFail', {});
+        if(/auth|authorize|permission|deny/i.test(msg)){
+          toast('要存到相册，得先给个权限。去设置里把「保存到相册」打开。');
+        }else{
+          shOpenHold(payload.mpFile, d);                               // 空间不足/未知 → 长按兜底
+        }
+      }
+    });
+    return;
+  }
+  var url = '';
+  try{ url = URL.createObjectURL(payload.blob); }catch(_e){ url = ''; }
+  if(!url){ shFail('URL'); return; }
+  shTrack('saveShown', {});        // H5 拿不到「保存成功」信号，只记走到这一步（share-flow §5.4）
+  if(shHoldPath()){
+    _shHoldUrl = url;
+    shOpenHold(url, d);
+    return;
+  }
+  try{
+    var a = document.createElement('a');
+    a.href = url; a.download = '韭菜之王-' + d.name + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }catch(_e){
+    _shHoldUrl = url;
+    shOpenHold(url, d);
+    return;
+  }
+  toast('已存到下载里');
+  setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(_e){} }, 30000);   // 别立刻 revoke（下载还没开始）
+}
+function shFail(reason){
+  shTrack('genFail', {});
+  try{ console.log('[share] fail:', reason); }catch(_e){}
+  toast('这张图没生成出来，再试一次');
+}
+function shPrefetch(d){
+  if(!d) return;
+  var key = shKey(d);
+  if(SH_CACHE.key === key && SH_CACHE.blob) return;
+  shGenerate(d, function(ok, payload){
+    if(ok && payload.blob){ SH_CACHE.key = key; SH_CACHE.blob = payload.blob; }
+  });
+}
+
+/* ---- 长按保存面板（share-flow §2.2.3：先断 src 再 revoke，反了会白屏闪）---- */
+var _shHoldUrl = '';
+function shOpenHold(url, d){
+  var img = $("sh-hold-img");
+  if(img){
+    try{ img.removeAttribute('src'); }catch(_e){}
+    img.src = url;
+    try{
+      img.alt = '战绩卡：第 ' + d.day + ' 天，' + d.name + '，最后剩下 ' + shMoney(d.net) + '。长按可存到相册。';
+    }catch(_e){}
+  }
+  var h = $("sh-hold");
+  if(h) h.hidden = false;
+}
+function shCloseHold(){
+  var img = $("sh-hold-img");
+  if(img){ try{ img.removeAttribute('src'); }catch(_e){} }
+  if(_shHoldUrl){ try{ URL.revokeObjectURL(_shHoldUrl); }catch(_e){} _shHoldUrl = ''; }
+  var h = $("sh-hold");
+  if(h) h.hidden = true;
+}
+function shCopy(text, cb){
+  var done = false;
+  var fin = function(v){ if(!done){ done = true; cb(v); } };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ fin(true); }, function(){ fin(shCopyFallback(text)); });
+      return;
+    }
+  }catch(_e){}
+  fin(shCopyFallback(text));
+}
+function shCopyFallback(text){
+  try{
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand && document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  }catch(_e){ return false; }
+}
+
+/* ---- 结局页入口：节流三档（share-flow §1.2），永不隐藏，全站零催促 ---- */
+function shareTier(isNew){
+  if(!META.share) META.share = { lastDay: '', hits: 0 };
+  var today = todayKey();
+  if(isNew) return 'full';                            // A. 首次解锁这个结局
+  if(META.share.lastDay !== today) return 'full';     // B. 今天第一次死
+  if((META.share.hits || 0) < 3) return 'mini';       // C. 今天第 2、3 次
+  return 'mini2';                                     // D. 今天第 4 次起：更淡，无图标
+}
+function renderShareSlot(tier){
+  var el = $("sh-slot");
+  if(!el) return;
+  SHARE.tier = tier;
+  var tx = $("sh-tx"), ico = $("sh-ico");
+  var cls = 'sh-slot', label = '存一张', icon = '📷';
+  /* 宽 <360（SE1 一档）强制折叠态（share-flow §1.7）：文案「存图」、无图标、槽宽 56 */
+  var narrow = false;
+  try{ narrow = window.innerWidth < 360; }catch(_e){ narrow = false; }
+  if(narrow || tier === 'mini'){ cls += ' sh-mini'; label = '存图'; icon = ''; }
+  else if(tier === 'mini2'){ cls += ' sh-mini sh-mini2'; label = '存图'; icon = ''; }
+  el.className = cls;
+  if(ico) ico.style.display = icon ? '' : 'none';
+  if(tx) tx.textContent = label;
+}
+function shPulseSlot(){
+  var el = $("sh-slot");
+  if(!el) return;
+  try{ if(String(document.documentElement.className).indexOf('fx-off') >= 0) return; }catch(_e){ return; }
+  el.className = String(el.className || '') + ' sh-pulse';   // A 档一次 400ms 确认脉冲，每局最多一次
+  setTimeout(function(){ toggleCls(el, 'sh-pulse', false); }, 460);
+}
+function shTap(){
+  if(SHARE.state === 'building' || !SHARE.data) return;
+  var d = SHARE.data;
+  if(SH_CACHE.key === shKey(d) && SH_CACHE.blob){ shDeliver(d, { blob: SH_CACHE.blob }); return; }
+  SHARE.state = 'building';
+  var tx = $("sh-tx"), ico = $("sh-ico");
+  if(tx) tx.textContent = '生成中…';
+  if(ico) ico.style.display = 'none';
+  shGenerate(d, function(ok, payload){
+    SHARE.state = 'idle';
+    renderShareSlot(SHARE.tier);
+    if(ok) shDeliver(d, payload);
+    else shFail(payload);
+  });
+}
+
 function check(){
   var n = net(), d = S.day, rate = (n - INIT) / INIT * 100, f = S.flags, e = null, why = "";
   var M = null;                                        // 结局元数据：END[name]
@@ -2667,7 +3636,26 @@ function check(){
   }
   if(!e) return;
   S.over = true;
+  /* 分享槽三档（share-flow §1.2）：isNew 必须在 recordRun 之前取——
+     recordRun 一写 unlocked，判断必假。快照也在这里拍深拷贝：
+     生成是异步的，期间玩家可能已点「再来一辈子」，S 会被 reset()。 */
+  var shToday = todayKey();
+  var shPrevDay = META.share ? META.share.lastDay : "";
+  var shIsNew = !META.unlocked[e[1]];
+  var shTier = shareTier(shIsNew);
+  SHARE.data = shSnapshot(e[1], e[0], d, n);
   recordRun(e[1], e[0], d, n);   // 写进图鉴 + 战绩（localStorage；原型替代账号系统）
+  if(!META.share) META.share = { lastDay:"", hits:0 };
+  META.share.lastDay = shToday;
+  /* hits = 今天在这个结局之前已经结束了几次：必须在覆盖 lastDay 之前读旧值，
+     否则换天时恒为 1、第 4 次永远判不到（share-flow §1.2） */
+  META.share.hits = (shPrevDay === shToday) ? ((META.share.hits | 0) + 1) : 1;
+  saveMeta();
+  renderShareSlot(shTier);
+  if(shTier === 'full'){
+    setTimeout(function(){ shPrefetch(SHARE.data); }, 1200);   // 后台预生成：等结局动画/震屏跑完
+    if(shIsNew) shPulseSlot();
+  }
   closeTips(null);        // 结局页 z-40 只是盖住：不主动收，重开一局 tip 会重新露在 HUD 上
   $("o-em").textContent = e[0]; $("o-t").textContent = e[1]; $("o-s").textContent = e[2]; $("o-q").textContent = e[3];
   var stat = "终局面板：心态 " + Math.round(S.mind) + " · 社会 " + Math.round(S.social) + " · 风险 " + Math.round(S.risk) +
@@ -3188,6 +4176,7 @@ function metaInit(){
   }
   if(!META.unlocked) META.unlocked = {};
   if(!META.best) META.best = {};
+  if(!META.share) META.share = { lastDay:"", hits:0 };   // 分享节流状态（share-flow §5.2）
   if(!META.tasks) META.tasks = { run:0, day20:0, ad:0, claimed:[false,false,false] };
   if(typeof META.lives !== "number") META.lives = 3;
 }
@@ -3298,6 +4287,15 @@ $("o-b").onclick = function(){
   enterRun();
 };
 $("o-home").onclick = function(){ hideOver($("over")); $("intro").classList.add("on"); refreshHome(); };
+/* 分享槽 + 长按面板（结局页右槽文字链；share-flow §1.1 / §2.2.3） */
+$("sh-slot").onclick = shTap;
+$("sh-hold-x").onclick = shCloseHold;
+$("sh-hold-copy").onclick = function(){
+  var d = SHARE.data;
+  shCopy(d ? shCardText(d) : '', function(ok){
+    toast(ok ? '文字复制好了。' : '长按这一屏，自己截一张。');
+  });
+};
 $("h-add").onclick   = openAd;
 $("h-album").onclick = function(){ renderAlbum(); $("album").classList.add("on"); };
 $("h-task").onclick  = function(){ renderTasks(); $("task").classList.add("on"); };
