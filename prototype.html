@@ -1649,6 +1649,10 @@ var $ = function(id){ return document.getElementById(id); };
    清单与试听：双击 tools/sfx-lab.html */
 var SFX_FILE = {};                                     // 例：{ swipe:"assets/sfx/自定义.mp3" }
 var SFX_DIR = "assets/sfx/", SFX_EXT = ".mp3", SFX_VOL = 0.7;
+/* 每个音的响度微调（2026-11-16）：素材响度天生不齐（瞬态滑卡声 vs 1.7 秒的崩塌声，
+   实测差 15dB）。听着某个太轻/太响就改这里的倍数，不用重新剪素材。
+   注意：素材峰值已经贴着 0dB，倍数超过 1.4 会削波（听着像破音）。 */
+var SFX_GAIN = { swipe:1, tap:1, coin:1, pay:1, warn:1, thud:1, crash:1, teach:1, reward:1, win:1, lose:1 };
 var _ac = null, _sfxEl = {}, _sfxMiss = {};
 function sfxOn(){ return !(typeof META === "object" && META && META.mute); }
 function sfxUnlock(){
@@ -1702,7 +1706,9 @@ function sfxPlayFile(n){
     var a = _sfxEl[n];
     if(!a){
       a = new Audio();
-      a.preload = "auto"; a.volume = SFX_VOL; a.src = sfxUrl(n);
+      a.preload = "auto";
+      a.volume = Math.max(0, Math.min(1, SFX_VOL * (SFX_GAIN[n] || 1)));
+      a.src = sfxUrl(n);
       a.addEventListener("error", function(){ _sfxMiss[n] = 1; _sfxEl[n] = null; });
       _sfxEl[n] = a;
     }

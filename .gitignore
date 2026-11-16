@@ -24,3 +24,6 @@ assets/char/raw/
 
 # 生图原始 PNG（1.4MB/张，只留转好的 webp；源图留着本地复核）
 assets/bg/*.png
+
+# 音效原始文件（wav/大文件只留本地，仓库只放转好的 mp3）
+assets/sfx/_raw/
