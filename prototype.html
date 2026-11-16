@@ -1429,6 +1429,8 @@ function tick(){
 
   // 悬崖预警（每局一次）：别让结局看起来像凭空掉下来的
   if(S.mind < 12 && !S.flags.wMind){ S.flags.wMind = true; msg.push("🧊 心态只剩 " + Math.round(S.mind) + "：再坏下去，人就「不动了」"); }
+  // 新手保护②：第一局精力第一次跌破 25，教一次怎么回精力（只出现一次）
+  if(S.rookie && S.energy < 25 && !S.flags.rkEnergy){ S.flags.rkEnergy = true; msg.push("⚡ 精力只剩 " + Math.round(S.energy) + "：累了就选睡觉、休息、推掉应酬，精力会回来"); }
   if(S.energy <= 5 && !S.flags.wEnergy){ S.flags.wEnergy = true; msg.push("🚑 精力见底还硬撑：身体会先垮——找机会睡觉、早睡、推掉应酬"); }
   if(S.social < 12 && !S.flags.wSoc){ S.flags.wSoc = true; msg.push("🪑 社会只剩 " + Math.round(S.social) + "：再淡下去，身边就没人了"); }
   if(S.risk > 90 && !S.flags.wRisk){ S.flags.wRisk = true; msg.push("💥 风险 " + Math.round(S.risk) + "：随时可能被强制平仓，满 100 直接「爆了」"); }
@@ -1468,7 +1470,10 @@ function tick(){
   if(S.st.fired) f2.wasFired = true;
   if(S.st.halt) f2.haltDays = (f2.haltDays || 0) + 1; else f2.haltDays = 0;
   if(S.mind <= 15) f2.mindLow = (f2.mindLow || 0) + 1; else f2.mindLow = 0;
-  if(S.energy <= 0.5) f2.energyZero = (f2.energyZero || 0) + 1; else f2.energyZero = 0;
+  // 新手保护（2026-11-16 用户定：只在第一局生效）：前 15 天精力见底只磨心态，不累计病倒天数。
+  // S.rookie 只在 enterRun() 里置位——仿真直接调 reset()，基线不受影响
+  if(S.energy <= 0.5 && !(S.rookie && S.day <= ROOKIE_DAYS)) f2.energyZero = (f2.energyZero || 0) + 1;
+  else f2.energyZero = 0;
   if(S._pNet !== undefined && n < S._pNet) f2.lossStreak = (f2.lossStreak || 0) + 1;
   else f2.lossStreak = 0;
   S._pNet = n;
@@ -4275,7 +4280,9 @@ function enterRun(){
   saveMeta(); refreshHome();
   hideOver($("intro")); hideOver($("over"));
   _skipTut = true; reset();
+  S.rookie = (META.runs === 1);         // 新手保护：只有这辈子的第一局（见 tick 的 energyZero / rkEnergy）
 }
+var ROOKIE_DAYS = 15;                   // 新手保护的天数窗口
 /* 模拟广告：上线替换激励视频 SDK（onClose 回调里发奖）。3s 可领按真机广告时长调 */
 var AD_T = 0, _adCtx = "";   // 广告从哪儿弹的：menu=主菜单、end=结局页「再来一辈子」（领取后直接开新局）
 function openAd(){
