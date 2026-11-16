@@ -126,9 +126,30 @@
   .vit-i.k-soc .u2-vit-slot{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSJyZ2JhKDAsMCwwLC4yNikiLz48L3N2Zz4=")}
   .vit-i.k-soc .u2-vit-ico{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSIjNThiNmZmIi8+PC9zdmc+")}
   .vit-i.k-soc .u2-vit-out{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTguNiA0LjYgYTMuMyAzLjMgMCAxIDAgMC4wMSAwIFogTTIuOSAyMCBjMC0zLjcgMi42LTYgNS43LTYgczUuNyAyLjMgNS43IDYgWiBNMTYuNCA2LjQgYTIuOSAyLjkgMCAxIDAgMC4wMSAwIFogTTE1LjIgMTMuNiBjMyAuMyA1LjIgMi40IDUuMiA1LjYgdjAuOCBoLTQuNCBaIiBmaWxsPSJub25lIiBzdHJva2U9IiNmN2VjYzkiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+")}
-  .vit-i.warn{animation:u2blink 1100ms ease-in-out infinite}
+  /* 预警闪烁（2026-11-16 用户定：要更快）：分两档——
+     进危险区（warn）780ms 呼吸；离死更近（crit）400ms 且暗得更深。
+     两档用不同 @keyframes 名，切档时动画会从头重播；同名叫只改 duration 会跳帧。 */
+  .vit-i.warn{animation:u2blink 780ms ease-in-out infinite}
+  .vit-i.warn.crit{animation:u2blinkFast 400ms ease-in-out infinite}
   .vit-i.bump{animation:u2bump 420ms var(--u2-e-jelly)}
   @keyframes u2blink{50%{opacity:.38}}
+  @keyframes u2blinkFast{50%{opacity:.22}}
+  /* 屏幕警示红：只要有一条命在危险区，整块屏四周淡淡泛红并呼吸（crit 更快更明显）。
+     只在边缘发光、中心留空——卡面文字与读数不被染色；只动 opacity，走合成层，
+     低端安卓也不掉帧。它和 .warn 同一个触发源（同一次 render），不额外制造事件。 */
+  /* 渐变用四条线性拼（不是 radial）：手机是竖长条，radial 的百分比在宽高比悬殊时
+     算出来的边缘几乎落在色标之外，实测几乎看不见。线性按「离边的距离」铺，跟屏宽高比无关。 */
+  .redpulse{position:absolute;inset:0;z-index:20;pointer-events:none;opacity:0;will-change:opacity;
+    background:
+      linear-gradient(to bottom,rgba(198,30,30,.85),rgba(198,30,30,0) 22%),
+      linear-gradient(to top,   rgba(198,30,30,.62),rgba(198,30,30,0) 15%),
+      linear-gradient(to right, rgba(198,30,30,.80),rgba(198,30,30,0) 17%),
+      linear-gradient(to left,  rgba(198,30,30,.80),rgba(198,30,30,0) 17%),
+      linear-gradient(rgba(198,30,30,.06),rgba(198,30,30,.06))}
+  .redpulse.on{animation:u2RedPulse 2000ms ease-in-out infinite}
+  .redpulse.on.crit{animation:u2RedPulseFast 1150ms ease-in-out infinite}
+  @keyframes u2RedPulse{0%,100%{opacity:.10}50%{opacity:.30}}
+  @keyframes u2RedPulseFast{0%,100%{opacity:.18}50%{opacity:.50}}
   /* 加命：Q 弹。x/y 分开给（1.18/.84）才有「果冻被按一下」的挤压感；
      等比放大 1.25 只是「变大」，看不出弹性（旧实现就是那样，玩家感受不到）。 */
   @keyframes u2bump{
@@ -699,7 +720,8 @@
      ---------------------------------------------------------------------
      铁律（违反 = 小程序掉帧或玩家眩晕，验收按 motion-spec §5）：
        ① 只动 transform / opacity：不碰 width/height/top/left，不触发重排；
-       ② 全部有限次数；无限循环只留 .warn(blink) 与 .u2-debt-breathe 两条且互斥；
+       ② 全部有限次数；无限循环只留 .warn(blink 两档)、.redpulse(屏红) 与 .u2-debt-breathe
+          三条（前两条同一个触发源，都是「有条命在危险区」）；
        ③ 一次事件只挂一个主载荷（震屏 或 弹跳），抖动类时长 ≤ 520ms；
        ④ 震屏必须带 scale(1.012/1.018)：纯平移会在圆角屏边缘闪出底色，
           放大 1.2% 后位移永远落在画面内（这就是「震»而不是«整块飘」的分界）；
@@ -799,7 +821,7 @@
   @media (prefers-reduced-motion:reduce){
     .phone.fx-shake,.phone.fx-shake-hard,.fx-jelly,.fx-wobble,.card.fx-deal,
     .mkt.fx-dent,.stamp.fx-lock,.toast.on,.over.on .endcard,.over.on .em,
-    .intro .intro-card,.vit-i.bump,.vit-i.warn,.mbar i.u2-debt-breathe,
+    .intro .intro-card,.vit-i.bump,.vit-i.warn,.redpulse.on,.mbar i.u2-debt-breathe,
     .sh-slot.sh-pulse{
       animation-duration:1ms !important;animation-iteration-count:1 !important}
   }
@@ -818,6 +840,7 @@
   </div>
 
   <div class="phone">
+    <div class="redpulse" id="redpulse"></div><!-- 危险态的屏幕警示红（见 .redpulse 注释） -->
     <!-- .u2-top = 导航 + HUD + 胶囊行 + 行情区 的包裹层：
          toast 用 top:100% 挂在它下缘，HUD/胶囊换行、大字号切换时自动跟随，
          不需要 JS 写死任何像素锚点（ui-adaptation §6-2 的结构解） -->
@@ -1902,13 +1925,21 @@ function vitUpdate(){
   var vals = {energy:S.energy, mind:S.mind, risk:S.risk, soc:S.social};
   var warns = { energy:S.energy < 25, mind:(S.mind < 22 || S.mind > 88),
                 risk:S.risk > 68, soc:S.social < 22 };
+  /* 重症档（离死更近）：闪得更快、屏红更深。阈值取在死亡线前面一小段，
+     给玩家「还能救」的反应时间，而不是死前最后一格才变。 */
+  var crits = { energy:S.energy < 10, mind:(S.mind < 10 || S.mind > 94),
+                risk:S.risk > 86, soc:S.social < 10 };
+  var anyWarn = false, anyCrit = false;
   VITS.forEach(function(v){
     var e = VIT_ELS[v.k]; if(!e) return;
     var val = Math.max(0, Math.min(100, vals[v.k]));
-    var warn = !!warns[v.k];
+    var warn = !!warns[v.k], crit = !!crits[v.k];
+    if(warn) anyWarn = true;
+    if(warn && crit) anyCrit = true;
     // 液面：外层高度就是数值。过渡（550ms）挂在 .u2-vit-fill 的 height 上
     if(e.fill && e.fill.style) e.fill.style.height = val.toFixed(1) + "%";
-    e.span.classList.toggle("warn", warn);            // 预警：整图标 1100ms 呼吸（spec §4）
+    e.span.classList.toggle("warn", warn);            // 预警：整图标呼吸（780ms／crit 400ms，spec §4）
+    e.span.classList.toggle("crit", warn && crit);
     e.tip.innerHTML = '<b>' + v.nm + '</b>' + v.tip(); // tip 数值每次刷新（build 一次就不能烤死在里面）
     /* 飘字 1 点起报；图标动效 2 点起才给——1 点的抖动天天有，天天弹就是噪音，
        「手感」只确认值得确认的事（motion-spec §2：小额变化交给数字）。 */
@@ -1932,6 +1963,17 @@ function vitUpdate(){
     if(v.k === "risk" && e.last !== null && e.last <= 68 && val > 68) FX.shake("soft");
     e.last = val;
   });
+  pulseDanger(anyWarn, anyCrit);
+}
+/* 屏幕警示红：由 vitUpdate 每帧喂进来，不自己挂定时器。
+   结局页弹出（S.over）时强制熄灭——死都死了，别再闪。 */
+function pulseDanger(any, crit){
+  try{
+    var el = $("redpulse"); if(!el) return;
+    var on = !!any && !S.over;
+    el.classList.toggle("on", on);
+    el.classList.toggle("crit", on && !!crit);
+  }catch(_e){}
 }
 function render(){
   if(!VIT_ELS) vitBuild();                             // 四条命骨架只搭一次，之后只推数值
