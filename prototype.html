@@ -428,6 +428,7 @@
   .h-chip{background:var(--u2-card);border:2px solid var(--u2-edge);border-radius:var(--u2-r-chip);
     padding:7px 12px;font-size:11px;font-weight:800;color:var(--u2-ink);
     box-shadow:var(--u2-sh-stamp);display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+  .h-mute{cursor:pointer;-webkit-appearance:none;font-family:inherit;padding:6px 10px;font-size:13px;margin-left:auto}
   .h-add{width:22px;height:22px;border-radius:50%;border:2px solid var(--u2-edge);background:var(--u2-gold);
     color:var(--u2-ink);font-size:13px;font-weight:900;line-height:1;cursor:pointer;padding:0;
     box-shadow:0 2px 0 rgba(43,31,18,.35);transition:transform var(--u2-t-tap) var(--u2-e-back);
@@ -475,6 +476,9 @@
   .p-x{width:30px;height:30px;border-radius:50%;border:2px solid var(--u2-edge);background:var(--u2-card-2);
     color:var(--u2-ink);font-size:12px;font-weight:900;cursor:pointer;padding:0;flex:0 0 auto;
     box-shadow:0 2px 0 rgba(43,31,18,.3);-webkit-appearance:none;font-family:inherit}
+  .p-replay{margin-top:10px;background:none;border:none;font:inherit;font-size:10.5px;font-weight:700;
+    color:var(--u2-ink-3);text-decoration:underline;cursor:pointer;-webkit-appearance:none}
+  .card.teach .txt{font-size:14px}
   .p-rules{font-size:10px;line-height:1.9;font-weight:600;color:var(--u2-ink-2);text-align:left;
     background:rgba(43,31,18,.06);border-radius:10px;padding:9px 11px;margin:0 0 12px;width:100%}
   .p-hint{font-size:11px;line-height:1.8;font-weight:700;color:var(--u2-ink-2);letter-spacing:.5px;margin:0 0 10px}
@@ -541,6 +545,23 @@
     letter-spacing:.3px}
   .over .why{font-size:10px;line-height:1.9;font-weight:600;color:var(--u2-ink-2);text-align:left;
     background:rgba(43,31,18,.06);border-radius:10px;padding:9px 11px;margin:0 0 12px;width:100%}
+  /* 结局复盘（2026-11-16）：为什么死——一条致命线的折线 + 转折点 + 最伤的三次选择 + 下一局建议 */
+  .rv{width:100%;text-align:left;margin:0 0 12px;font-size:10.5px;line-height:1.8;font-weight:600;color:var(--u2-ink-2)}
+  .rv:empty{display:none}
+  .endcard > *{flex-shrink:0}                         /* 复盘把内容撑长后，按钮别被 flex 压扁（滚动交给 endcard） */
+  .rv-h{font-size:12px;font-weight:800;color:var(--u2-ink);margin:0 0 6px;letter-spacing:.5px}
+  .rv-sp{display:block;width:100%;height:54px;background:rgba(43,31,18,.05);border-radius:8px}
+  .rv-sp-l{display:flex;justify-content:space-between;font-size:9px;color:var(--u2-ink-3);margin:2px 0 6px}
+  .rv-p{margin:0 0 5px}
+  .rv-p b,.rv-tip b{color:var(--u2-ink);font-weight:800}
+  .rv-l{list-style:none;margin:0 0 6px;padding:0}
+  .rv-l li{display:flex;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px dashed rgba(43,31,18,.14)}
+  .rv-l li i{font-style:normal;color:var(--u2-ink-3);flex:none;font-size:9.5px}
+  .rv-l li em{font-style:normal;margin-left:auto;font-weight:800;color:#b03a2e;flex:none;font-variant-numeric:tabular-nums}
+  .rv-led{display:flex;flex-wrap:wrap;gap:4px 10px;margin:4px 0 6px}
+  .rv-led span{font-size:9.5px;color:var(--u2-ink-3)}
+  .rv-led b{margin-left:3px;font-weight:800;color:var(--u2-ink);font-variant-numeric:tabular-nums}
+  .rv-tip{background:rgba(255,197,61,.18);border:1.5px solid rgba(43,31,18,.18);border-radius:8px;padding:7px 9px;margin-top:6px}
   .life{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;width:100%;margin-bottom:16px;
     border-top:2px solid rgba(43,31,18,.16);border-bottom:2px solid rgba(43,31,18,.16);padding:10px 0}
   .life div{font-size:10px;line-height:1.6;font-weight:600;color:var(--u2-ink-3);text-align:left}
@@ -809,6 +830,7 @@
       <div class="home">
         <div class="home-top">
           <div class="h-chip" id="h-best">🏆 第一局等你开局</div>
+          <button class="h-chip h-mute" id="h-mute" aria-label="音效开关">🔊</button>
           <div class="h-chip">💡 ×<b id="h-lives">3</b><button class="h-add" id="h-add" aria-label="看广告得次数">＋</button></div>
         </div>
         <div class="home-hero">
@@ -833,6 +855,7 @@
         <div class="sub" id="o-s"></div>
         <p class="quote" id="o-q"></p>
         <p class="why" id="o-why"></p>
+        <div class="rv" id="o-rv"></div>
         <div class="life">
           <div>这一辈子<b id="o-d"></b></div><div>最后剩下<b id="o-a"></b></div>
           <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
@@ -857,6 +880,7 @@
           行情：你只有一只票。泡沫、冬天、停牌都会来；K 线右上角的标签是它今天的涨跌。
         </p>
         <button class="btn" id="p-go-help">知道了</button>
+        <button class="p-replay" id="p-replay">下一局重看开场教程 + 讲解卡</button>
       </div>
     </div>
 
@@ -973,7 +997,11 @@ function reset(){
         _pStage:0, _pAdv:0, _pLastDay:0,
         leak:null,                                    // 手里的那条消息（见 apply 的 leak / tick 的兑现）
         ledger:{},                                    // 今日账目：led() 埋点入账，render 展示后清空
+        ltot:{},                                      // 一辈子的账目累计（结局复盘「钱都去哪了」）
+        trail:[], hx:[],                              // 复盘：每张卡的选择与数值变化 / 每天的四条命快照（见 fly）
+        teachQ:[],                                    // 待插的讲解卡（见 teach / nextCard）
         index:3000, hist:[3000] };
+  S.hx.push(snapOf());
   CARDS.forEach(function(c){ c._used = 0; });
   _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0; _lastWasChain = false;   // 新的一局：袋子、冷却、同类记忆、插队节流都重来
   render(); nextCard();
@@ -987,7 +1015,10 @@ var LED_IO = { "工资":1, "行情":1, "外快":1, "消费":1, "日用":1, "房�
 function led(k, v){
   if(!(Math.abs(v) >= 0.5)) return;
   S.ledger[k] = (S.ledger[k] || 0) + v;
+  if(S.ltot) S.ltot[k] = (S.ltot[k] || 0) + v;
 }
+/* 复盘快照：四条命 + 净值（fly 在选择前/选择后/过完一天各拍一次） */
+function snapOf(){ return { d:S.day, m:S.mind, s:S.social, r:S.risk, e:S.energy, n:net() }; }
 
 /* 月度账单的唯一算法：tick 扣钱、HUD 显示倒计时都用它（两处各算一遍必然漂移） */
 function billOf(day){
@@ -1337,7 +1368,7 @@ function tick(){
     else if(S.equity > 0){
       var cut = S.equity * 0.35; S.equity -= cut; S.cost -= S.cost * 0.35;
       S.mind -= 12; S.social -= 4;
-      msg.push("💥 有人替你平了仓 −" + money(cut).replace("¥","¥"));
+      msg.push("💥 有人替你平了仓 −" + money(cut));
     } else { S.mind -= 9; S.social -= 5; S.debt += 2000; msg.push("💥 欠款又滚了一圈"); }
     S.risk = clamp(S.risk - 18, 0, 100);
   }
@@ -1381,6 +1412,7 @@ function tick(){
      5 号那次少还一点（房租已经是一大笔），两次加起来仍是一个月的月供。 */
   var dueWanted = Math.min(S.debt, Math.max(DEBT_DUE_MIN, S.debt * DEBT_DUE_RATE));
   if((dayOfMonth === PAYDAY || dayOfMonth === PAYDAY + 15) && S.debt > 1){
+    S._evDue = true;                                 // 讲解卡：第一次碰上还款日（见 teachScan）
     var due = dueWanted;
     var dpay = Math.min(S.cash, due);
     if(dpay > 0){ S.cash -= dpay; S.debt -= dpay; led("还款", -dpay); S.risk = clamp(S.risk - dpay / 900, 0, 100); }
@@ -1428,14 +1460,18 @@ function tick(){
   S.mind = clamp(S.mind + 0.25 + (S.social >= 70 ? 0.3 : 0), 0, 100);
 
   // 悬崖预警（每局一次）：别让结局看起来像凭空掉下来的
+  var W_KEYS = ["wMind","wEnergy","wSoc","wRisk","wCash"];
+  function wN(){ return W_KEYS.filter(function(x){ return S.flags[x]; }).length; }
+  var _w0 = wN();                                   // 预警前数一下：新亮了一盏就「嘀嘀」一声
   if(S.mind < 12 && !S.flags.wMind){ S.flags.wMind = true; msg.push("🧊 心态只剩 " + Math.round(S.mind) + "：再坏下去，人就「不动了」"); }
   // 新手保护②：第一局精力第一次跌破 25，教一次怎么回精力（只出现一次）
-  if(S.rookie && S.energy < 25 && !S.flags.rkEnergy){ S.flags.rkEnergy = true; msg.push("⚡ 精力只剩 " + Math.round(S.energy) + "：累了就选睡觉、休息、推掉应酬，精力会回来"); }
+  // （精力首破 25 的教学已改由讲解卡 TEACH.energy 负责，一辈子一次，不分第几局）
   if(S.energy <= 5 && !S.flags.wEnergy){ S.flags.wEnergy = true; msg.push("🚑 精力见底还硬撑：身体会先垮——找机会睡觉、早睡、推掉应酬"); }
   if(S.social < 12 && !S.flags.wSoc){ S.flags.wSoc = true; msg.push("🪑 社会只剩 " + Math.round(S.social) + "：再淡下去，身边就没人了"); }
   if(S.risk > 90 && !S.flags.wRisk){ S.flags.wRisk = true; msg.push("💥 风险 " + Math.round(S.risk) + "：随时可能被强制平仓，满 100 直接「爆了」"); }
   if(S.cash < 600 && !S.flags.wCash){ S.flags.wCash = true; msg.push("💸 现金只剩 " + money(S.cash) + "：再花钱就得动股票或者赊账了"); }
 
+  if(wN() > _w0) sfx("warn");
   for(var k2 in S.st){ if(S.st[k2] === 0) clearST(k2); }
   // 现金不留在负数上：负的部分就是刷了信用卡，转进负债（负债条上看得见，利息也才开始算）
   if(S.cash < 0){
@@ -1470,7 +1506,7 @@ function tick(){
   if(S.st.fired) f2.wasFired = true;
   if(S.st.halt) f2.haltDays = (f2.haltDays || 0) + 1; else f2.haltDays = 0;
   if(S.mind <= 15) f2.mindLow = (f2.mindLow || 0) + 1; else f2.mindLow = 0;
-  // 新手保护（2026-11-16 用户定：只在第一局生效）：前 15 天精力见底只磨心态，不累计病倒天数。
+  // 新手保护（2026-11-16 用户定：只在第一局生效；同日 15→30 天）：前 ROOKIE_DAYS 天精力见底只磨心态，不累计病倒天数。
   // S.rookie 只在 enterRun() 里置位——仿真直接调 reset()，基线不受影响
   if(S.energy <= 0.5 && !(S.rookie && S.day <= ROOKIE_DAYS)) f2.energyZero = (f2.energyZero || 0) + 1;
   else f2.energyZero = 0;
@@ -1581,6 +1617,78 @@ var $ = function(id){ return document.getElementById(id); };
      ③ 全部可关（?fx=0 / fx=1 轻档），关掉后数值、颜色、文字一个不少。
    小程序迁移：on() 换成 setData 挂类、shake() 换成 wx.createAnimation 或同款 class，
    三档语义与事件表照搬；haptic() 换 wx.vibrateShort({type:'light'|'medium'|'heavy'})。 */
+/* ============ 音效层（2026-11-16）============
+   一个入口 sfx(name)。现在全部用 WebAudio 现场合成（零文件、零下载），
+   素材到位后在 SFX_FILE 里填 name → 文件路径，就自动改播文件，调用点一处不用动。
+   iOS/微信 WebView：AudioContext 必须在第一次手势里创建/resume，见 sfxUnlock。
+   没有 AudioContext 的环境（node 仿真/冒烟桩）一律静默。 */
+var SFX_FILE = {};                                     // 例：{ swipe:"assets/sfx/swipe.mp3" }
+var _ac = null, _sfxBuf = {};
+function sfxOn(){ return !(typeof META === "object" && META && META.mute); }
+function sfxUnlock(){
+  try{
+    if(!_ac){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      _ac = new AC();
+    }
+    if(_ac.state === "suspended") _ac.resume();
+  }catch(_e){}
+}
+function _tone(f0, f1, dur, type, vol, at){
+  var t = _ac.currentTime + (at || 0);
+  var o = _ac.createOscillator(), g = _ac.createGain();
+  o.type = type || "sine";
+  o.frequency.setValueAtTime(f0, t);
+  if(f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.12, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(_ac.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function _noise(dur, vol, hp, at){
+  var t = _ac.currentTime + (at || 0), n = Math.floor(_ac.sampleRate * dur);
+  var b = _ac.createBuffer(1, n, _ac.sampleRate), d = b.getChannelData(0);
+  for(var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  var s = _ac.createBufferSource(), f = _ac.createBiquadFilter(), g = _ac.createGain();
+  s.buffer = b; f.type = "highpass"; f.frequency.value = hp || 800; g.gain.value = vol || 0.08;
+  s.connect(f); f.connect(g); g.connect(_ac.destination); s.start(t);
+}
+var SFX_SYN = {
+  swipe:  function(){ _noise(0.14, 0.05, 1800); },
+  tap:    function(){ _tone(660, 520, 0.06, "triangle", 0.08); },
+  coin:   function(){ _tone(1320, 1320, 0.07, "square", 0.04); _tone(1760, 1760, 0.16, "square", 0.04, 0.06); },
+  pay:    function(){ _tone(520, 300, 0.16, "triangle", 0.08); },
+  warn:   function(){ _tone(880, 880, 0.09, "square", 0.05); _tone(880, 880, 0.09, "square", 0.05, 0.14); },
+  thud:   function(){ _tone(140, 60, 0.22, "sine", 0.22); },
+  crash:  function(){ _tone(180, 40, 0.5, "sawtooth", 0.12); _noise(0.4, 0.09, 300); },
+  teach:  function(){ _tone(784, 784, 0.1, "sine", 0.09); _tone(1175, 1175, 0.22, "sine", 0.08, 0.09); },
+  reward: function(){ [523, 659, 784, 1047].forEach(function(f, i){ _tone(f, f, 0.14, "triangle", 0.08, i * 0.07); }); },
+  win:    function(){ [523, 659, 784].forEach(function(f, i){ _tone(f, f, 0.3, "triangle", 0.09, i * 0.12); }); _tone(1047, 1047, 0.6, "triangle", 0.09, 0.36); },
+  lose:   function(){ [392, 349, 294].forEach(function(f, i){ _tone(f, f * 0.98, 0.34, "sine", 0.1, i * 0.22); }); _tone(196, 150, 0.9, "sine", 0.12, 0.66); }
+};
+function sfx(name){
+  if(!sfxOn() || !_ac) return;
+  try{
+    if(_ac.state === "suspended") _ac.resume();
+    var url = SFX_FILE[name];
+    if(url){
+      if(_sfxBuf[name]){ var s = _ac.createBufferSource(); s.buffer = _sfxBuf[name]; s.connect(_ac.destination); s.start(); return; }
+      if(_sfxBuf[name] !== false){
+        _sfxBuf[name] = false;                         // 加载中：这一次先用合成音顶上
+        fetch(url).then(function(r){ return r.arrayBuffer(); })
+          .then(function(a){ return _ac.decodeAudioData(a); })
+          .then(function(b){ _sfxBuf[name] = b; })["catch"](function(){ delete SFX_FILE[name]; });
+      }
+    }
+    if(SFX_SYN[name]) SFX_SYN[name]();
+  }catch(_e){}
+}
+try{
+  document.addEventListener("pointerdown", sfxUnlock, true);
+  document.addEventListener("touchstart", sfxUnlock, true);
+}catch(_e){}
 var FX = (function(){
   var lv = 2;                                          // 0 全关 / 1 只留视觉轻档 / 2 默认（含马达）
   try{
@@ -1884,7 +1992,7 @@ function render(){
     t.className = t5 > 0.4 ? "up" : (t5 < -0.4 ? "down" : "flat");
   }
   $("v-det").textContent = "· 现金 " + money(S.cash) + " · 持仓 " + money(S.equity) +
-                           (S.debt > 1 ? " · 欠 " + money(S.debt).replace("¥","¥") : "");
+                           (S.debt > 1 ? " · 欠 " + money(S.debt) : "");
 }
 function toast(t){
   var el = $("toast"); if(!el) return;
@@ -2398,6 +2506,50 @@ var TUT = [
   txt:"盯住净值＝现金＋股票−欠款，它是你的总分。风险拉满，会被强制平仓。",
   L:{s:"记住了"},R:{s:"开工"}}
 ];
+/* 讲解卡（2026-11-16 教程补课）：机制第一次真的落到玩家头上时，插一张只教不算账的卡。
+   一个玩家一辈子每张只看一次（META.teach 记），所以老玩家不会被打扰。
+   插在下一张正常卡之前，走序幕卡同一条通道（_tut：不推进天数、不动数值）。
+   数字都从常量读——改了平衡，讲解卡跟着变，不会讲错。 */
+var TEACH = {
+  debt:  {who:"信用卡账单",wid:"tut_debt",av:"💳",
+          txt:function(){ return "现金花光不会结束：差的钱自动记成负债，每天吃利息（约 0.3% 起）。负债顶到 " + money(creditLimit()) + "，就没人再借你了。"; }},
+  due:   {who:"还款提醒",wid:"tut_due",av:"📅",
+          txt:function(){ return "有欠款时，每月 " + PAYDAY + " 号和 " + (PAYDAY + 15) + " 号自动还月供。现金不够就算没还上——会上失信名单，连着 3 期不还，房子被收走。"; }},
+  laolai:{who:"法院通知",wid:"tut_laolai",av:"⚖️",
+          txt:function(){ return "上了失信名单：每天磨心态，发薪日工资先被划走 " + Math.round(LAOLAI_GARNISH * 100) + "%，借钱只能借到一半。债还清那天才摘得掉。"; }},
+  risk:  {who:"风控短信",wid:"tut_risk",av:"🚨",
+          txt:function(){ return "风险过了 72：从今天起，事情可能自己发生——被平仓、催债上门。减仓、还钱能降风险，满 100 直接爆。"; }},
+  over:  {who:"你自己",wid:"tut_over",av:"🤩",
+          txt:function(){ return "心态太好，上头了：买入会自动多花 35%，风险每天往上爬。心态回落到 74 以下才会冷静。"; }},
+  energy:{who:"镜子里的你",wid:"tut_energy",av:"🥱",
+          txt:function(){ return "精力不会自己回来，只能靠睡觉、休息、推掉应酬。见底还硬撑会天天扣心态，连撑 10 天会病倒。"; }},
+  fired: {who:"空荡荡的工位",wid:"tut_fired",av:"📦",
+          txt:function(){ return "失业了：工资停发，能借的额度只剩三成，每天都在磨心态。找到新工作之前，手里的现金就是命。"; }}
+};
+function teach(k){
+  try{
+    if(!TEACH[k] || !S.teachQ) return;
+    if(!META.teach) META.teach = {};
+    if(META.teach[k] || S.teachQ.indexOf(k) >= 0) return;
+    META.teach[k] = 1; saveMeta();
+    S.teachQ.push(k);
+  }catch(_e){}
+}
+/* 每张卡结算后看一眼：哪些机制刚刚第一次发生了 */
+function teachScan(b){
+  if(S.debt > 1 && b.debt <= 1) teach("debt");
+  if(S._evDue){ S._evDue = false; teach("due"); }
+  if(S.st.laolai && !b.laolai) teach("laolai");
+  if(S.risk >= 72) teach("risk");
+  if(S.st.over) teach("over");
+  if(S.energy < 25) teach("energy");
+  if(S.st.fired) teach("fired");
+}
+function teachCard(k){
+  var T = TEACH[k];
+  return { who:T.who, wid:T.wid, av:T.av, tag:"讲解", _tut:true, _teach:k, txt:T.txt(),
+           L:{s:"知道了"}, R:{s:"记住了"} };
+}
 function nextCard(){
   if(busy) return;
   closeTips(null);                                   // 换卡就收提示：tip 是挂在 HUD/胶囊上的浮层，
@@ -2411,6 +2563,13 @@ function nextCard(){
     var t = build(TUT[S.tut]);
     stage.appendChild(t); cur = t; bind(t); markArtShort();
     FX.deal(t);                                      // 发牌：从下方弹上来（.card.fx-deal）
+    return;
+  }
+  if(S.teachQ && S.teachQ.length){                  // 讲解卡插队：一次一张，滑走就回正片
+    var tc = build(teachCard(S.teachQ.shift()));
+    tc.classList.add("teach");
+    stage.appendChild(tc); cur = tc; bind(tc); markArtShort();
+    FX.deal(tc); sfx("teach");
     return;
   }
   var a = build(pick());
@@ -2481,10 +2640,10 @@ function fxAfter(b){
     var pct = Math.abs(b.net) > 1 ? (n - b.net) / Math.abs(b.net) : 0;
     var laolaiNew = !b.laolai && !!S.st.laolai;
     var burst = S.flags && S.flags.burstDay === S.day;
-    if(burst){ FX.shake("hard"); FX.dent($("mkt")); return; }            // 泡沫破：这一下是真崩了
-    if(laolaiNew){ FX.shake("hard"); return; }                          // 刚上失信名单：重震，因为这是不可逆的
-    if(lim === "up" || lim === "down"){ FX.shake("mid"); FX.dent($("mkt")); return; }   // 涨跌停封板
-    if(pct <= -0.09){ FX.shake("mid"); FX.dent($("mkt")); return; }      // 单日净值 −9% 以上（杠杆吃跌停）
+    if(burst){ sfx("crash"); FX.shake("hard"); FX.dent($("mkt")); return; }            // 泡沫破：这一下是真崩了
+    if(laolaiNew){ sfx("crash"); FX.shake("hard"); return; }                          // 刚上失信名单：重震，因为这是不可逆的
+    if(lim === "up" || lim === "down"){ sfx(lim === "up" ? "coin" : "thud"); FX.shake("mid"); FX.dent($("mkt")); return; }   // 涨跌停封板
+    if(pct <= -0.09){ sfx("thud"); FX.shake("mid"); FX.dent($("mkt")); return; }      // 单日净值 −9% 以上（杠杆吃跌停）
     if(b.cash > 0.5 && S.cash <= 0.5 && S.debt - b.debt >= 1){ FX.shake("soft"); return; }  // 现金见底、开始欠着
     if(pct >= 0.09){ FX.dent($("mkt")); }                               // 大涨只「顿」面板：正在读卡时别震屏
   }catch(_e){}
@@ -2492,6 +2651,7 @@ function fxAfter(b){
 function fly(dir){
   if(busy || S.over) return; busy = true;
   var c = cur._c;
+  sfx("swipe");
   var stp = cur.querySelector(".stamp." + dir);
   if(stp){ stp.textContent = stampLabel(c, dir); stp.style.opacity = 1; }   // 既定事实卡没有印章
   cur.style.transition = "transform .34s ease-out, opacity .34s";
@@ -2499,14 +2659,19 @@ function fly(dir){
   cur.style.opacity = 0;
 
   if(c._tut){                                        // 序幕教程卡：只教，不算账——不推进天数、不动数值
-    S.tut++;
+    if(!c._teach){
+      S.tut++;
+      if(S.tut >= TUT.length && !META.tutDone){ META.tutDone = true; saveMeta(); }
+    }
     setTimeout(function(){ busy = false; nextCard(); }, 340);
     return;
   }
 
   var debt0 = S.debt;
   var fx0 = { cash:S.cash, debt:S.debt, net:net(), laolai:!!S.st.laolai };   // 结算前快照（给手感层判断「发生了什么」）
+  var tb = snapOf(), tLabel = labelOf(dir === "R" ? c.R : c.L);   // 复盘：选之前的样子 + 选项原话（金额要按选前状态填）
   resolve(c, dir);
+  var ta = snapOf();
   var borrowed = S.debt - debt0;                     // 这一选择借了多少钱（给 toast 提示用）
   // 卡牌自带状态：给玩家一个提示
   if(c.st) for(var k in c.st){
@@ -2514,7 +2679,11 @@ function fly(dir){
   }
   S._pre = { mind: S.mind, social: S.social, risk: S.risk };   // 快照：给结局面板「前一天」的对比
   var m = tick();
-  S._lastMsg = m || "";                                        // 当天发生了什么：若游戏就此结束，写进结局面板
+  S._lastMsg = m || "";
+  trailPush(c, dir, tLabel, tb, ta, snapOf(), m);
+  teachScan(fx0);
+  if((S.ledger["工资"] || 0) > 0 || (S.ledger["外快"] || 0) >= 500) sfx("coin");
+  else if((S.ledger["房租水电"] || 0) < 0 || (S.ledger["消费"] || 0) <= -1500) sfx("pay");                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
   fxAfter(fx0);
   setTimeout(function(){
@@ -3534,6 +3703,174 @@ function shTap(){
   });
 }
 
+/* ============ 结局复盘（2026-11-16 用户定：死了要知道「为啥死」） ============
+   数据：fly 每打一张卡记一条 trail（选前/选后/过完一天三个快照 + 原话），hx 存每天四条命。
+   仿真/冒烟走 resolve+tick，不经 fly → trail 为空，复盘自动降级成只看终局，不报错。
+   规矩：只陈述发生了什么 + 一条下一局可以试的做法；不评判选择（与结局白描风格一致）。 */
+function trailPush(c, dir, lab, tb, ta, tc, msg){
+  try{
+    var T = S.trail; if(!T) return;
+    T.push({ d:tb.d, who:c.who || "", txt:String(c.txt || ""), lab:lab, dir:dir,
+             dc:{ m:ta.m-tb.m, s:ta.s-tb.s, r:ta.r-tb.r, e:ta.e-tb.e, n:ta.n-tb.n },
+             dt:{ m:tc.m-ta.m, s:tc.s-ta.s, r:tc.r-ta.r, e:tc.e-ta.e, n:tc.n-ta.n } });
+    if(T.length > 400) T.shift();
+    S.hx.push(tc); if(S.hx.length > 400) S.hx.shift();
+    var k = S.rvc || (S.rvc = {});                    // 「日子本身」的磨损来源：按天计数
+    function inc(x){ k[x] = (k[x] || 0) + 1; }
+    if(S.energy <= 0.5) inc("eZero");
+    if(S.st.laolai) inc("laolai");
+    if(S.st.fired) inc("fired");
+    if(S.st.bear || S.st.crisis) inc("bear");
+    if(S.st.halt) inc("halt");
+    if(S.st.over) inc("over");
+    if(S.equity > 0 && S.equity >= (S.cash + S.equity) * 0.75) inc("heavy");
+    if(S.debt > 1) inc("debt");
+    if(tc.n < ta.n - 1 && S.equity > 0) inc("mktDown");
+  }catch(_e){}
+}
+/* 结局 → 真正致命的那条线（key）+ 危险线（line）+ 下一局建议 */
+var RV_KEY = {
+  "泡沫之后":"n","查房":"r","爆了":"r","最后一把":"n","冬天还没过完":"n","断供":"n","穿仓":"n","老赖顶格":"n",
+  "亮红灯":"e","梦游":"m","不动了":"m","停牌之后":"m","错过的人":"s","没有人":"s","离婚":"s","不认识":"s",
+  "温水煮蛙":"n","复利葬礼":"n"
+};
+var RV_META = {
+  m:{ nm:"心态", line:25, low:true,  col:"#ff4d4f",
+      tip:"心态几乎不会自己回血。亏损、熊市、精力见底都在暗中扣它——跌狠了先减仓，累了先歇，陪家人、休息类选项能补回来。" },
+  s:{ nm:"社会", line:25, low:true,  col:"#4d9fff",
+      tip:"社会每天自己掉 0.25，「推掉」默认在扣它。隔一阵就花点钱或时间陪人、请客、帮忙，别等到个位数再补。" },
+  e:{ nm:"精力", line:15, low:true,  col:"#d9a400",
+      tip:"精力没有自然恢复，只能靠睡觉、休息、推掉应酬回血。掉到 25 以下就该挑轻松的选项了，见底硬撑 10 天会病倒。" },
+  r:{ nm:"风险", line:72, low:false, col:"#ff9500",
+      tip:"借钱、重仓（持仓超过身家七成半）、内线消息都在堆风险；减仓、还钱能降下来。72 以上每天都可能出事，满 100 直接爆。" },
+  n:{ nm:"净值", line:0,  low:true,  col:"#2b1f12",
+      tip:"生活成本每个月都在涨，光靠工资迟早被追上。别让负债滚着利息过日子（每天约 0.3%），手里留一点现金扛 5 号的账单。" }
+};
+function rvEsc(t){ return String(t).replace(/[&<>"]/g, function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]; }); }
+function rvNum(k, v){
+  if(k === "n") return (v >= 0 ? "+" : "−") + money(Math.abs(v));
+  var r = Math.round(v);
+  return (r >= 0 ? "+" : "−") + Math.abs(r);
+}
+function rvCut(t, n){                                // 优先截在第一个句读处，别把「deadline」切成「dea…」
+  t = String(t);
+  if(t.length <= n) return t;
+  var m = t.slice(0, n + 1).match(/^(.{4,}?)[。，？！：；]/);
+  return m ? m[1] : t.slice(0, n) + "…";
+}
+/* 折线：致命那条线的一辈子 + 危险线（虚线） */
+function rvSpark(k){
+  var H = S.hx || [], M = RV_META[k];
+  if(H.length < 3) return "";
+  var W = 300, Ht = 54, pad = 3, vals = H.map(function(h){ return h[k]; });
+  var lo, hi;
+  if(k === "n"){ lo = Math.min.apply(null, vals.concat([0])); hi = Math.max.apply(null, vals.concat([INIT])); }
+  else { lo = 0; hi = 100; }
+  if(hi - lo < 1) hi = lo + 1;
+  function X(i){ return pad + i * (W - pad*2) / (H.length - 1); }
+  function Y(v){ return pad + (1 - (v - lo) / (hi - lo)) * (Ht - pad*2); }
+  var pts = vals.map(function(v, i){ return X(i).toFixed(1) + "," + Y(v).toFixed(1); }).join(" ");
+  var ly = Y(M.line).toFixed(1);
+  return '<svg class="rv-sp" viewBox="0 0 ' + W + ' ' + Ht + '" preserveAspectRatio="none">' +
+    '<line x1="0" x2="' + W + '" y1="' + ly + '" y2="' + ly + '" stroke="#c0392b" stroke-width="1" stroke-dasharray="4 3" opacity=".7"/>' +
+    '<polyline points="' + pts + '" fill="none" stroke="' + M.col + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<circle cx="' + X(H.length-1).toFixed(1) + '" cy="' + Y(vals[vals.length-1]).toFixed(1) + '" r="3.2" fill="' + M.col + '"/></svg>' +
+    '<div class="rv-sp-l"><span>第 1 天</span><span>' + M.nm + (k === "n" ? "（虚线＝0）" : "（虚线＝危险线 " + M.line + "）") + '</span><span>第 ' + S.day + ' 天</span></div>';
+}
+/* 进入危险区、此后再没回来的那一天 */
+function rvTurn(k){
+  var H = S.hx || [], M = RV_META[k];
+  function bad(v){ return M.low ? v <= M.line : v >= M.line; }
+  if(!H.length || !bad(H[H.length-1][k])) return null;
+  var i = H.length - 1;
+  while(i > 0 && bad(H[i-1][k])) i--;
+  return H[i].d;
+}
+function buildReview(name){
+  var k = RV_KEY[name], lose = !!k, M = RV_META[k || "n"];
+  var T = S.trail || [], C = S.rvc || {}, L = S.ltot || {}, out = [];
+  if(!lose){
+    // 活法：只给一张「这一辈子的账」+ 最赚的一次选择，不说教
+    var best = null;
+    T.forEach(function(t){ if(!best || t.dc.n > best.dc.n) best = t; });
+    out.push('<div class="rv-h">🔍 这一辈子的账</div>' + rvSpark("n") + rvLedger(L));
+    if(best && best.dc.n >= 500)
+      out.push('<div class="rv-p">最值钱的一次选择：第 ' + best.d + ' 天，' + rvEsc(best.who) + '「' + rvEsc(rvCut(best.txt, 16)) +
+               '」——你选了「' + rvEsc(best.lab) + '」，净值 ' + rvNum("n", best.dc.n) + '。</div>');
+    return out.join("");
+  }
+  var kk = k === "n" ? "n" : k;
+  out.push('<div class="rv-h">🔍 这一局是怎么走到这里的</div>');
+  out.push(rvSpark(kk));
+  // ① 转折点
+  var td = rvTurn(kk);
+  if(td){
+    var tc = null; T.forEach(function(t){ if(t.d === td - 1 || t.d === td) tc = tc || t; });
+    out.push('<div class="rv-p"><b>转折点</b>：从第 ' + td + ' 天起，' + M.nm + (kk === "n" ? "跌到 0 以下" : (M.low ? "跌破 " : "冲过 ") + M.line) +
+             '，之后再没回来' + (tc ? '。那天你在「' + rvEsc(rvCut(tc.txt, 14)) + '」选了「' + rvEsc(tc.lab) + '」' : '') + '。</div>');
+  }
+  // ② 伤得最深的三次选择（只算这一选当场造成的变化）
+  var sign = M.low ? 1 : -1;
+  var hurt = T.filter(function(t){ return sign * t.dc[kk] < 0; })
+              .sort(function(a, b){ return sign * a.dc[kk] - sign * b.dc[kk]; }).slice(0, 3);
+  var cardSum = 0, daySum = 0;
+  T.forEach(function(t){ cardSum += t.dc[kk]; daySum += t.dt[kk]; });
+  if(hurt.length){
+    out.push('<div class="rv-p"><b>扣' + M.nm + '最多的三次选择</b>：</div><ul class="rv-l">' + hurt.map(function(t){
+      return '<li><i>第 ' + t.d + ' 天</i>' + rvEsc(rvCut(t.txt, 15)) + ' → 「' + rvEsc(rvCut(t.lab, 12)) + '」<em>' + rvNum(kk, t.dc[kk]) + '</em></li>';
+    }).join("") + '</ul>');
+  }
+  // ③ 日子本身磨掉的（tick）
+  var src = [];
+  if(kk === "m"){
+    if(C.mktDown) src.push("持仓下跌 " + C.mktDown + " 天");
+    if(C.eZero)   src.push("精力见底硬撑 " + C.eZero + " 天");
+    if(C.fired)   src.push("失业 " + C.fired + " 天");
+    if(C.laolai)  src.push("挂在失信名单上 " + C.laolai + " 天");
+    if(C.bear)    src.push("熊市/冬天 " + C.bear + " 天");
+    if(C.halt)    src.push("停牌 " + C.halt + " 天");
+  } else if(kk === "s"){
+    src.push("人情自然变淡 " + S.day + " 天（每天 −0.25）");
+    var ms = S.miss || {}, mt = (ms.lover||0) + (ms.child||0) + (ms.fam||0) + (ms.pet||0);
+    if(mt) src.push("「不在场」" + mt + " 次（伴侣 " + (ms.lover||0) + " · 孩子 " + (ms.child||0) + " · 家人 " + (ms.fam||0) + "）");
+    if(C.laolai) src.push("挂在失信名单上 " + C.laolai + " 天");
+  } else if(kk === "e"){
+    var rest = T.filter(function(t){ return t.dc.e > 0; }).length, use = T.filter(function(t){ return t.dc.e < 0; }).length;
+    src.push("花精力的选择 " + use + " 次，回精力的只有 " + rest + " 次");
+    if(C.eZero) src.push("精力为 0 还在硬撑 " + C.eZero + " 天");
+  } else if(kk === "r"){
+    if(C.heavy) src.push("重仓（持仓超七成半）" + C.heavy + " 天");
+    if(C.debt)  src.push("背着负债 " + C.debt + " 天");
+    if(C.over)  src.push("上头状态 " + C.over + " 天");
+  } else {
+    if(L["债息"])  src.push("付出去的利息 " + money(-L["债息"]));
+    if(L["行情"])  src.push("股票" + (L["行情"] >= 0 ? "赚了 " : "亏了 ") + money(Math.abs(L["行情"])));
+    if(C.debt)    src.push("背着负债过了 " + C.debt + " 天");
+  }
+  if(T.length){
+    var cs = Math.round(cardSum), ds = Math.round(daySum);
+    if(kk !== "n")
+      out.push('<div class="rv-p"><b>账怎么算的</b>：你的选择让' + M.nm + ' ' + rvNum(kk, cs) + (ds ? '，日子本身又 ' + rvNum(kk, ds) : '') +
+               (src.length ? '——' + src.join("、") : '') + '。</div>');
+    else if(src.length)
+      out.push('<div class="rv-p"><b>钱漏在哪</b>：' + src.join("、") + '。</div>');
+  } else if(src.length){
+    out.push('<div class="rv-p"><b>日子本身</b>：' + src.join("、") + '。</div>');
+  }
+  if(kk === "n") out.push(rvLedger(L));
+  out.push('<div class="rv-tip"><b>下一局试试</b>：' + M.tip + '</div>');
+  return out.join("");
+}
+/* 一辈子的账：真收支按金额排，转账（借/还/买/卖）不进——那是左口袋到右口袋 */
+function rvLedger(L){
+  var ks = Object.keys(LED_IO).filter(function(x){ return Math.abs(L[x] || 0) >= 1; })
+            .sort(function(a, b){ return Math.abs(L[b]) - Math.abs(L[a]); });
+  if(!ks.length) return "";
+  return '<div class="rv-led">' + ks.map(function(x){
+    var v = L[x];
+    return '<span>' + x + '<b class="' + (v >= 0 ? "in" : "out") + '">' + (v >= 0 ? "+" : "−") + money(Math.abs(v)) + '</b></span>';
+  }).join("") + '</div>';
+}
 function check(){
   var n = net(), d = S.day, rate = (n - INIT) / INIT * 100, f = S.flags, e = null, why = "";
   var M = null;                                        // 结局元数据：END[name]
@@ -3716,6 +4053,7 @@ function check(){
              " · 净值 " + money(n) + (S.debt > 1 ? " · 负债 " + money(S.debt) : "");
   $("o-why").textContent = (why ? "为什么是这个结局：" + why + "　" : "") +
                            (S._lastMsg ? "最后一天：" + S._lastMsg + "。" : "") + stat;
+  try{ $("o-rv").innerHTML = buildReview(e[1]); }catch(_e){ $("o-rv").innerHTML = ""; }   // 复盘挂了也不能拦结局页
   $("o-d").textContent = d + " 天";
   var a = $("o-a"); a.textContent = money(n); a.className = n >= INIT ? "up" : "down";
   $("o-n").textContent = S.trades + " 次";
@@ -3725,6 +4063,7 @@ function check(){
      结局卡片本身的入场动画在 CSS 里（.over.on .endcard），这里只管「那一震」。 */
   var softEnd = ["自由","上岸","两个人","熬成精","一次都没动"].indexOf(e[1]) >= 0;
   FX.shake(softEnd ? "soft" : "hard");
+  sfx(RV_KEY[e[1]] ? "lose" : "win");
   $("over").classList.add("on");
 }
 $("o-b").onclick = function(){ hideOver($("over")); _skipTut = true; reset(); };  // 重开不重播序幕教程（刷新页面才重播）
@@ -4279,10 +4618,10 @@ function enterRun(){
   META.runs = (META.runs | 0) + 1;      // 总开局数：开局就 +1，中途退出的也算（它才是渗透率的分母）
   saveMeta(); refreshHome();
   hideOver($("intro")); hideOver($("over"));
-  _skipTut = true; reset();
-  S.rookie = (META.runs === 1);         // 新手保护：只有这辈子的第一局（见 tick 的 energyZero / rkEnergy）
+  _skipTut = !!META.tutDone; reset();   // 序幕没看完过就播（fa09d12 起这里写死 true，新玩家一直看不到序幕）
+  S.rookie = (META.runs === 1);         // 新手保护：只有这辈子的第一局（见 tick 的 energyZero）
 }
-var ROOKIE_DAYS = 15;                   // 新手保护的天数窗口
+var ROOKIE_DAYS = 30;                   // 新手保护的天数窗口
 /* 模拟广告：上线替换激励视频 SDK（onClose 回调里发奖）。3s 可领按真机广告时长调 */
 var AD_T = 0, _adCtx = "";   // 广告从哪儿弹的：menu=主菜单、end=结局页「再来一辈子」（领取后直接开新局）
 function openAd(){
@@ -4337,7 +4676,7 @@ function renderTasks(){
     btns[i].onclick = function(){
       var j = +this.getAttribute("data-i");
       META.tasks.claimed[j] = true;
-      META.lives += TASKS[j].r;
+      META.lives += TASKS[j].r; sfx("reward");
       saveMeta(); renderTasks(); refreshHome();
     };
   }
@@ -4364,15 +4703,22 @@ $("sh-hold-copy").onclick = function(){
   });
 };
 $("h-add").onclick   = openAd;
+function muteIcon(){ try{ $("h-mute").textContent = META.mute ? "🔇" : "🔊"; }catch(_e){} }
+$("h-mute").onclick = function(){ META.mute = !META.mute; saveMeta(); muteIcon(); sfxUnlock(); sfx("tap"); };
 $("h-album").onclick = function(){ renderAlbum(); $("album").classList.add("on"); };
 $("h-task").onclick  = function(){ renderTasks(); $("task").classList.add("on"); };
 $("h-help").onclick  = function(){ $("help").classList.add("on"); };
 $("p-x-album").onclick = $("p-go-album").onclick = function(){ hideOver($("album")); };
 $("p-x-task").onclick  = $("p-go-task").onclick  = function(){ hideOver($("task")); };
 $("p-x-help").onclick  = $("p-go-help").onclick  = function(){ hideOver($("help")); };
+$("p-replay").onclick = function(){
+  META.tutDone = false; META.teach = {}; saveMeta();
+  toast("好，下一局从开场教程开始，讲解卡也会重新出现。");
+  hideOver($("help"));
+};
 $("ad-b").onclick = function(){
   clearInterval(AD_T);
-  META.lives++; META.tasks.ad++;
+  META.lives++; META.tasks.ad++; sfx("reward");
   saveMeta(); refreshHome();
   $("admod").classList.remove("on");
   /* 从结局页「再来一辈子」进来的广告：领完直接开新局——玩家的意图就是再来一辈子，
@@ -4383,7 +4729,7 @@ $("ad-b").onclick = function(){
 $("ad-skip").onclick = function(){ clearInterval(AD_T); _adCtx = ""; $("admod").classList.remove("on"); };
 
 $("intro").classList.add("on");          // 主菜单（点「开始游戏」进局，消耗一次次数）
-metaInit(); refreshHome();
+metaInit(); refreshHome(); muteIcon();
 reset();
 introIcons();                            // 玩法说明面板里那四个满格小图标
 ensureLedgRow();                         // 账目行常驻占位：第一次出现时不让行情区跳 16px
