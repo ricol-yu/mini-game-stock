@@ -87,6 +87,7 @@
 | `data/cards.json` | **97 张卡的唯一真源**（schema v2：语义 id + whoId）。改卡面文案或数值一律改它 |
 | `docs/plan/baseline.md` | **仿真基线**：结局分布/重复率/卡覆盖。改卡后跑仿真与它对比 |
 | `tools/sync-json-to-prototype.js` | 真源 → 原型：`node tools/sync-json-to-prototype.js` |
+| `assets/sfx/README.md` | **音效文件清单**：`assets/sfx/<名字>.mp3` 丢进去就生效（文件优先，缺失用合成音）。试听：`tools/sfx-lab.html`（听自己的文件）/ `prototype.html?sfxlab=1`（听合成音现状） |
 | `tools/validate-cards.js` | **校验器**：`node tools/validate-cards.js`，9 类检查（含决策质量），退出码非 0 = 不许提交 |
 | `tools/check-dominance.js` | 单卡「还需不需要想」：伪选择 / 全赚不赔 / 只碰 1–2 条数值 |
 | `tools/check-payoff.js` | **花钱性价比**：掏钱那侧换成的东西折成钱，和「另一侧」比。差得太多 = 这侧没人会点 |

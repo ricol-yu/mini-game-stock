@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>音效试听台 · 韭菜之王</title>
+<style>
+  :root{
+    --ink:#2b1f12; --ink2:#6b5a45; --ink3:#9a8a76;
+    --card:#f6ecd8; --felt:#14503a; --gold:#f2b01e; --edge:#2b1f12;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--felt);color:var(--ink);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding:22px 16px 50px}
+  .wrap{max-width:560px;margin:0 auto}
+  h1{font-size:20px;font-weight:900;color:#f4ecdd;letter-spacing:2px;text-align:center;margin:0 0 6px}
+  .sub{font-size:12px;line-height:1.85;font-weight:600;color:#bcd7c8;text-align:center;margin:0 0 4px}
+  .sub b{color:#f4ecdd}
+  .path{display:block;margin:8px auto 16px;padding:8px 12px;background:rgba(0,0,0,.28);border-radius:8px;
+    font:12px/1.5 ui-monospace,Menlo,monospace;color:#f2d98a;text-align:center;word-break:break-all}
+  .card{background:var(--card);border:3px solid var(--edge);border-radius:14px;
+    box-shadow:0 4px 0 rgba(0,0,0,.25);padding:12px 12px 10px;margin-bottom:10px}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed rgba(43,31,18,.18)}
+  .row:last-child{border-bottom:none}
+  .name{font-weight:800;font-size:13.5px;min-width:74px;font-family:ui-monospace,Menlo,monospace}
+  .mid{flex:1;min-width:0}
+  .use{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.5}
+  .pick{flex:none;height:30px;padding:0 12px;border-radius:8px;border:2px solid var(--edge);
+    background:var(--gold);color:var(--ink);font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;
+    -webkit-appearance:none;box-shadow:0 2px 0 rgba(43,31,18,.3)}
+  .pick:active{transform:translateY(2px);box-shadow:none}
+  .meta{font-size:10px;font-weight:700;color:var(--ink3);margin-top:2px}
+  .meta.warn{color:#b03a2e}
+  input[type=file]{display:none}
+  .foot{font-size:11px;line-height:1.9;font-weight:600;color:#bcd7c8;text-align:center;margin-top:14px}
+  .foot a{color:#f2d98a}
+  .links{display:flex;gap:10px;justify-content:center;margin:16px 0 0;flex-wrap:wrap}
+  .links a{display:inline-block;padding:9px 16px;border-radius:10px;background:var(--card);
+    border:2px solid var(--edge);color:var(--ink);font-size:12px;font-weight:800;text-decoration:none;
+    box-shadow:0 3px 0 rgba(0,0,0,.3)}
+  .hint{margin:12px 0 0;padding:10px 12px;background:rgba(242,176,30,.16);border:2px solid rgba(43,31,18,.25);
+    border-radius:10px;font-size:11.5px;line-height:1.85;font-weight:600;color:#e8dfcc}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>音效试听台</h1>
+  <p class="sub">先在这里听你自己的音频，选好后按名字放进文件夹。</p>
+  <code class="path">mini-game-stock/assets/sfx/&lt;名字&gt;.mp3</code>
+
+  <div class="card" id="list"></div>
+
+  <div class="links">
+    <a href="../prototype.html?sfxlab=1">听游戏里的合成音现状</a>
+    <a href="../prototype.html">打开游戏</a>
+  </div>
+
+  <p class="hint">
+    这个页面只负责「试听 + 检查」，不会帮你拷文件——听完自己把 mp3 拖进
+    <b>assets/sfx/</b>，文件名改成左边那一列的名字，刷新游戏就生效。<br>
+    没有文件的名字，游戏会用代码合成的占位音顶上，所以可以先只换你听着难受的那几个。
+  </p>
+
+  <p class="foot">
+    响度请自己拉齐：游戏里固定 0.7 音量，混在一起听起来忽大忽小就是源文件没对齐。<br>
+    单张建议 ≤ 40KB、时长 ≤ 1.5 秒（超过会标红）。
+  </p>
+</div>
+
+<script>
+var ITEMS = [
+  { n:'swipe',  use:'滑出一张卡',            max:0.20 },
+  { n:'tap',    use:'按钮/菜单点击',          max:0.10 },
+  { n:'coin',   use:'发工资、外快、涨停',      max:0.60 },
+  { n:'pay',    use:'房租水电、大额支出',      max:0.50 },
+  { n:'warn',   use:'四条命第一次进危险区',    max:0.50 },
+  { n:'thud',   use:'跌停、单日大跌',          max:0.40 },
+  { n:'crash',  use:'泡沫破、上失信名单',      max:1.00 },
+  { n:'teach',  use:'讲解卡出现',             max:0.50 },
+  { n:'reward', use:'领广告次数、任务奖励',    max:1.00 },
+  { n:'win',    use:'活下来的结局',           max:1.80 },
+  { n:'lose',   use:'死掉的结局',             max:1.80 }
+];
+var list = document.getElementById('list');
+ITEMS.forEach(function(it){
+  var row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = '<div><div class="name">' + it.n + '</div></div>' +
+    '<div class="mid"><div class="use">' + it.use + '</div><div class="meta" id="m-' + it.n + '">还没选文件</div></div>' +
+    '<button class="pick">选文件</button><input type="file" accept="audio/*" id="f-' + it.n + '">';
+  list.appendChild(row);
+  var btn = row.querySelector('.pick'), inp = row.querySelector('input');
+  btn.onclick = function(){ inp.click(); };
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0];
+    if(!f) return;
+    var url = URL.createObjectURL(f);
+    var a = new Audio(url);
+    a.play().catch(function(){ alert('这个格式浏览器放不了，换 mp3'); });
+    a.onloadedmetadata = function(){
+      var m = document.getElementById('m-' + it.n);
+      var over = a.duration > it.max;
+      m.className = 'meta' + (over ? ' warn' : '');
+      m.textContent = f.name + ' · ' + a.duration.toFixed(2) + 's · ' +
+        (f.size / 1024).toFixed(0) + 'KB' +
+        (over ? '　⚠️ 建议 ≤' + it.max + 's' : '') +
+        (f.size > 40960 ? '　⚠️ 偏大' : '');
+    };
+  };
+});
+</script>
+</body>
+</html>

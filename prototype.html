@@ -476,6 +476,25 @@
   .p-x{width:30px;height:30px;border-radius:50%;border:2px solid var(--u2-edge);background:var(--u2-card-2);
     color:var(--u2-ink);font-size:12px;font-weight:900;cursor:pointer;padding:0;flex:0 0 auto;
     box-shadow:0 2px 0 rgba(43,31,18,.3);-webkit-appearance:none;font-family:inherit}
+  /* 音效试听台（?sfxlab=1，仅开发者模式） */
+  .sl-on .phone,.sl-on .legend,.sl-on .stage,.sl-on .over{display:none!important}
+  #sfxlab{position:fixed;inset:0;z-index:999;overflow-y:auto;background:var(--u2-felt);
+    padding:20px 16px 40px;-webkit-overflow-scrolling:touch}
+  .sl-wrap{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+  #sfxlab h1{font-size:19px;font-weight:900;color:var(--u2-on-felt);letter-spacing:2px;text-align:center;margin:6px 0 2px}
+  .sl-sub{font-size:11px;line-height:1.8;font-weight:600;color:var(--u2-on-felt-2);text-align:center;margin:0 0 6px;word-break:break-all}
+  .sl-sub b{color:var(--u2-on-felt)}
+  .sl-list{display:flex;flex-direction:column;gap:6px}
+  .sl-row{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;cursor:pointer;
+    background:var(--u2-card);border:2px solid var(--u2-edge);border-radius:10px;font-family:inherit;
+    box-shadow:0 3px 0 rgba(43,31,18,.25);text-align:left;-webkit-appearance:none}
+  .sl-row:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(43,31,18,.25)}
+  .sl-row b{font-size:12.5px;font-weight:800;color:var(--u2-ink);min-width:62px}
+  .sl-row span{font-size:10px;font-weight:600;color:var(--u2-ink-2);flex:1}
+  .sl-row em{font-size:9.5px;font-style:normal;font-weight:800;padding:2px 7px;border-radius:6px;flex:none}
+  .sl-row em.ok{background:#d9f2dd;color:#1d6b2f}
+  .sl-row em.syn{background:#eee0cc;color:#8a6a3a}
+  .sl-tip{font-size:10px;line-height:1.8;color:var(--u2-on-felt-2);text-align:center}
   .p-replay{margin-top:10px;background:none;border:none;font:inherit;font-size:10.5px;font-weight:700;
     color:var(--u2-ink-3);text-decoration:underline;cursor:pointer;-webkit-appearance:none}
   .card.teach .txt{font-size:14px}
@@ -1622,8 +1641,15 @@ var $ = function(id){ return document.getElementById(id); };
    素材到位后在 SFX_FILE 里填 name → 文件路径，就自动改播文件，调用点一处不用动。
    iOS/微信 WebView：AudioContext 必须在第一次手势里创建/resume，见 sfxUnlock。
    没有 AudioContext 的环境（node 仿真/冒烟桩）一律静默。 */
-var SFX_FILE = {};                                     // 例：{ swipe:"assets/sfx/swipe.mp3" }
-var _ac = null, _sfxBuf = {};
+/* 换音效只需丢文件，不用改代码（2026-11-16 晚）：
+   把名字对应的音频放到 assets/sfx/<名字>.mp3，游戏自动改用它；没有文件就用下面的合成音。
+   为什么用 <audio> 而不是 decodeAudioData：原型是双击打开的 file:// 页面，
+   fetch 本地文件会被 CORS 拦下——表现是「合成音还在响、文件永远不生效」，很难查。
+   <audio> 元素不受这条限制。放别的目录/别的格式：在 SFX_FILE 里显式登记即可。
+   清单与试听：双击 tools/sfx-lab.html */
+var SFX_FILE = {};                                     // 例：{ swipe:"assets/sfx/自定义.mp3" }
+var SFX_DIR = "assets/sfx/", SFX_EXT = ".mp3", SFX_VOL = 0.7;
+var _ac = null, _sfxEl = {}, _sfxMiss = {};
 function sfxOn(){ return !(typeof META === "object" && META && META.mute); }
 function sfxUnlock(){
   try{
@@ -1668,22 +1694,37 @@ var SFX_SYN = {
   win:    function(){ [523, 659, 784].forEach(function(f, i){ _tone(f, f, 0.3, "triangle", 0.09, i * 0.12); }); _tone(1047, 1047, 0.6, "triangle", 0.09, 0.36); },
   lose:   function(){ [392, 349, 294].forEach(function(f, i){ _tone(f, f * 0.98, 0.34, "sine", 0.1, i * 0.22); }); _tone(196, 150, 0.9, "sine", 0.12, 0.66); }
 };
-function sfx(name){
-  if(!sfxOn() || !_ac) return;
+function sfxUrl(n){ return SFX_FILE[n] || (SFX_DIR + n + SFX_EXT); }
+/* 返回 true = 这次交给文件（或已判定有文件）；false = 没文件，调用方去放合成音 */
+function sfxPlayFile(n){
+  if(_sfxMiss[n]) return false;
   try{
-    if(_ac.state === "suspended") _ac.resume();
-    var url = SFX_FILE[name];
-    if(url){
-      if(_sfxBuf[name]){ var s = _ac.createBufferSource(); s.buffer = _sfxBuf[name]; s.connect(_ac.destination); s.start(); return; }
-      if(_sfxBuf[name] !== false){
-        _sfxBuf[name] = false;                         // 加载中：这一次先用合成音顶上
-        fetch(url).then(function(r){ return r.arrayBuffer(); })
-          .then(function(a){ return _ac.decodeAudioData(a); })
-          .then(function(b){ _sfxBuf[name] = b; })["catch"](function(){ delete SFX_FILE[name]; });
-      }
+    var a = _sfxEl[n];
+    if(!a){
+      a = new Audio();
+      a.preload = "auto"; a.volume = SFX_VOL; a.src = sfxUrl(n);
+      a.addEventListener("error", function(){ _sfxMiss[n] = 1; _sfxEl[n] = null; });
+      _sfxEl[n] = a;
     }
-    if(SFX_SYN[name]) SFX_SYN[name]();
-  }catch(_e){}
+    try{ a.currentTime = 0; }catch(_e){}
+    var pr = a.play();
+    if(pr && pr.then) pr.then(null, function(err){
+      /* 分清两种失败（iOS 上踩过这个坑）：
+         NotAllowedError = 浏览器还没解锁音频，文件本身是好的——不能记成「没文件」，
+         否则 setTimeout 里播的那几个音（工资/交钱/预警）在 iOS 上会被误判成缺失、永远用合成音。
+         真正该判缺失的是 NotSupportedError（404/格式不支持），那才回退。 */
+      if(err && err.name === "NotAllowedError") return;
+      _sfxMiss[n] = 1; _sfxEl[n] = null;
+      if(_ac && SFX_SYN[n]) try{ SFX_SYN[n](); }catch(_e2){}
+    });
+    return true;
+  }catch(_e){ _sfxMiss[n] = 1; return false; }
+}
+function sfx(name){
+  if(!sfxOn()) return;
+  if(sfxPlayFile(name)) return;                       // 有文件：只放文件，不叠合成音
+  if(!_ac) return;
+  try{ if(_ac.state === "suspended") _ac.resume(); if(SFX_SYN[name]) SFX_SYN[name](); }catch(_e){}
 }
 try{
   document.addEventListener("pointerdown", sfxUnlock, true);
@@ -4704,7 +4745,15 @@ $("sh-hold-copy").onclick = function(){
 };
 $("h-add").onclick   = openAd;
 function muteIcon(){ try{ $("h-mute").textContent = META.mute ? "🔇" : "🔊"; }catch(_e){} }
-$("h-mute").onclick = function(){ META.mute = !META.mute; saveMeta(); muteIcon(); sfxUnlock(); sfx("tap"); };
+$("h-mute").onclick = function(){ META.mute = !META.mute; saveMeta(); muteIcon(); sfxUnlock(); };
+/* 按钮统一一声 tap（2026-11-16）：一处委托，省得每个按钮各接一遍。
+   游戏内没有按钮，所以不会和滑卡音叠；结局页按钮 / 面板关闭 / 广告领取都走这里。 */
+try{
+  document.addEventListener("pointerdown", function(ev){
+    var t = ev.target;
+    try{ if(t && t.closest && t.closest(".btn,.h-ent,.h-add,.h-mute,.p-x,.ad-skip,.t-claim")) sfx("tap"); }catch(_e){}
+  }, true);
+}catch(_e){}
 $("h-album").onclick = function(){ renderAlbum(); $("album").classList.add("on"); };
 $("h-task").onclick  = function(){ renderTasks(); $("task").classList.add("on"); };
 $("h-help").onclick  = function(){ $("help").classList.add("on"); };
@@ -4731,6 +4780,62 @@ $("ad-skip").onclick = function(){ clearInterval(AD_T); _adCtx = ""; $("admod").
 $("intro").classList.add("on");          // 主菜单（点「开始游戏」进局，消耗一次次数）
 metaInit(); refreshHome(); muteIcon();
 reset();
+/* ============ 音效试听台（?sfxlab=1，给换音效的人用） ============
+   只在 URL 带参数时接管整屏，正常游戏不进这段。
+   每行点一下就播：有文件播文件，没文件播合成音，右侧徽章告诉你实际用的是哪个。 */
+var SFX_TAG = { swipe:"滑出一张卡", tap:"按钮点击", coin:"发工资/外快/涨停", pay:"房租水电/大额消费",
+  warn:"四条命第一次进危险区", thud:"跌停/单日大跌", crash:"泡沫破/上失信名单", teach:"讲解卡出现",
+  reward:"领广告次数/任务奖励", win:"活下来的结局", lose:"死掉的结局" };
+function openSfxLab(){
+  var names = Object.keys(SFX_SYN), rows = "";
+  names.forEach(function(n){
+    rows += '<button class="sl-row" data-n="' + n + '"><b>' + n + '</b><span>' + (SFX_TAG[n] || "") +
+            '</span><em id="sl-st-' + n + '">检测中…</em></button>';
+  });
+  var d = document.createElement("div");
+  d.id = "sfxlab";
+  d.innerHTML = '<div class="sl-wrap"><h1>音效试听台</h1>' +
+    '<p class="sl-sub">把音频放到 <b>' + SFX_DIR + '&lt;名字&gt;.mp3</b> 就自动替换，刷新页面生效。<br>' +
+    '没有文件的名字会用代码合成音顶上（下表能听出来有多糙）。</p>' +
+    '<div class="sl-list">' + rows + '</div>' +
+    '<button class="btn" id="sl-all">全部播一遍</button>' +
+    '<p class="sl-tip">想先听自己的文件再决定放哪个名字：双击 <b>tools/sfx-lab.html</b>。</p></div>';
+  document.body.appendChild(d);
+  document.documentElement.classList.add("sl-on");
+  function mark(n, ok){
+    var el = $("sl-st-" + n); if(!el) return;
+    el.textContent = ok ? "文件 ✓" : "合成音";
+    el.className = ok ? "ok" : "syn";
+  }
+  // 进这个模式才探测文件（正常游戏不探测：11 次 404 请求没意义）
+  names.forEach(function(n){
+    try{
+      var a = new Audio(); a.preload = "metadata"; a.src = sfxUrl(n);
+      a.addEventListener("loadedmetadata", function(){ _sfxMiss[n] = 0; mark(n, true); });
+      a.addEventListener("error", function(){ _sfxMiss[n] = 1; mark(n, false); });
+    }catch(_e){ mark(n, false); }
+  });
+  function play(n){
+    sfxUnlock();
+    if(_sfxMiss[n] === 1){ _sfxMiss[n] = 0; }         // 用户可能刚放了文件：给他一次机会
+    var had = !_sfxMiss[n];
+    sfx(n);
+    setTimeout(function(){
+      var el = $("sl-st-" + n);
+      if(!el) return;
+      if(_sfxMiss[n]){ el.textContent = had ? "合成音（文件坏了）" : "合成音"; el.className = "syn"; }
+      else { el.textContent = "文件 ✓"; el.className = "ok"; }
+    }, 400);
+  }
+  d.addEventListener("click", function(ev){
+    var r = ev.target.closest ? ev.target.closest(".sl-row") : null;
+    if(r) play(r.getAttribute("data-n"));
+  });
+  $("sl-all").onclick = function(){ names.forEach(function(n, i){ setTimeout(function(){ play(n); }, i * 700); }); };
+}
+try{
+  if(/[?&]sfxlab=1/.test(location.search)) setTimeout(openSfxLab, 60);
+}catch(_e){}
 introIcons();                            // 玩法说明面板里那四个满格小图标
 ensureLedgRow();                         // 账目行常驻占位：第一次出现时不让行情区跳 16px
 relayout();
