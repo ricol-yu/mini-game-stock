@@ -494,6 +494,7 @@
   .sl-row em{font-size:9.5px;font-style:normal;font-weight:800;padding:2px 7px;border-radius:6px;flex:none}
   .sl-row em.ok{background:#d9f2dd;color:#1d6b2f}
   .sl-row em.syn{background:#eee0cc;color:#8a6a3a}
+  .sl-row.off{opacity:.55}
   .sl-tip{font-size:10px;line-height:1.8;color:var(--u2-on-felt-2);text-align:center}
   .p-replay{margin-top:10px;background:none;border:none;font:inherit;font-size:10.5px;font-weight:700;
     color:var(--u2-ink-3);text-decoration:underline;cursor:pointer;-webkit-appearance:none}
@@ -1653,6 +1654,16 @@ var SFX_DIR = "assets/sfx/", SFX_EXT = ".mp3", SFX_VOL = 0.7;
    实测差 15dB）。听着某个太轻/太响就改这里的倍数，不用重新剪素材。
    注意：素材峰值已经贴着 0dB，倍数超过 1.4 会削波（听着像破音）。 */
 var SFX_GAIN = { swipe:1, tap:1, coin:1, pay:1, warn:1, thud:1, crash:1, teach:1, reward:1, win:1, lose:1 };
+/* 音色复用（2026-11-16 用户定）：
+   · tap 用 teach 的音色——按钮的「嘀」；
+   · thud（跌停/单日大跌）直接复用 crash 的文件，不再单独做一个；
+   · pay（房租水电/大额支出）和 teach（讲解卡出现）这两个场景不要声音，
+     定义留着（tap 还要借 teach 的音色），但调用点已删。
+   SFX_UNUSED 只是给试听台做「游戏里不响」的灰显标记——真正的开关是调用点，
+   别把它当保险用。 */
+var SFX_ALIAS = { tap:"teach", thud:"crash" };
+var SFX_UNUSED = { pay:1, teach:1 };
+function sfxSrc(n){ return SFX_ALIAS[n] || n; }
 var _ac = null, _sfxEl = {}, _sfxMiss = {};
 function sfxOn(){ return !(typeof META === "object" && META && META.mute); }
 function sfxUnlock(){
@@ -1698,20 +1709,21 @@ var SFX_SYN = {
   win:    function(){ [523, 659, 784].forEach(function(f, i){ _tone(f, f, 0.3, "triangle", 0.09, i * 0.12); }); _tone(1047, 1047, 0.6, "triangle", 0.09, 0.36); },
   lose:   function(){ [392, 349, 294].forEach(function(f, i){ _tone(f, f * 0.98, 0.34, "sine", 0.1, i * 0.22); }); _tone(196, 150, 0.9, "sine", 0.12, 0.66); }
 };
-function sfxUrl(n){ return SFX_FILE[n] || (SFX_DIR + n + SFX_EXT); }
+function sfxUrl(n){ var s = sfxSrc(n); return SFX_FILE[s] || (SFX_DIR + s + SFX_EXT); }
 /* 返回 true = 这次交给文件（或已判定有文件）；false = 没文件，调用方去放合成音 */
 function sfxPlayFile(n){
-  if(_sfxMiss[n]) return false;
+  var s = sfxSrc(n);
+  if(_sfxMiss[s]) return false;
   try{
-    var a = _sfxEl[n];
+    var a = _sfxEl[s];
     if(!a){
       a = new Audio();
       a.preload = "auto";
-      a.volume = Math.max(0, Math.min(1, SFX_VOL * (SFX_GAIN[n] || 1)));
       a.src = sfxUrl(n);
-      a.addEventListener("error", function(){ _sfxMiss[n] = 1; _sfxEl[n] = null; });
-      _sfxEl[n] = a;
+      a.addEventListener("error", function(){ _sfxMiss[s] = 1; _sfxEl[s] = null; });
+      _sfxEl[s] = a;
     }
+    a.volume = Math.max(0, Math.min(1, SFX_VOL * (SFX_GAIN[n] || 1)));   // 别名共用元素：音量按当前这个名字的增益走
     try{ a.currentTime = 0; }catch(_e){}
     var pr = a.play();
     if(pr && pr.then) pr.then(null, function(err){
@@ -1720,17 +1732,18 @@ function sfxPlayFile(n){
          否则 setTimeout 里播的那几个音（工资/交钱/预警）在 iOS 上会被误判成缺失、永远用合成音。
          真正该判缺失的是 NotSupportedError（404/格式不支持），那才回退。 */
       if(err && err.name === "NotAllowedError") return;
-      _sfxMiss[n] = 1; _sfxEl[n] = null;
-      if(_ac && SFX_SYN[n]) try{ SFX_SYN[n](); }catch(_e2){}
+      _sfxMiss[s] = 1; _sfxEl[s] = null;
+      if(_ac && SFX_SYN[s]) try{ SFX_SYN[s](); }catch(_e2){}
     });
     return true;
-  }catch(_e){ _sfxMiss[n] = 1; return false; }
+  }catch(_e){ _sfxMiss[s] = 1; return false; }
 }
 function sfx(name){
   if(!sfxOn()) return;
   if(sfxPlayFile(name)) return;                       // 有文件：只放文件，不叠合成音
+  var s = sfxSrc(name);
   if(!_ac) return;
-  try{ if(_ac.state === "suspended") _ac.resume(); if(SFX_SYN[name]) SFX_SYN[name](); }catch(_e){}
+  try{ if(_ac.state === "suspended") _ac.resume(); if(SFX_SYN[s]) SFX_SYN[s](); }catch(_e){}
 }
 try{
   document.addEventListener("pointerdown", sfxUnlock, true);
@@ -2616,7 +2629,7 @@ function nextCard(){
     var tc = build(teachCard(S.teachQ.shift()));
     tc.classList.add("teach");
     stage.appendChild(tc); cur = tc; bind(tc); markArtShort();
-    FX.deal(tc); sfx("teach");
+    FX.deal(tc);                                     // 讲解卡不出声（用户定：tap 借了它的音色）
     return;
   }
   var a = build(pick());
@@ -2729,8 +2742,7 @@ function fly(dir){
   S._lastMsg = m || "";
   trailPush(c, dir, tLabel, tb, ta, snapOf(), m);
   teachScan(fx0);
-  if((S.ledger["工资"] || 0) > 0 || (S.ledger["外快"] || 0) >= 500) sfx("coin");
-  else if((S.ledger["房租水电"] || 0) < 0 || (S.ledger["消费"] || 0) <= -1500) sfx("pay");                                        // 当天发生了什么：若游戏就此结束，写进结局面板
+  if((S.ledger["工资"] || 0) > 0 || (S.ledger["外快"] || 0) >= 500) sfx("coin");   // 支出不出声（用户定）                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
   fxAfter(fx0);
   setTimeout(function(){
@@ -4795,7 +4807,9 @@ var SFX_TAG = { swipe:"滑出一张卡", tap:"按钮点击", coin:"发工资/外
 function openSfxLab(){
   var names = Object.keys(SFX_SYN), rows = "";
   names.forEach(function(n){
-    rows += '<button class="sl-row" data-n="' + n + '"><b>' + n + '</b><span>' + (SFX_TAG[n] || "") +
+    var s = sfxSrc(n), off = !!SFX_UNUSED[n];
+    rows += '<button class="sl-row' + (off ? " off" : "") + '" data-n="' + n + '"><b>' + n + '</b><span>' +
+            (SFX_TAG[n] || "") + (s !== n ? "（借 " + s + " 的音）" : "") + (off ? " · 游戏里不响" : "") +
             '</span><em id="sl-st-' + n + '">检测中…</em></button>';
   });
   var d = document.createElement("div");
@@ -4815,21 +4829,22 @@ function openSfxLab(){
   }
   // 进这个模式才探测文件（正常游戏不探测：11 次 404 请求没意义）
   names.forEach(function(n){
+    var s = sfxSrc(n);
     try{
       var a = new Audio(); a.preload = "metadata"; a.src = sfxUrl(n);
-      a.addEventListener("loadedmetadata", function(){ _sfxMiss[n] = 0; mark(n, true); });
-      a.addEventListener("error", function(){ _sfxMiss[n] = 1; mark(n, false); });
+      a.addEventListener("loadedmetadata", function(){ _sfxMiss[s] = 0; mark(n, true); });
+      a.addEventListener("error", function(){ _sfxMiss[s] = 1; mark(n, false); });
     }catch(_e){ mark(n, false); }
   });
   function play(n){
+    var s = sfxSrc(n);
     sfxUnlock();
-    if(_sfxMiss[n] === 1){ _sfxMiss[n] = 0; }         // 用户可能刚放了文件：给他一次机会
-    var had = !_sfxMiss[n];
+    _sfxMiss[s] = 0;                                   // 每次试听都给文件一次机会（可能刚放进去）
     sfx(n);
     setTimeout(function(){
       var el = $("sl-st-" + n);
       if(!el) return;
-      if(_sfxMiss[n]){ el.textContent = had ? "合成音（文件坏了）" : "合成音"; el.className = "syn"; }
+      if(_sfxMiss[s]){ el.textContent = "合成音"; el.className = "syn"; }
       else { el.textContent = "文件 ✓"; el.className = "ok"; }
     }, 400);
   }
