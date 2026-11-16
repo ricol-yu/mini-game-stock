@@ -586,23 +586,10 @@
     letter-spacing:.3px}
   .over .why{font-size:10px;line-height:1.9;font-weight:600;color:var(--u2-ink-2);text-align:left;
     background:rgba(43,31,18,.06);border-radius:10px;padding:9px 11px;margin:0 0 12px;width:100%}
-  /* 结局复盘（2026-11-16）：为什么死——一条致命线的折线 + 转折点 + 最伤的三次选择 + 下一局建议 */
-  .rv{width:100%;text-align:left;margin:0 0 12px;font-size:10.5px;line-height:1.8;font-weight:600;color:var(--u2-ink-2)}
-  .rv:empty{display:none}
-  .endcard > *{flex-shrink:0}                         /* 复盘把内容撑长后，按钮别被 flex 压扁（滚动交给 endcard） */
-  .rv-h{font-size:12px;font-weight:800;color:var(--u2-ink);margin:0 0 6px;letter-spacing:.5px}
-  .rv-sp{display:block;width:100%;height:54px;background:rgba(43,31,18,.05);border-radius:8px}
-  .rv-sp-l{display:flex;justify-content:space-between;font-size:9px;color:var(--u2-ink-3);margin:2px 0 6px}
-  .rv-p{margin:0 0 5px}
-  .rv-p b,.rv-tip b{color:var(--u2-ink);font-weight:800}
-  .rv-l{list-style:none;margin:0 0 6px;padding:0}
-  .rv-l li{display:flex;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px dashed rgba(43,31,18,.14)}
-  .rv-l li i{font-style:normal;color:var(--u2-ink-3);flex:none;font-size:9.5px}
-  .rv-l li em{font-style:normal;margin-left:auto;font-weight:800;color:#b03a2e;flex:none;font-variant-numeric:tabular-nums}
-  .rv-led{display:flex;flex-wrap:wrap;gap:4px 10px;margin:4px 0 6px}
-  .rv-led span{font-size:9.5px;color:var(--u2-ink-3)}
-  .rv-led b{margin-left:3px;font-weight:800;color:var(--u2-ink);font-variant-numeric:tabular-nums}
-  .rv-tip{background:rgba(255,197,61,.18);border:1.5px solid rgba(43,31,18,.18);border-radius:8px;padding:7px 9px;margin-top:6px}
+  /* 结果 + 死因（2026-11-16 用户定：复盘太长影响观看，只留一句）。
+     .why 就是那唯一一句结束语；四格小数字（天数/净值/交易/回落）承担「结果」。
+     别再把折线、列表、建议加回来——一屏一结论，玩家是要接着开下一局的。 */
+  .endcard > *{flex-shrink:0}                         /* 内容撑长时按钮别被 flex 压扁（滚动交给 endcard） */
   .life{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;width:100%;margin-bottom:16px;
     border-top:2px solid rgba(43,31,18,.16);border-bottom:2px solid rgba(43,31,18,.16);padding:10px 0}
   .life div{font-size:10px;line-height:1.6;font-weight:600;color:var(--u2-ink-3);text-align:left}
@@ -898,7 +885,6 @@
         <div class="sub" id="o-s"></div>
         <p class="quote" id="o-q"></p>
         <p class="why" id="o-why"></p>
-        <div class="rv" id="o-rv"></div>
         <div class="life">
           <div>这一辈子<b id="o-d"></b></div><div>最后剩下<b id="o-a"></b></div>
           <div>买卖次数<b id="o-n"></b></div><div>最大回落<b id="o-m"></b></div>
@@ -1040,11 +1026,8 @@ function reset(){
         _pStage:0, _pAdv:0, _pLastDay:0,
         leak:null,                                    // 手里的那条消息（见 apply 的 leak / tick 的兑现）
         ledger:{},                                    // 今日账目：led() 埋点入账，render 展示后清空
-        ltot:{},                                      // 一辈子的账目累计（结局复盘「钱都去哪了」）
-        trail:[], hx:[],                              // 复盘：每张卡的选择与数值变化 / 每天的四条命快照（见 fly）
         teachQ:[],                                    // 待插的讲解卡（见 teach / nextCard）
         index:3000, hist:[3000] };
-  S.hx.push(snapOf());
   CARDS.forEach(function(c){ c._used = 0; });
   _bag = []; _recent = []; _lastTag = ""; _pickResets = 0; _bagRefills = 0; _lastWasChain = false;   // 新的一局：袋子、冷却、同类记忆、插队节流都重来
   render(); nextCard();
@@ -1058,10 +1041,7 @@ var LED_IO = { "工资":1, "行情":1, "外快":1, "消费":1, "日用":1, "房�
 function led(k, v){
   if(!(Math.abs(v) >= 0.5)) return;
   S.ledger[k] = (S.ledger[k] || 0) + v;
-  if(S.ltot) S.ltot[k] = (S.ltot[k] || 0) + v;
 }
-/* 复盘快照：四条命 + 净值（fly 在选择前/选择后/过完一天各拍一次） */
-function snapOf(){ return { d:S.day, m:S.mind, s:S.social, r:S.risk, e:S.energy, n:net() }; }
 
 /* 月度账单的唯一算法：tick 扣钱、HUD 显示倒计时都用它（两处各算一遍必然漂移） */
 function billOf(day){
@@ -2771,9 +2751,7 @@ function fly(dir){
 
   var debt0 = S.debt;
   var fx0 = { cash:S.cash, debt:S.debt, net:net(), laolai:!!S.st.laolai };   // 结算前快照（给手感层判断「发生了什么」）
-  var tb = snapOf(), tLabel = labelOf(dir === "R" ? c.R : c.L);   // 复盘：选之前的样子 + 选项原话（金额要按选前状态填）
   resolve(c, dir);
-  var ta = snapOf();
   var borrowed = S.debt - debt0;                     // 这一选择借了多少钱（给 toast 提示用）
   // 卡牌自带状态：给玩家一个提示
   if(c.st) for(var k in c.st){
@@ -2782,7 +2760,6 @@ function fly(dir){
   S._pre = { mind: S.mind, social: S.social, risk: S.risk };   // 快照：给结局面板「前一天」的对比
   var m = tick();
   S._lastMsg = m || "";
-  trailPush(c, dir, tLabel, tb, ta, snapOf(), m);
   teachScan(fx0);
   if((S.ledger["工资"] || 0) > 0 || (S.ledger["外快"] || 0) >= 500) sfx("coin");   // 支出不出声（用户定）                                        // 当天发生了什么：若游戏就此结束，写进结局面板
   render();
@@ -2809,7 +2786,7 @@ function fly(dir){
     /* 行情句/利息句不再进 toast（2026-10-29）：「这只票涨跌 x%」分时图标签上就有，
        钱的影响飘在资金条上（.fdlt）；利息也化作现金飘字里的一个小减数。
        这两句是每天都有的常驻内容，留在 toast 里 = toast 天天出现挡视线。
-       只留在 S._lastMsg 里（结局面板还要用）。 */
+       只在 S._lastMsg 里留一份（2026-11-16 起结局页只显示一句话，面板不再读它）。 */
     if(m) m = m.split("　·　").filter(function(s){
       return s.indexOf("这只票") !== 0 && s !== "空仓，与你无关" && s.indexOf("利息") !== 0;
     }).join("　·　");
@@ -3804,174 +3781,12 @@ function shTap(){
   });
 }
 
-/* ============ 结局复盘（2026-11-16 用户定：死了要知道「为啥死」） ============
-   数据：fly 每打一张卡记一条 trail（选前/选后/过完一天三个快照 + 原话），hx 存每天四条命。
-   仿真/冒烟走 resolve+tick，不经 fly → trail 为空，复盘自动降级成只看终局，不报错。
-   规矩：只陈述发生了什么 + 一条下一局可以试的做法；不评判选择（与结局白描风格一致）。 */
-function trailPush(c, dir, lab, tb, ta, tc, msg){
-  try{
-    var T = S.trail; if(!T) return;
-    T.push({ d:tb.d, who:c.who || "", txt:String(c.txt || ""), lab:lab, dir:dir,
-             dc:{ m:ta.m-tb.m, s:ta.s-tb.s, r:ta.r-tb.r, e:ta.e-tb.e, n:ta.n-tb.n },
-             dt:{ m:tc.m-ta.m, s:tc.s-ta.s, r:tc.r-ta.r, e:tc.e-ta.e, n:tc.n-ta.n } });
-    if(T.length > 400) T.shift();
-    S.hx.push(tc); if(S.hx.length > 400) S.hx.shift();
-    var k = S.rvc || (S.rvc = {});                    // 「日子本身」的磨损来源：按天计数
-    function inc(x){ k[x] = (k[x] || 0) + 1; }
-    if(S.energy <= 0.5) inc("eZero");
-    if(S.st.laolai) inc("laolai");
-    if(S.st.fired) inc("fired");
-    if(S.st.bear || S.st.crisis) inc("bear");
-    if(S.st.halt) inc("halt");
-    if(S.st.over) inc("over");
-    if(S.equity > 0 && S.equity >= (S.cash + S.equity) * 0.75) inc("heavy");
-    if(S.debt > 1) inc("debt");
-    if(tc.n < ta.n - 1 && S.equity > 0) inc("mktDown");
-  }catch(_e){}
-}
-/* 结局 → 真正致命的那条线（key）+ 危险线（line）+ 下一局建议 */
+/* 结局 → 属哪条命（只用于结局页的输赢音效与配色，别再往上加统计） */
 var RV_KEY = {
   "泡沫之后":"n","查房":"r","爆了":"r","最后一把":"n","冬天还没过完":"n","断供":"n","穿仓":"n","老赖顶格":"n",
   "亮红灯":"e","梦游":"m","不动了":"m","停牌之后":"m","错过的人":"s","没有人":"s","离婚":"s","不认识":"s",
   "温水煮蛙":"n","复利葬礼":"n"
 };
-var RV_META = {
-  m:{ nm:"心态", line:25, low:true,  col:"#ff4d4f",
-      tip:"心态几乎不会自己回血。亏损、熊市、精力见底都在暗中扣它——跌狠了先减仓，累了先歇，陪家人、休息类选项能补回来。" },
-  s:{ nm:"社会", line:25, low:true,  col:"#4d9fff",
-      tip:"社会每天自己掉 0.25，「推掉」默认在扣它。隔一阵就花点钱或时间陪人、请客、帮忙，别等到个位数再补。" },
-  e:{ nm:"精力", line:15, low:true,  col:"#d9a400",
-      tip:"精力没有自然恢复，只能靠睡觉、休息、推掉应酬回血。掉到 25 以下就该挑轻松的选项了，见底硬撑 10 天会病倒。" },
-  r:{ nm:"风险", line:72, low:false, col:"#ff9500",
-      tip:"借钱、重仓（持仓超过身家七成半）、内线消息都在堆风险；减仓、还钱能降下来。72 以上每天都可能出事，满 100 直接爆。" },
-  n:{ nm:"净值", line:0,  low:true,  col:"#2b1f12",
-      tip:"生活成本每个月都在涨，光靠工资迟早被追上。别让负债滚着利息过日子（每天约 0.3%），手里留一点现金扛 5 号的账单。" }
-};
-function rvEsc(t){ return String(t).replace(/[&<>"]/g, function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]; }); }
-function rvNum(k, v){
-  if(k === "n") return (v >= 0 ? "+" : "−") + money(Math.abs(v));
-  var r = Math.round(v);
-  return (r >= 0 ? "+" : "−") + Math.abs(r);
-}
-function rvCut(t, n){                                // 优先截在第一个句读处，别把「deadline」切成「dea…」
-  t = String(t);
-  if(t.length <= n) return t;
-  var m = t.slice(0, n + 1).match(/^(.{4,}?)[。，？！：；]/);
-  return m ? m[1] : t.slice(0, n) + "…";
-}
-/* 折线：致命那条线的一辈子 + 危险线（虚线） */
-function rvSpark(k){
-  var H = S.hx || [], M = RV_META[k];
-  if(H.length < 3) return "";
-  var W = 300, Ht = 54, pad = 3, vals = H.map(function(h){ return h[k]; });
-  var lo, hi;
-  if(k === "n"){ lo = Math.min.apply(null, vals.concat([0])); hi = Math.max.apply(null, vals.concat([INIT])); }
-  else { lo = 0; hi = 100; }
-  if(hi - lo < 1) hi = lo + 1;
-  function X(i){ return pad + i * (W - pad*2) / (H.length - 1); }
-  function Y(v){ return pad + (1 - (v - lo) / (hi - lo)) * (Ht - pad*2); }
-  var pts = vals.map(function(v, i){ return X(i).toFixed(1) + "," + Y(v).toFixed(1); }).join(" ");
-  var ly = Y(M.line).toFixed(1);
-  return '<svg class="rv-sp" viewBox="0 0 ' + W + ' ' + Ht + '" preserveAspectRatio="none">' +
-    '<line x1="0" x2="' + W + '" y1="' + ly + '" y2="' + ly + '" stroke="#c0392b" stroke-width="1" stroke-dasharray="4 3" opacity=".7"/>' +
-    '<polyline points="' + pts + '" fill="none" stroke="' + M.col + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>' +
-    '<circle cx="' + X(H.length-1).toFixed(1) + '" cy="' + Y(vals[vals.length-1]).toFixed(1) + '" r="3.2" fill="' + M.col + '"/></svg>' +
-    '<div class="rv-sp-l"><span>第 1 天</span><span>' + M.nm + (k === "n" ? "（虚线＝0）" : "（虚线＝危险线 " + M.line + "）") + '</span><span>第 ' + S.day + ' 天</span></div>';
-}
-/* 进入危险区、此后再没回来的那一天 */
-function rvTurn(k){
-  var H = S.hx || [], M = RV_META[k];
-  function bad(v){ return M.low ? v <= M.line : v >= M.line; }
-  if(!H.length || !bad(H[H.length-1][k])) return null;
-  var i = H.length - 1;
-  while(i > 0 && bad(H[i-1][k])) i--;
-  return H[i].d;
-}
-function buildReview(name){
-  var k = RV_KEY[name], lose = !!k, M = RV_META[k || "n"];
-  var T = S.trail || [], C = S.rvc || {}, L = S.ltot || {}, out = [];
-  if(!lose){
-    // 活法：只给一张「这一辈子的账」+ 最赚的一次选择，不说教
-    var best = null;
-    T.forEach(function(t){ if(!best || t.dc.n > best.dc.n) best = t; });
-    out.push('<div class="rv-h">🔍 这一辈子的账</div>' + rvSpark("n") + rvLedger(L));
-    if(best && best.dc.n >= 500)
-      out.push('<div class="rv-p">最值钱的一次选择：第 ' + best.d + ' 天，' + rvEsc(best.who) + '「' + rvEsc(rvCut(best.txt, 16)) +
-               '」——你选了「' + rvEsc(best.lab) + '」，净值 ' + rvNum("n", best.dc.n) + '。</div>');
-    return out.join("");
-  }
-  var kk = k === "n" ? "n" : k;
-  out.push('<div class="rv-h">🔍 这一局是怎么走到这里的</div>');
-  out.push(rvSpark(kk));
-  // ① 转折点
-  var td = rvTurn(kk);
-  if(td){
-    var tc = null; T.forEach(function(t){ if(t.d === td - 1 || t.d === td) tc = tc || t; });
-    out.push('<div class="rv-p"><b>转折点</b>：从第 ' + td + ' 天起，' + M.nm + (kk === "n" ? "跌到 0 以下" : (M.low ? "跌破 " : "冲过 ") + M.line) +
-             '，之后再没回来' + (tc ? '。那天你在「' + rvEsc(rvCut(tc.txt, 14)) + '」选了「' + rvEsc(tc.lab) + '」' : '') + '。</div>');
-  }
-  // ② 伤得最深的三次选择（只算这一选当场造成的变化）
-  var sign = M.low ? 1 : -1;
-  var hurt = T.filter(function(t){ return sign * t.dc[kk] < 0; })
-              .sort(function(a, b){ return sign * a.dc[kk] - sign * b.dc[kk]; }).slice(0, 3);
-  var cardSum = 0, daySum = 0;
-  T.forEach(function(t){ cardSum += t.dc[kk]; daySum += t.dt[kk]; });
-  if(hurt.length){
-    out.push('<div class="rv-p"><b>扣' + M.nm + '最多的三次选择</b>：</div><ul class="rv-l">' + hurt.map(function(t){
-      return '<li><i>第 ' + t.d + ' 天</i>' + rvEsc(rvCut(t.txt, 15)) + ' → 「' + rvEsc(rvCut(t.lab, 12)) + '」<em>' + rvNum(kk, t.dc[kk]) + '</em></li>';
-    }).join("") + '</ul>');
-  }
-  // ③ 日子本身磨掉的（tick）
-  var src = [];
-  if(kk === "m"){
-    if(C.mktDown) src.push("持仓下跌 " + C.mktDown + " 天");
-    if(C.eZero)   src.push("精力见底硬撑 " + C.eZero + " 天");
-    if(C.fired)   src.push("失业 " + C.fired + " 天");
-    if(C.laolai)  src.push("挂在失信名单上 " + C.laolai + " 天");
-    if(C.bear)    src.push("熊市/冬天 " + C.bear + " 天");
-    if(C.halt)    src.push("停牌 " + C.halt + " 天");
-  } else if(kk === "s"){
-    src.push("人情自然变淡 " + S.day + " 天（每天 −0.25）");
-    var ms = S.miss || {}, mt = (ms.lover||0) + (ms.child||0) + (ms.fam||0) + (ms.pet||0);
-    if(mt) src.push("「不在场」" + mt + " 次（伴侣 " + (ms.lover||0) + " · 孩子 " + (ms.child||0) + " · 家人 " + (ms.fam||0) + "）");
-    if(C.laolai) src.push("挂在失信名单上 " + C.laolai + " 天");
-  } else if(kk === "e"){
-    var rest = T.filter(function(t){ return t.dc.e > 0; }).length, use = T.filter(function(t){ return t.dc.e < 0; }).length;
-    src.push("花精力的选择 " + use + " 次，回精力的只有 " + rest + " 次");
-    if(C.eZero) src.push("精力为 0 还在硬撑 " + C.eZero + " 天");
-  } else if(kk === "r"){
-    if(C.heavy) src.push("重仓（持仓超七成半）" + C.heavy + " 天");
-    if(C.debt)  src.push("背着负债 " + C.debt + " 天");
-    if(C.over)  src.push("上头状态 " + C.over + " 天");
-  } else {
-    if(L["债息"])  src.push("付出去的利息 " + money(-L["债息"]));
-    if(L["行情"])  src.push("股票" + (L["行情"] >= 0 ? "赚了 " : "亏了 ") + money(Math.abs(L["行情"])));
-    if(C.debt)    src.push("背着负债过了 " + C.debt + " 天");
-  }
-  if(T.length){
-    var cs = Math.round(cardSum), ds = Math.round(daySum);
-    if(kk !== "n")
-      out.push('<div class="rv-p"><b>账怎么算的</b>：你的选择让' + M.nm + ' ' + rvNum(kk, cs) + (ds ? '，日子本身又 ' + rvNum(kk, ds) : '') +
-               (src.length ? '——' + src.join("、") : '') + '。</div>');
-    else if(src.length)
-      out.push('<div class="rv-p"><b>钱漏在哪</b>：' + src.join("、") + '。</div>');
-  } else if(src.length){
-    out.push('<div class="rv-p"><b>日子本身</b>：' + src.join("、") + '。</div>');
-  }
-  if(kk === "n") out.push(rvLedger(L));
-  out.push('<div class="rv-tip"><b>下一局试试</b>：' + M.tip + '</div>');
-  return out.join("");
-}
-/* 一辈子的账：真收支按金额排，转账（借/还/买/卖）不进——那是左口袋到右口袋 */
-function rvLedger(L){
-  var ks = Object.keys(LED_IO).filter(function(x){ return Math.abs(L[x] || 0) >= 1; })
-            .sort(function(a, b){ return Math.abs(L[b]) - Math.abs(L[a]); });
-  if(!ks.length) return "";
-  return '<div class="rv-led">' + ks.map(function(x){
-    var v = L[x];
-    return '<span>' + x + '<b class="' + (v >= 0 ? "in" : "out") + '">' + (v >= 0 ? "+" : "−") + money(Math.abs(v)) + '</b></span>';
-  }).join("") + '</div>';
-}
 function check(){
   var n = net(), d = S.day, rate = (n - INIT) / INIT * 100, f = S.flags, e = null, why = "";
   var M = null;                                        // 结局元数据：END[name]
@@ -3979,147 +3794,104 @@ function check(){
     M = END[name]; e = [M.em, name, sub, M.q]; why = w;
   }
   if(f.burst && d > 30 && d - f.burstDay <= 10 && n <= INIT * 0.5 && f.burstDrop > 0.42){
-    mk("泡沫之后", "第 " + d + " 天 · 它终于跌回来了",
-       "泡沫破的那天单日砸了 " + Math.round(f.burstDrop * 100) + "%，之后 10 天里净值一直没回到起步资金一半（¥" +
-       Math.round(INIT/2000) + ",000）。泡沫里加的仓，破的时候一并不落。");
+    mk("泡沫之后", "第 " + d + " 天 · 它终于跌回来了", "泡沫破那天单日砸了 " + Math.round(f.burstDrop * 100) + "%，十天后净值还没回到起步的一半。");
   }
   else if(S.st.insider && S.risk >= 85){
-    mk("查房", "第 " + d + " 天 · 有人敲门",
-       "拿着内线消息的时候，风险已经堆到 " + Math.round(S.risk) + "/100——消息还没证伪，查房的人先到了。那 14% 的「可能假」，从来不是概率，是倒计时。");
+    mk("查房", "第 " + d + " 天 · 有人敲门", "风险都堆到 " + Math.round(S.risk) + "/100 了还攥着内线消息，消息没证伪，查房的人先到了。");
   }
   else if(S.risk >= 100){
-    mk("爆了", "第 " + d + " 天 · 系统替你做了决定",
-       "风险打满 100/100：重仓、内线、借债把风险堆到了顶，仓位被强制处理。杠杆在跌市里从不商量。");
+    mk("爆了", "第 " + d + " 天 · 系统替你做了决定", "重仓、内线、借债把风险堆满 100，仓位在跌停里被系统强平。");
   }
   /* 净值归零不再等于结束（2026-10-28 用户定）：现金花光可以借，先欠着继续活。
      真正结束的是「借不动了」——负债顶到 creditLimit()，没人再借你（穿仓）。
      没这条之前，钱一归零就直接结算，玩家根本没机会体验"欠债→月供还不上→老赖"这条线。 */
   else if(S.st.over && S.risk >= 55 && n <= 0 && S.debt >= creditLimit()){
-    mk("最后一把", "第 " + d + " 天 · 那一单比平时大得多",
-       "上头状态替你放大了下单，风险 " + Math.round(S.risk) + "、净值为零，而借钱的额度也已经用满——最后一单把账户打穿，也把这一局打穿了。");
+    mk("最后一把", "第 " + d + " 天 · 那一单比平时大得多", "上头替你放大了下单，净值归零、额度也用满，最后一单把账户打穿。");
   }
   else if(n <= 0 && S.debt >= creditLimit() && S.st.crisis){
-    mk("冬天还没过完", "第 " + d + " 天 · 你倒在了最后一段路上",
-       "净值归零，冬天（熊市）还没结束，能借的额度也用完了（" + money(S.debt) + "）。行情不会等人攒够本金。");
+    mk("冬天还没过完", "第 " + d + " 天 · 你倒在了最后一段路上", "熊市还没结束，能借的额度先用完了（欠 " + money(S.debt) + "），净值归零。");
   }
   else if(S.arrears >= 3){
-    mk("断供", "第 " + d + " 天 · 收房子的来敲门",
-       "连续 3 期月供没还上（欠款 " + money(S.debt) + "）。房子不是被行情收走的，是被「下个月再说」一句一句收走的。");
+    mk("断供", "第 " + d + " 天 · 收房子的来敲门", "连着 3 期月供没还上（欠 " + money(S.debt) + "），房子被收走了。");
   }
   else if(S.st.laolai && n <= 0 && S.debt >= creditLimit()){
-    mk("老赖顶格", "第 " + d + " 天 · 名单的最下面一层",
-       "失信名单挂着（欠款 " + money(S.debt) + "），借钱只能借一半——但连一半的额度也用满了。老赖的下场不是新的惩罚，是旧惩罚的终点。");
+    mk("老赖顶格", "第 " + d + " 天 · 名单的最下面一层", "挂着失信名单（欠 " + money(S.debt) + "），连能借的一半额度也用满了。");
   }
   else if(n <= 0 && S.debt >= creditLimit()){
-    mk("穿仓", "第 " + d + " 天 · 你欠的比拥有的多",
-       "净值 " + money(n) + "，负债 " + money(S.debt) + "：欠的比拥有的多，而且借钱的额度（" +
-       money(creditLimit()) + "）已经用满——没人再借你了。钱是一点一点少的，少到最后，你自己都拼不出中间的过程。");
+    mk("穿仓", "第 " + d + " 天 · 你欠的比拥有的多", "负债 " + money(S.debt) + " 顶到额度上限，净值 " + money(n) + "，没人再借你了。");
   }
   else if(S.energy <= 0.5 && f.energyZero >= 10){
-    mk("亮红灯", "第 " + d + " 天 · 你先倒下了",
-       "精力见底硬撑了 " + f.energyZero + " 天：熬夜、加班、应酬全压在身体上——身体是第一条会爆的命，病历比 K 线先到跌停。");
+    mk("亮红灯", "第 " + d + " 天 · 你先倒下了", "精力见底还硬撑了 " + f.energyZero + " 天，身体先垮了。");
   }
   else if(f.mindLow >= 12 && S.mind <= 15){
-    mk("梦游", "第 " + d + " 天 · 人还在，魂不在",
-       "连续 " + f.mindLow + " 天心态低于 15：还在打开软件、还在滑动，只是很久没有真的看过一眼了。不动是结局，梦游是结局的前一站。");
+    mk("梦游", "第 " + d + " 天 · 人还在，魂不在", "心态连着 " + f.mindLow + " 天卡在 15 以下，亏损和硬扛一天一天摞上去，最后什么都感觉不到了。");
   }
   else if(S.mind <= 0){
-    mk("不动了", "第 " + d + " 天 · 你关掉了那个软件",
-       "心态归零 0/100" + (S._pre ? "（前一天还有 " + Math.round(S._pre.mind) + "）" : "") +
-       "：连续的亏损和硬扛，把「再看一眼」的力气磨没了。");
+    mk("不动了", "第 " + d + " 天 · 你关掉了那个软件", "心态被一路磨到 0/100，亏损还能再赚，这口气没了就没了。");
   }
   else if((S.miss.lover || 0) >= 10 && S.social < 40){
-    mk("错过的人", "第 " + d + " 天 · 家里很安静",
-       "「不在场」累计 " + S.miss.lover + " 次、社会 " + Math.round(S.social) + "/100——她没有离开，是等够了。缺席是会记账的，账期比你想的长。");
+    mk("错过的人", "第 " + d + " 天 · 家里很安静", "「不在场」累计 " + S.miss.lover + " 次、社会只剩 " + Math.round(S.social) + "/100，缺席是会被记账的。");
   }
   else if(S.social <= 0){
-    mk("没有人", "第 " + d + " 天 · 通讯录很久没响过",
-       "社会归零 0/100" + (S._pre ? "（前一天还有 " + Math.round(S._pre.social) + "）" : "") +
-       "：你炒了一辈子的股，回头发现身边已经空无一人。");
+    mk("没有人", "第 " + d + " 天 · 通讯录很久没响过", "社会归零 0/100，炒了一辈子股，回头身边一个人都没有。");
   }
   else if(f.haltDays >= 15 && S.mind <= 35){
-    mk("停牌之后", "第 " + d + " 天 · 公告还是没有来",
-       "停牌第 " + f.haltDays + " 天，心态磨到 " + Math.round(S.mind) + "/100——复牌时间待定，你的日子也是。等一个不知道会不会来的开盘，比亏钱更磨人。");
+    mk("停牌之后", "第 " + d + " 天 · 公告还是没有来", "停牌第 " + f.haltDays + " 天、心态磨到 " + Math.round(S.mind) + "/100，复牌时间待定，日子也待定。");
   }
   else if(f.lossStreak >= 20 && n > 0 && n < INIT * 0.4){
-    mk("温水煮蛙", "第 " + d + " 天 · 没有一声巨响",
-       "连续 " + f.lossStreak + " 天净值下滑，还剩 " + money(n) + "（起步 " + money(INIT) + "）——没有爆仓、没有归零，钱就是这么一点一点变少的。");
+    mk("温水煮蛙", "第 " + d + " 天 · 没有一声巨响", "净值连跌 " + f.lossStreak + " 天，从 " + money(INIT) + " 剩到 " + money(n) + "，全程没有人提醒过你。");
   }
   else if(S.did && S.did.fam_divorce_01 === "l" && S.social <= 45){
-    mk("离婚", "第 " + d + " 天 · 房子变大了",
-       "那天你选了「好」，社会跌到 " + Math.round(S.social) + "/100——签字只要一分钟，空出来的房间要住很多年。");
+    mk("离婚", "第 " + d + " 天 · 房子变大了", "离婚协议上你点了「好」，社会跌到 " + Math.round(S.social) + "/100。");
   }
   else if(S.st.baby && (S.miss.child || 0) >= 8){
-    mk("不认识", "第 " + d + " 天 · 孩子管别人叫爸爸",
-       "家长会缺席、签字缺席……「不在场」累计 " + S.miss.child + " 次。行情每天开盘，孩子的童年不等人。");
+    mk("不认识", "第 " + d + " 天 · 孩子管别人叫爸爸", "孩子出生后你「不在场」" + S.miss.child + " 次，谁天天在场，孩子就认谁。");
   }
   else if(f.intPaid >= 8000 && S.debt > 2000){
-    mk("复利葬礼", "第 " + d + " 天 · 给利息打了一辈子工",
-       "累计付出去的债息已经超过 ¥8,000，本金还欠着 " + money(S.debt) + "——你赚的每一笔，都只是利息的过路费。");
+    mk("复利葬礼", "第 " + d + " 天 · 给利息打了一辈子工", "累计付了 " + money(f.intPaid) + " 的债息，本金还剩 " + money(S.debt) + "，利息比工资还准时。");
   }
   else if(d <= 60 && n >= 60000){
-    mk("快进快出", "第 " + d + " 天 · 三倍，三个月",
-       "第 " + d + " 天，净值 " + money(n) + "（起步 ¥20,000，收益 " + rate.toFixed(0) + "%）。速度本身就是一种结局——下一程去哪，你自己挑。");
+    mk("快进快出", "第 " + d + " 天 · 三倍，三个月", "第 " + d + " 天净值 " + money(n) + "（收益 " + rate.toFixed(0) + "%），快是快，但别指望每次都这么快。");
   }
   else if(f.bigDay && n > 0){
-    mk("大阳线", "第 " + d + " 天 · 你什么都没做",
-       "第 " + f.bigDay + " 天那天，行情一天就给了你起步资金的两成——那种日子不会常有，但见过一次的人，很难再离开这个市场。");
+    mk("大阳线", "第 " + d + " 天 · 你什么都没做", "第 " + f.bigDay + " 天行情一天给了你起步资金的两成，那种日子不常有，但见过就很难离开。");
   }
   else if(S.index <= 2400 && n >= INIT && d > 50){
-    mk("逆风局", "第 " + d + " 天 · 大盘跌了三成",
-       "指数从 3000 跌到 " + Math.round(S.index) + "，你的净值还在 " + money(n) + "（≥起步）——熊市里没亏钱，比牛市里赚钱少见得多。");
+    mk("逆风局", "第 " + d + " 天 · 大盘跌了三成", "指数从 3000 跌到 " + Math.round(S.index) + "，你的净值还有 " + money(n) + "，几乎没受影响。");
   }
   else if(S.st.baby && S.social >= 65 && S.mind >= 45 && n > 0 && d > 80){
-    mk("三口之家", "第 " + d + " 天 · 你关掉了软件",
-       "孩子出生后（社会 " + Math.round(S.social) + "、心态 " + Math.round(S.mind) + "、净值 " + money(n) + "）——你先顾好了家里，再回头看盘。这局真正想赢的本来就不是市场。");
+    mk("三口之家", "第 " + d + " 天 · 你关掉了软件", "孩子出生后社会 " + Math.round(S.social) + "、心态 " + Math.round(S.mind) + "、净值 " + money(n) + "，家里那条线你守住了。");
   }
   else if(S.did && S.did.pet_adopt_01 === "l" && !S.did.pet_gone_01 && S.mind >= 40 && S.social < 55 && n > 0 && d > 100){
-    mk("一人一狗", "第 " + d + " 天 · 有人蹲在门口等你",
-       "第 100 天还收留着那只猫（它没被送走），社会不高但心态 " + Math.round(S.mind) + "/100——朋友淡了，回家总还有个生命按点等你。");
+    mk("一人一狗", "第 " + d + " 天 · 有人蹲在门口等你", "一百多天过去那只猫还在，朋友淡了（社会 " + Math.round(S.social) + "），回家总有人等。");
   }
   else if(f.wasFired && !S.st.fired && S.mind >= 45 && S.social >= 45){
-    mk("再就业", "第 " + d + " 天 · 有些东西回来了",
-       "被裁过（心态一度见底），后来接受了降薪三成的工作——心态 " + Math.round(S.mind) + "、社会 " + Math.round(S.social) +
-       "。跌倒过的人，重新站着也是本事。");
+    mk("再就业", "第 " + d + " 天 · 有些东西回来了", "被裁过，又找回来了：心态 " + Math.round(S.mind) + "、社会 " + Math.round(S.social) + "，站着本身就是本事。");
   }
   else if(f.deepDebtDays >= 12 && S.debt <= 1 && n > 0 && n < INIT * 1.5){
-    mk("无债一身轻", "第 " + d + " 天 · 欠款归零",
-       "负债深过 ¥8,000 的日子熬了 " + f.deepDebtDays + " 天以上，现在分文不欠、手里还有 " + money(n) +
-       "——深坑也是能爬出来的，虽然你没跟任何人说起过。");
+    mk("无债一身轻", "第 " + d + " 天 · 欠款归零", "负债深过 ¥8,000 熬了 " + f.deepDebtDays + " 天，现在分文不欠、手里还有 " + money(n) + "。");
   }
   else if(d >= 90 && S.mind >= 55 && S.social >= 55 && S.risk <= 25 && S.energy >= 45 && n > 0){
-    mk("平衡大师", "第 " + d + " 天 · 什么都守住了",
-       "第 " + d + " 天：心态 " + Math.round(S.mind) + " · 社会 " + Math.round(S.social) + " · 风险 " + Math.round(S.risk) +
-       " · 精力 " + Math.round(S.energy) + " · 净值 " + money(n) + "——四条命全在安全线以上，账户还是正的。");
+    mk("平衡大师", "第 " + d + " 天 · 什么都守住了", "心态 " + Math.round(S.mind) + "、社会 " + Math.round(S.social) + "、风险 " + Math.round(S.risk) + "、精力 " + Math.round(S.energy) + "——每条都留着余量。");
   }
   else if(d >= 90 && n >= INIT && n < INIT * 1.2 && S.mind >= 40 && S.social >= 40 && S.risk <= 40){
-    mk("平凡之路", "第 " + d + " 天 · 不好不坏",
-       "第 " + d + " 天，净值 " + money(n) + "，跟起步几乎一样，但人还立着（心态 " + Math.round(S.mind) + " · 社会 " +
-       Math.round(S.social) + "）——没赢，也没输，这大概是大多数人的一辈子。");
+    mk("平凡之路", "第 " + d + " 天 · 不好不坏", "第 " + d + " 天净值 " + money(n) + "，一年下来没赚到钱，也没欠下什么。");
   }
   else if(n >= 80000){
-    mk("自由", "第 " + d + " 天 · 你终于可以不用看了",
-       "净值达到 ¥80,000 —— 落袋为安。");
+    mk("自由", "第 " + d + " 天 · 你终于可以不用看了", "净值做到 ¥80,000，四倍起步资金，落袋为安。");
   }
   else if(S.did && S.did.self_exit_01 === "r"){
     // 上岸不再自动触发：条件满足只是"可以走了"，真正按下停止键的是玩家自己（见 self_exit_01）
-    mk("上岸", "第 " + d + " 天 · 清仓，还清，删掉 App",
-       "这是你自己按下的停止键：仓位清空、欠款还清，手里还剩 " + money(n) +
-       "（起步 ¥20,000，收益 " + rate.toFixed(1) + "%）。全场唯一一个「不玩了就算赢」的结局——" +
-       "不用等翻倍，也不用等爆仓，够本就走也是本事。");
+    mk("上岸", "第 " + d + " 天 · 清仓，还清，删掉 App", "这是你自己按下的停止键，手里剩 " + money(n) + "（收益 " + rate.toFixed(1) + "%），够本就走。");
   }
   else if(d > 60 && S.did && S.did.fam_wed_day_01 && S.social >= 70 && n > 0){
-    mk("两个人", "第 " + d + " 天 · 钱没大赚，但照片挂在客厅",
-       "结了婚，社会 " + Math.round(S.social) + "/100，净值 " + money(n) +
-       "——老婆还在，朋友们也还在。婚礼的照片挂在客厅。");
+    mk("两个人", "第 " + d + " 天 · 钱没大赚，但照片挂在客厅", "结了婚，社会 " + Math.round(S.social) + "、净值 " + money(n) + "——市场没给的，别处给了。");
   }
   else if(d > 150 && n > 0){
-    mk("熬成精", "第 " + d + " 天 · 五个月了，你还站着",
-       "150 天，净值仍为正（" + money(n) + "）。通胀、熊市、生活的账单都没能把你打穿。");
+    mk("熬成精", "第 " + d + " 天 · 五个月了，你还站着", "150 天，净值仍为正（" + money(n) + "），通胀、熊市和账单都没能打穿你。");
   }
   else if(d > 120 && S.neverBought){
-    mk("一次都没动", "第 " + d + " 天 · 底仓之外毫无动作",
-       "120 天里你一次都没有主动交易——只有开局那笔 ¥6,000 底仓在场内跟着涨跌。");
+    mk("一次都没动", "第 " + d + " 天 · 底仓之外毫无动作", "120 天里零次买卖，账户就这么放着，涨跌都算它的。");
   }
   if(!e) return;
   S.over = true;
@@ -4150,11 +3922,9 @@ function check(){
   }catch(_e){}                                                 // 结局页必须弹：分享挂了就当没有分享槽
   closeTips(null);        // 结局页 z-40 只是盖住：不主动收，重开一局 tip 会重新露在 HUD 上
   $("o-em").textContent = e[0]; $("o-t").textContent = e[1]; $("o-s").textContent = e[2]; $("o-q").textContent = e[3];
-  var stat = "终局面板：心态 " + Math.round(S.mind) + " · 社会 " + Math.round(S.social) + " · 风险 " + Math.round(S.risk) +
-             " · 净值 " + money(n) + (S.debt > 1 ? " · 负债 " + money(S.debt) : "");
-  $("o-why").textContent = (why ? "为什么是这个结局：" + why + "　" : "") +
-                           (S._lastMsg ? "最后一天：" + S._lastMsg + "。" : "") + stat;
-  try{ $("o-rv").innerHTML = buildReview(e[1]); }catch(_e){ $("o-rv").innerHTML = ""; }   // 复盘挂了也不能拦结局页
+  /* 只有一句：死因（或活下来的缘由）就写在这句结束语里。结果由上面的
+     结局名 + 副标题 + 下面四格数字承担，别在这里再堆统计（2026-11-16 用户定）。 */
+  $("o-why").textContent = why;
   $("o-d").textContent = d + " 天";
   var a = $("o-a"); a.textContent = money(n); a.className = n >= INIT ? "up" : "down";
   $("o-n").textContent = S.trades + " 次";

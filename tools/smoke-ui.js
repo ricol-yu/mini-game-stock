@@ -204,9 +204,14 @@ step('离场卡：左滑「再玩两天」继续，且两天内不重复追问',
   if (isExit(c2)) throw new Error('隔天就追问了（冷却没生效）');
 });
 
-step('结局面板文案非空（why 必写，且带「为什么是这个结局」）', () => {
-  const why = getEl('o-why')._t;
-  if (!why || why.indexOf('为什么是这个结局') < 0) throw new Error('结局面板没解释：' + why);
+step('结局面板只有一句：死因写在这句结束语里（不超 46 字、一个句号收尾）', () => {
+  const why = getEl('o-why')._t || '';
+  if (!why) throw new Error('结局面板没解释');
+  if (why.indexOf('为什么是这个结局') >= 0 || why.indexOf('终局面板') >= 0)
+    throw new Error('又接回旧的长文案了：' + why);
+  if (why.length > 46) throw new Error('一句太长（' + why.length + ' 字）：' + why);
+  if ((why.match(/。/g) || []).length !== 1) throw new Error('应该正好一句话：' + why);
+  if (why.slice(-1) !== '。') throw new Error('这句没有句号收尾：' + why);
 });
 
 step('HUD 还款节点胶囊：无债只显示房租，有债连月供一起算进总额', () => {
